@@ -84,6 +84,9 @@
     <ClCompile Include="TestMovementSystem.cpp">
       <Filter>Source Files\Framework\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="CollisionUpdateSystem.cpp">
+      <Filter>Source Files\Framework\Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -142,6 +145,15 @@
     </ClInclude>
     <ClInclude Include="TestMovementComponent.h">
       <Filter>Header Files\Framework\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionUpdateSystem.h">
+      <Filter>Header Files\Framework\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionComponent.h">
+      <Filter>Header Files\Framework\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

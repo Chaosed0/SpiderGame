@@ -19,10 +19,11 @@
 #include <glm\gtc\matrix_transform.hpp>
 
 #include "Camera.h"
+#include "Util.h"
 
 #include "TransformComponent.h"
 #include "ModelRenderComponent.h"
-#include "TestMovementComponent.h"
+#include "CollisionComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1280;
@@ -97,6 +98,19 @@ int Game::setup()
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
+	/* Physics */
+	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
+	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	dynamicsWorld = std::unique_ptr<btDiscreteDynamicsWorld>(new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration));
+	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
+
+	btStaticPlaneShape* planeShape = new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 0.0f);
+	btDefaultMotionState* motionState = new btDefaultMotionState(btTransform::getIdentity());
+	btRigidBody* body = new btRigidBody(0.0f, motionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
+	dynamicsWorld->addRigidBody(body);
+
 	/* Scene */
 	lightShader.compileAndLink("basic.vert", "white.frag");
 	shader.compileAndLink("basic.vert", "lightcolor.frag");
@@ -145,7 +159,7 @@ int Game::setup()
 	pointLightModel = modelLoader.loadModelById("pointLight");
 	skyboxModel = modelLoader.loadModelById("skybox");
 
-	camera.transform.setPosition(glm::vec3(0, 0, 0));
+	camera.transform.setPosition(glm::vec3(0, 0, -10.0f));
 
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.obj");
 
@@ -160,14 +174,19 @@ int Game::setup()
 		Entity shroom;
 		std::shared_ptr<ModelRenderComponent> modelComponent = shroom.addComponent<ModelRenderComponent>();
 		std::shared_ptr<TransformComponent> transformComponent = shroom.addComponent<TransformComponent>();
-		std::shared_ptr<TestMovementComponent> testMoveComponent = shroom.addComponent<TestMovementComponent>();
+		std::shared_ptr<CollisionComponent> collisionComponent = shroom.addComponent<CollisionComponent>();
 
 		float z = axisRand(generator);
 		float axisAngle = angleRand(generator);
 		float angle = angleRand(generator);
-		transformComponent->transform.setPosition(glm::vec3(positionRand(generator), positionRand(generator), positionRand(generator)));
+		transformComponent->transform.setPosition(glm::vec3(positionRand(generator), positionRand(generator) + 5.0f, positionRand(generator)));
 		transformComponent->transform.setRotation(glm::angleAxis(angle, glm::vec3(sqrt(1 - z*z) * cos(axisAngle), sqrt(1 - z*z) * sin(axisAngle), z)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
+
+		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
+		btDefaultMotionState* motionState = new btDefaultMotionState(Util::transformToBt(transformComponent->transform));
+		collisionComponent->body = std::shared_ptr<btRigidBody>(new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f)));
+		dynamicsWorld->addRigidBody(collisionComponent->body.get());
 
 		unsigned int shroomHandle = renderer.getHandle(shroomModel, shader);
 		modelComponent->rendererHandle = shroomHandle;
@@ -182,7 +201,7 @@ int Game::setup()
 	}
 
 	modelRenderSystem = std::unique_ptr<ModelRenderSystem>(new ModelRenderSystem(renderer));
-	testMovementSystem = std::unique_ptr<TestMovementSystem>(new TestMovementSystem());
+	collisionUpdateSystem = std::unique_ptr<CollisionUpdateSystem>(new CollisionUpdateSystem());
 
 	return 0;
 }
@@ -292,6 +311,8 @@ void Game::update()
 		camera.transform.setPosition(camera.transform.getPosition() + camera.transform.getRotation() * scaledMovement);
 	}
 
-	testMovementSystem->update(timeDelta, entities);
 	modelRenderSystem->update(timeDelta, entities);
+	collisionUpdateSystem->update(timeDelta, entities);
+
+	dynamicsWorld->stepSimulation(timeDelta);
 }

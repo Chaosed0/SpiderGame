@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include <btBulletDynamicsCommon.h>
 
 #include <vector>
 #include <memory>
@@ -14,7 +15,7 @@
 #include "Entity.h"
 
 #include "ModelRenderSystem.h"
-#include "TestMovementSystem.h"
+#include "CollisionUpdateSystem.h"
 
 class Game
 {
@@ -51,5 +52,7 @@ private:
 
 	std::vector<Entity> entities;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
-	std::unique_ptr<TestMovementSystem> testMovementSystem;
+	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
+
+	std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld;
 };
