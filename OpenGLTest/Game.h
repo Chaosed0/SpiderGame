@@ -14,6 +14,7 @@
 #include "Entity.h"
 
 #include "ModelRenderSystem.h"
+#include "TestMovementSystem.h"
 
 class Game
 {
@@ -50,4 +51,5 @@ private:
 
 	std::vector<Entity> entities;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
+	std::unique_ptr<TestMovementSystem> testMovementSystem;
 };

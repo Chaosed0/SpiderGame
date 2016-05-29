@@ -137,6 +137,7 @@
     <ClCompile Include="ModelLoader.cpp" />
     <ClCompile Include="ModelRenderSystem.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="TestMovementSystem.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -155,6 +156,8 @@
     <ClInclude Include="ModelRenderSystem.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="System.h" />
+    <ClInclude Include="TestMovementComponent.h" />
+    <ClInclude Include="TestMovementSystem.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Transform.h" />

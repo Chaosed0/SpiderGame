@@ -81,6 +81,9 @@
     <ClCompile Include="ModelRenderSystem.cpp">
       <Filter>Source Files\Framework\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="TestMovementSystem.cpp">
+      <Filter>Source Files\Framework\Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -133,6 +136,12 @@
     </ClInclude>
     <ClInclude Include="ModelRenderSystem.h">
       <Filter>Header Files\Framework\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="TestMovementSystem.h">
+      <Filter>Header Files\Framework\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="TestMovementComponent.h">
+      <Filter>Header Files\Framework\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

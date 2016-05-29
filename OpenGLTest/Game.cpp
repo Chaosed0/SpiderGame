@@ -22,6 +22,7 @@
 
 #include "TransformComponent.h"
 #include "ModelRenderComponent.h"
+#include "TestMovementComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1280;
@@ -159,6 +160,7 @@ int Game::setup()
 		Entity shroom;
 		std::shared_ptr<ModelRenderComponent> modelComponent = shroom.addComponent<ModelRenderComponent>();
 		std::shared_ptr<TransformComponent> transformComponent = shroom.addComponent<TransformComponent>();
+		std::shared_ptr<TestMovementComponent> testMoveComponent = shroom.addComponent<TestMovementComponent>();
 
 		float z = axisRand(generator);
 		float axisAngle = angleRand(generator);
@@ -174,14 +176,13 @@ int Game::setup()
 
 	unsigned int skyboxHandle = renderer.getHandle(skyboxModel, skyboxShader);
 	renderer.updateTransform(skyboxHandle, Transform::identity);
-	unsigned int shroomHandle = renderer.getHandle(shroomModel, shader);
-	renderer.updateTransform(shroomHandle, Transform::identity);
 	for (unsigned int i = 0; i < pointLightTransforms.size(); i++) {
 		unsigned int lightHandle = renderer.getHandle(pointLightModel, lightShader);
 		renderer.updateTransform(lightHandle, pointLightTransforms[i]);
 	}
 
 	modelRenderSystem = std::unique_ptr<ModelRenderSystem>(new ModelRenderSystem(renderer));
+	testMovementSystem = std::unique_ptr<TestMovementSystem>(new TestMovementSystem());
 
 	return 0;
 }
@@ -197,11 +198,11 @@ int Game::loop()
 	{
 		accumulator += SDL_GetTicks() - lastUpdate;
 		lastUpdate = SDL_GetTicks();
-		if (accumulator >= 1000.0f / updatesPerSecond)
+		if (accumulator >= 1.0f / updatesPerSecond)
 		{
-			timeDelta = 1000.0f / updatesPerSecond;
+			timeDelta = 1.0f / updatesPerSecond;
 			update();
-			accumulator -= 1000.0f / updatesPerSecond;
+			accumulator -= 1.0f / updatesPerSecond;
 		}
 	
 		draw();
@@ -234,8 +235,8 @@ void Game::update()
 			running = false;
 			break;
 		case SDL_MOUSEMOTION:
-			cameraHorizontal -= event.motion.xrel * timeDelta / 1000.0f * 0.2f;
-			cameraVertical -= event.motion.yrel * timeDelta / 1000.0f * 0.2f;
+			cameraHorizontal -= event.motion.xrel * timeDelta * 0.2f;
+			cameraVertical -= event.motion.yrel * timeDelta * 0.2f;
 			cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + glm::epsilon<float>(), glm::half_pi<float>() - glm::epsilon<float>());
 			break;
 		case SDL_KEYDOWN:
@@ -287,9 +288,10 @@ void Game::update()
 	
 	if (fabs(glm::length(movement)) > glm::epsilon<float>())
 	{
-		glm::vec3 scaledMovement = glm::normalize(movement) * timeDelta / 1000.0f * 5.0f;
+		glm::vec3 scaledMovement = glm::normalize(movement) * timeDelta * 5.0f;
 		camera.transform.setPosition(camera.transform.getPosition() + camera.transform.getRotation() * scaledMovement);
 	}
 
+	testMovementSystem->update(timeDelta, entities);
 	modelRenderSystem->update(timeDelta, entities);
 }
