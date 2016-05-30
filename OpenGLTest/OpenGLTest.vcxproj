@@ -71,8 +71,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\bullet3\bin\;E:\Libraries\SDL2-2.0.4\lib\x86;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\Debug\;E:\Libraries\glew-1.13.0\lib\Release\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Libraries\freetype-2.6.3\include\;E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\bin\;E:\Libraries\SDL2-2.0.4\lib\x86;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\Debug\;E:\Libraries\glew-1.13.0\lib\Release\Win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -81,7 +81,7 @@
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimpd.lib;glew32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype263d.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimpd.lib;glew32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
@@ -130,6 +130,7 @@
     <ClCompile Include="Box.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionUpdateSystem.cpp" />
+    <ClCompile Include="Console.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="CollisionComponent.h" />
     <ClInclude Include="CollisionUpdateSystem.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="Console.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Material.h" />
@@ -169,9 +171,13 @@
     <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="back.frag" />
+    <None Include="back.vert" />
     <None Include="basic.vert" />
     <None Include="skybox.frag" />
     <None Include="skybox.vert" />
+    <None Include="text.frag" />
+    <None Include="text.vert" />
     <None Include="white.frag" />
     <None Include="lightcolor.frag" />
     <None Include="textured.frag">

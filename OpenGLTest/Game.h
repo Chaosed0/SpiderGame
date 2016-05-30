@@ -13,6 +13,7 @@
 #include "Box.h"
 #include "Model.h"
 #include "Entity.h"
+#include "Console.h"
 
 #include "ModelRenderSystem.h"
 #include "CollisionUpdateSystem.h"
@@ -55,4 +56,7 @@ private:
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
 
 	std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld;
+
+	std::unique_ptr<Console> console;
+	bool consoleIsVisible;
 };

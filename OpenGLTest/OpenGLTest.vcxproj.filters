@@ -37,6 +37,15 @@
     <Filter Include="Source Files\Framework\Systems">
       <UniqueIdentifier>{d50abe4d-e7a1-490d-8079-4cb3722fe426}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Console">
+      <UniqueIdentifier>{1175e0ae-5dc7-4564-aee0-ef0b6f5a565e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Console">
+      <UniqueIdentifier>{a2c968c0-6b74-4e82-8e59-d4ab370daf91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Console">
+      <UniqueIdentifier>{e1a18399-a804-47f5-a346-333af61c181b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -86,6 +95,9 @@
     </ClCompile>
     <ClCompile Include="CollisionUpdateSystem.cpp">
       <Filter>Source Files\Framework\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="Console.cpp">
+      <Filter>Source Files\Console</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +167,9 @@
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Console.h">
+      <Filter>Header Files\Console</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="textured.frag">
@@ -174,6 +189,18 @@
     </None>
     <None Include="skybox.frag">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="text.frag">
+      <Filter>Shaders\Console</Filter>
+    </None>
+    <None Include="text.vert">
+      <Filter>Shaders\Console</Filter>
+    </None>
+    <None Include="back.vert">
+      <Filter>Shaders\Console</Filter>
+    </None>
+    <None Include="back.frag">
+      <Filter>Shaders\Console</Filter>
     </None>
   </ItemGroup>
 </Project>

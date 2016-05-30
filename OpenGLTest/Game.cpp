@@ -38,6 +38,7 @@ Game::Game()
 {
 	running = false;
 	lastUpdate = UINT32_MAX;
+	consoleIsVisible = false;
 }
 
 int Game::run()
@@ -94,9 +95,10 @@ int Game::setup()
 		return -1;
 	}
 
-	glEnable(GL_DEPTH_TEST);
-
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+	/* Console */
+	console = std::unique_ptr<Console>(new Console((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -164,7 +166,7 @@ int Game::setup()
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.obj");
 
 	std::default_random_engine generator;
-	generator.seed(time(NULL));
+	generator.seed((unsigned int)time(NULL));
 	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
 	std::uniform_real_distribution<float> angleRand(-glm::pi<float>(), glm::pi<float>());
 	std::uniform_real_distribution<float> axisRand(-1.0f, 1.0f);
@@ -234,12 +236,18 @@ void Game::draw()
 {
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 
 	camera.rotateHorizontalVertical(cameraHorizontal, cameraVertical);
 	renderer.setProjectionMatrix(camera.getProjectionMatrix());
 	renderer.setViewMatrix(camera.getViewMatrix());
 
 	renderer.draw();
+
+	if (consoleIsVisible) {
+		glDisable(GL_DEPTH_TEST);
+		console->draw();
+	}
 
 	SDL_GL_SwapWindow(window);
 }
@@ -258,10 +266,36 @@ void Game::update()
 			cameraVertical -= event.motion.yrel * timeDelta * 0.2f;
 			cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + glm::epsilon<float>(), glm::half_pi<float>() - glm::epsilon<float>());
 			break;
+		case SDL_TEXTINPUT:
+			if (consoleIsVisible) {
+				char c;
+				for (int i = 0; (c = event.text.text[i]) != '\0'; i++) {
+					if (c == '`') {
+						// Ignore backticks
+						continue;
+					}
+					console->inputChar(event.text.text[i]);
+				}
+			}
 		case SDL_KEYDOWN:
-			if (event.key.repeat) {
+			if (event.key.keysym.sym == SDLK_BACKQUOTE) {
+				consoleIsVisible = !consoleIsVisible;
+				if (consoleIsVisible) {
+					SDL_StartTextInput();
+				} else {
+					SDL_StopTextInput();
+				}
+			}
+
+			if (consoleIsVisible) {
+				if (event.key.keysym.sym == SDLK_RETURN) {
+					console->endLine();
+				}
+				break;
+			} else if (event.key.repeat) {
 				break;
 			}
+
 			switch(event.key.keysym.sym) {
 			case SDLK_ESCAPE:
 				SDL_SetRelativeMouseMode(SDL_FALSE);
@@ -281,6 +315,9 @@ void Game::update()
 			}
 			break;
 		case SDL_KEYUP:
+			if (consoleIsVisible) {
+				break;
+			}
 			switch(event.key.keysym.sym) {
 			case SDLK_w:
 				movement.z += 1.0f;
