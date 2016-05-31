@@ -37,6 +37,7 @@ Game::Game()
 	: camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f)
 {
 	running = false;
+	wireframe = false;
 	lastUpdate = UINT32_MAX;
 	consoleIsVisible = false;
 }
@@ -55,19 +56,14 @@ int Game::run()
 	return 0;
 }
 
-void Game::foo()
+void Game::exit()
 {
-	printf("foo\n");
+	running = false;
 }
 
-void Game::bar(int i)
+void Game::setWireframe(bool on)
 {
-	printf("bar %d\n", i);
-}
-
-void Game::qux(float i, const std::string& v)
-{
-	printf("qux %g %s\n", i, v.c_str());
+	wireframe = on;
 }
 
 int Game::setup()
@@ -114,9 +110,8 @@ int Game::setup()
 
 	/* Console */
 	console = std::unique_ptr<Console>(new Console((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight));
-	console->addCallback("foo", CallbackMap::defineCallback(std::bind(&Game::foo, this)));
-	console->addCallback("bar", CallbackMap::defineCallback<int>(std::bind(&Game::bar, this, std::placeholders::_1)));
-	console->addCallback("qux", CallbackMap::defineCallback<float, std::string>(std::bind(&Game::qux, this, std::placeholders::_1, std::placeholders::_2)));
+	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
+	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -255,6 +250,7 @@ void Game::draw()
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, this->wireframe ? GL_LINE : GL_FILL);
 
 	camera.rotateHorizontalVertical(cameraHorizontal, cameraVertical);
 	renderer.setProjectionMatrix(camera.getProjectionMatrix());
@@ -264,6 +260,7 @@ void Game::draw()
 
 	if (consoleIsVisible) {
 		glDisable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		console->draw();
 	}
 

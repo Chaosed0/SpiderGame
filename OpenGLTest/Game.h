@@ -60,7 +60,7 @@ private:
 	std::unique_ptr<Console> console;
 	bool consoleIsVisible;
 
-	void foo();
-	void bar(int a);
-	void qux(float i, const std::string& v);
+	void exit();
+	void setWireframe(bool on);
+	bool wireframe;
 };
