@@ -55,6 +55,21 @@ int Game::run()
 	return 0;
 }
 
+void Game::foo()
+{
+	printf("foo\n");
+}
+
+void Game::bar(int i)
+{
+	printf("bar %d\n", i);
+}
+
+void Game::qux(float i, const std::string& v)
+{
+	printf("qux %g %s\n", i, v.c_str());
+}
+
 int Game::setup()
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -99,6 +114,9 @@ int Game::setup()
 
 	/* Console */
 	console = std::unique_ptr<Console>(new Console((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight));
+	console->addCallback("foo", CallbackMap::defineCallback(std::bind(&Game::foo, this)));
+	console->addCallback("bar", CallbackMap::defineCallback<int>(std::bind(&Game::bar, this, std::placeholders::_1)));
+	console->addCallback("qux", CallbackMap::defineCallback<float, std::string>(std::bind(&Game::qux, this, std::placeholders::_1, std::placeholders::_2)));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();

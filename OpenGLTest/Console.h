@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "Shader.h"
+#include "Callbacks.h"
 
 struct ConsoleCallback
 {
@@ -19,10 +20,11 @@ class Console
 {
 public:
 	Console(float width, float height, float windowWidth, float windowHeight);
-	bool addCallback(const std::string& functionName, std::function<void(std::vector<std::string>)> function, int args);
+	void addCallback(const std::string& functionName, Callback callback);
 	void inputChar(char c);
 	void endLine();
 	void draw();
+	void print(const std::string& message);
 private:
 	std::stringstream input;
 	std::vector<std::string> buffer;
@@ -32,7 +34,6 @@ private:
 	float bottom;
 	float lineHeight;
 
-	std::unordered_map<std::string, ConsoleCallback> functionNameMap;
 	Shader textShader;
 	Shader backShader;
 	unsigned int glyphVao, glyphQuad;
@@ -44,4 +45,6 @@ private:
 	const static unsigned int maxBufferLines;
 	
 	void drawLine(std::string line, unsigned int top);
+
+	CallbackMap callbackMap;
 };

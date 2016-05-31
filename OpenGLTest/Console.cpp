@@ -98,8 +98,8 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	}
 
 	lineHeight = FLT_MIN;
-	for (int i = 0; i < characters.size(); i++) {
-		lineHeight = fmax(lineHeight, characters[i].size.y);
+	for (unsigned int i = 0; i < characters.size(); i++) {
+		lineHeight = std::max(lineHeight, (float)characters[i].size.y);
 	}
 
 	bufferEnd = 0;
@@ -145,37 +145,53 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	textShader.use();
 	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
 	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
-
-	input << "this is a line of text";
 }
 
-bool Console::addCallback(const std::string& functionName, std::function<void(std::vector<std::string>)> function, int args)
+void Console::addCallback(const std::string& functionName, Callback callback)
 {
-	if (this->functionNameMap.find(functionName) != this->functionNameMap.end()) {
-		return false;
-	}
-
-	this->functionNameMap.emplace(functionName, ConsoleCallback(function, args));
-	return true;
+	callbackMap.setCallback(functionName, callback);
 }
 
 void Console::inputChar(char c)
 {
-	input << c;
+	this->input << c;
 }
 
 void Console::endLine()
 {
-	std::string line = input.str();
+	std::string line = this->input.str();
 	if (line.empty()) {
 		return;
 	}
 
-	buffer[bufferEnd] = input.str();
-	input.str("");
+	this->print(line);
+	this->input.str("");
 
-	bufferEnd = (bufferEnd+1)%buffer.size();
-	numBufferedLines = std::min(buffer.size(), numBufferedLines+1);
+	size_t firstSpace = line.find_first_of(' ');
+	std::string functionName;
+	std::string args;
+	if (firstSpace == std::string::npos) {
+		functionName = line;
+		args = "";
+	} else {
+		functionName = line.substr(0, firstSpace);
+		args = line.substr(firstSpace);
+	}
+
+	CallbackMap::Error error = callbackMap.call(functionName, args);
+
+	if (error == CallbackMap::CALLBACK_NOT_FOUND) {
+		print("Error: Didn't find callback with name " + functionName);
+	} else if (error == CallbackMap::CALLBACK_BAD_ARGS) {
+		print("Error: Bad arguments passed to function " + functionName);
+	}
+}
+
+void Console::print(const std::string& message)
+{
+	this->buffer[this->bufferEnd] = message;
+	this->bufferEnd = (this->bufferEnd+1)%buffer.size();
+	this->numBufferedLines = std::min(this->buffer.size(), this->numBufferedLines+1);
 }
 
 void Console::draw()
@@ -195,14 +211,14 @@ void Console::draw()
 
 	// Iterate through all characters
 	std::string inputLine = input.str();
-	drawLine(inputLine, (unsigned int)(this->bottom + yPadding + lineHeight));
-	for (int i = 0; i < numBufferedLines; i++) {
+	drawLine("> " + inputLine, (unsigned int)(this->bottom + yPadding + lineHeight));
+	for (unsigned int i = 0; i < numBufferedLines; i++) {
 		int index = bufferEnd-i-1;
 		if (index < 0) {
 			index = buffer.size() + index;
 		}
-		unsigned int top = this->bottom + yPadding + (i+2) * (linePadding + lineHeight);
-		drawLine(buffer[index], top);
+		float top = this->bottom + yPadding + (i+2) * (linePadding + lineHeight);
+		drawLine(buffer[index], (unsigned int)top);
 	}
 
 	glBindVertexArray(0);
@@ -214,7 +230,7 @@ void Console::drawLine(std::string line, unsigned int top)
 	unsigned int x = (unsigned int)xPadding;
 	unsigned int y = top;
 	float scale = 1.1f;
-	for (int i = 0; i < line.size(); i++) {
+	for (unsigned int i = 0; i < line.size(); i++) {
 		Character ch = characters[line[i]];
 
 		GLfloat xpos = x + ch.bearing.x * scale;
