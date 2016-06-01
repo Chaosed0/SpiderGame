@@ -272,89 +272,7 @@ void Game::update()
 	SDL_Event event;
 
 	while (SDL_PollEvent(&event)) {
-		switch(event.type) {
-		case SDL_QUIT:
-			running = false;
-			break;
-		case SDL_MOUSEMOTION:
-			cameraHorizontal -= event.motion.xrel * timeDelta * 0.2f;
-			cameraVertical -= event.motion.yrel * timeDelta * 0.2f;
-			cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + glm::epsilon<float>(), glm::half_pi<float>() - glm::epsilon<float>());
-			break;
-		case SDL_TEXTINPUT:
-			if (consoleIsVisible) {
-				char c;
-				for (int i = 0; (c = event.text.text[i]) != '\0'; i++) {
-					if (c == '`') {
-						// Ignore backticks
-						continue;
-					}
-					console->inputChar(event.text.text[i]);
-				}
-			}
-		case SDL_KEYDOWN:
-			if (event.key.keysym.sym == SDLK_BACKQUOTE) {
-				consoleIsVisible = !consoleIsVisible;
-				if (consoleIsVisible) {
-					SDL_StartTextInput();
-				} else {
-					SDL_StopTextInput();
-				}
-			}
-
-			if (consoleIsVisible) {
-				if (event.key.keysym.sym == SDLK_RETURN) {
-					console->endLine();
-				}
-				break;
-			} else if (event.key.repeat) {
-				break;
-			}
-
-			switch(event.key.keysym.sym) {
-			case SDLK_ESCAPE:
-				SDL_SetRelativeMouseMode(SDL_FALSE);
-				break;
-			case SDLK_w:
-				movement.z -= 1.0f;
-				break;
-			case SDLK_s:
-				movement.z += 1.0f;
-				break;
-			case SDLK_d:
-				movement.x += 1.0f;
-				break;
-			case SDLK_a:
-				movement.x -= 1.0f;
-				break;
-			}
-			break;
-		case SDL_KEYUP:
-			if (consoleIsVisible) {
-				break;
-			}
-			switch(event.key.keysym.sym) {
-			case SDLK_w:
-				movement.z += 1.0f;
-				break;
-			case SDLK_s:
-				movement.z -= 1.0f;
-				break;
-			case SDLK_d:
-				movement.x -= 1.0f;
-				break;
-			case SDLK_a:
-				movement.x += 1.0f;
-				break;
-			}
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			switch(event.button.button) {
-			case SDL_BUTTON_LEFT:
-				SDL_SetRelativeMouseMode(SDL_TRUE);
-				break;
-			}
-		}
+		this->handleEvent(event);
 	}
 	
 	if (fabs(glm::length(movement)) > glm::epsilon<float>())
@@ -367,4 +285,97 @@ void Game::update()
 	collisionUpdateSystem->update(timeDelta, entities);
 
 	dynamicsWorld->stepSimulation(timeDelta);
+}
+
+void Game::handleEvent(SDL_Event& event)
+{
+	switch(event.type) {
+	case SDL_QUIT:
+		running = false;
+		break;
+	case SDL_MOUSEMOTION:
+		cameraHorizontal -= event.motion.xrel * timeDelta * 0.2f;
+		cameraVertical -= event.motion.yrel * timeDelta * 0.2f;
+		cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + glm::epsilon<float>(), glm::half_pi<float>() - glm::epsilon<float>());
+		break;
+	case SDL_TEXTINPUT:
+		if (consoleIsVisible) {
+			char c;
+			for (int i = 0; (c = event.text.text[i]) != '\0'; i++) {
+				if (c == '`') {
+					// Ignore backticks
+					continue;
+				}
+				console->inputChar(event.text.text[i]);
+			}
+		}
+	case SDL_KEYDOWN:
+		if (event.key.keysym.sym == SDLK_BACKQUOTE) {
+			consoleIsVisible = !consoleIsVisible;
+			if (consoleIsVisible) {
+				SDL_StartTextInput();
+			} else {
+				SDL_StopTextInput();
+			}
+		}
+
+		if (consoleIsVisible) {
+			switch(event.key.keysym.sym) {
+			case SDLK_RETURN:
+				console->endLine();
+				break;
+			case SDLK_BACKSPACE:
+				console->backspace();
+				break;
+			}
+			break;
+		} else if (event.key.repeat) {
+			break;
+		}
+
+		switch(event.key.keysym.sym) {
+		case SDLK_ESCAPE:
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+			break;
+		case SDLK_w:
+			movement.z -= 1.0f;
+			break;
+		case SDLK_s:
+			movement.z += 1.0f;
+			break;
+		case SDLK_d:
+			movement.x += 1.0f;
+			break;
+		case SDLK_a:
+			movement.x -= 1.0f;
+			break;
+		}
+		break;
+	case SDL_KEYUP:
+		if (consoleIsVisible) {
+			break;
+		}
+
+		switch(event.key.keysym.sym) {
+		case SDLK_w:
+			movement.z += 1.0f;
+			break;
+		case SDLK_s:
+			movement.z -= 1.0f;
+			break;
+		case SDLK_d:
+			movement.x -= 1.0f;
+			break;
+		case SDLK_a:
+			movement.x += 1.0f;
+			break;
+		}
+		break;
+	case SDL_MOUSEBUTTONDOWN:
+		switch(event.button.button) {
+		case SDL_BUTTON_LEFT:
+			SDL_SetRelativeMouseMode(SDL_TRUE);
+			break;
+		}
+	}
 }

@@ -154,28 +154,26 @@ void Console::addCallback(const std::string& functionName, Callback callback)
 
 void Console::inputChar(char c)
 {
-	this->input << c;
+	this->input.push_back(c);
 }
 
 void Console::endLine()
 {
-	std::string line = this->input.str();
-	if (line.empty()) {
+	if (input.empty()) {
 		return;
 	}
 
-	this->print(line);
-	this->input.str("");
+	this->print(input);
 
-	size_t firstSpace = line.find_first_of(' ');
+	size_t firstSpace = input.find_first_of(' ');
 	std::string functionName;
 	std::string args;
 	if (firstSpace == std::string::npos) {
-		functionName = line;
+		functionName = input;
 		args = "";
 	} else {
-		functionName = line.substr(0, firstSpace);
-		args = line.substr(firstSpace);
+		functionName = input.substr(0, firstSpace);
+		args = input.substr(firstSpace);
 	}
 
 	CallbackMap::Error error = callbackMap.call(functionName, args);
@@ -184,6 +182,15 @@ void Console::endLine()
 		print("Error: Didn't find callback with name " + functionName);
 	} else if (error == CallbackMap::CALLBACK_BAD_ARGS) {
 		print("Error: Bad arguments passed to function " + functionName);
+	}
+
+	this->input.clear();
+}
+
+void Console::backspace()
+{
+	if (!input.empty()) {
+		input.pop_back();
 	}
 }
 
@@ -210,8 +217,7 @@ void Console::draw()
 	glBindVertexArray(glyphVao);
 
 	// Iterate through all characters
-	std::string inputLine = input.str();
-	drawLine("> " + inputLine, (unsigned int)(this->bottom + yPadding + lineHeight));
+	drawLine("> " + input, (unsigned int)(this->bottom + yPadding + lineHeight));
 	for (unsigned int i = 0; i < numBufferedLines; i++) {
 		int index = bufferEnd-i-1;
 		if (index < 0) {

@@ -29,6 +29,7 @@ private:
 	int teardown();
 
 	void update();
+	void handleEvent(SDL_Event& event);
 	void draw();
 
 	bool running;

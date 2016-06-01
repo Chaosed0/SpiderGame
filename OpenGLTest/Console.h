@@ -22,11 +22,15 @@ public:
 	Console(float width, float height, float windowWidth, float windowHeight);
 	void addCallback(const std::string& functionName, Callback callback);
 	void inputChar(char c);
+
+	void backspace();
 	void endLine();
+
 	void draw();
+
 	void print(const std::string& message);
 private:
-	std::stringstream input;
+	std::string input;
 	std::vector<std::string> buffer;
 	unsigned int bufferEnd, numBufferedLines;
 
