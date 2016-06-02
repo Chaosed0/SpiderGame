@@ -8,10 +8,12 @@
 #include <glm/glm.hpp>
 
 #include <unordered_map>
+#include <memory>
 #include <map>
 
 #include "Model.h"
 #include "Material.h"
+#include "Camera.h"
 
 struct PointLight
 {
@@ -49,8 +51,7 @@ class Renderer
 public:
 	Renderer();
 
-	void setProjectionMatrix(glm::mat4 projection);
-	void setViewMatrix(glm::mat4 view);
+	void setCamera(std::shared_ptr<Camera> camera);
 
 	void setDirLight(DirLight dirLight);
 	void setPointLight(unsigned int index, PointLight pointLight);
@@ -60,8 +61,7 @@ public:
 	void updateTransform(unsigned int handle, const Transform& transform);
 	void draw();
 private:
-	glm::mat4 projection;
-	glm::mat4 view;
+	std::shared_ptr<Camera> camera;
 
 	DirLight dirLight;
 	std::vector<PointLight> pointLights;

@@ -45,8 +45,8 @@ void Renderer::draw()
 		const Shader& shader = iter->second;
 
 		shader.use();
-		shader.setProjectionMatrix(&this->projection[0][0]);
-		shader.setViewMatrix(&this->view[0][0]);
+		shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
+		shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
 
 		for (unsigned int i = 0; i < pointLights.size(); i++) {
 			PointLight light = pointLights[i];
@@ -85,14 +85,9 @@ void Renderer::draw()
 	}
 }
 
-void Renderer::setProjectionMatrix(glm::mat4 projection)
+void Renderer::setCamera(std::shared_ptr<Camera> camera)
 {
-	this->projection = projection;
-}
-
-void Renderer::setViewMatrix(glm::mat4 view)
-{
-	this->view = view;
+	this->camera = camera;
 }
 
 void Renderer::setDirLight(DirLight dirLight)

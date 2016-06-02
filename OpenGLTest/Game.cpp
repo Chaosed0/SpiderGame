@@ -34,12 +34,13 @@ static float cameraVertical = 0.0f;
 static glm::vec3 movement(0,0,0);
 
 Game::Game()
-	: camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f)
 {
 	running = false;
 	wireframe = false;
 	lastUpdate = UINT32_MAX;
 	consoleIsVisible = false;
+
+	camera = std::shared_ptr<Camera>(new Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f));
 }
 
 int Game::run()
@@ -127,6 +128,8 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(body);
 
 	/* Scene */
+	renderer.setCamera(camera);
+
 	lightShader.compileAndLink("basic.vert", "white.frag");
 	shader.compileAndLink("basic.vert", "lightcolor.frag");
 	skyboxShader.compileAndLink("skybox.vert", "skybox.frag");
@@ -174,7 +177,7 @@ int Game::setup()
 	pointLightModel = modelLoader.loadModelById("pointLight");
 	skyboxModel = modelLoader.loadModelById("skybox");
 
-	camera.transform.setPosition(glm::vec3(0, 0, -10.0f));
+	camera->transform.setPosition(glm::vec3(0, 0, -10.0f));
 
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.obj");
 
@@ -252,9 +255,7 @@ void Game::draw()
 	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, this->wireframe ? GL_LINE : GL_FILL);
 
-	camera.rotateHorizontalVertical(cameraHorizontal, cameraVertical);
-	renderer.setProjectionMatrix(camera.getProjectionMatrix());
-	renderer.setViewMatrix(camera.getViewMatrix());
+	camera->rotateHorizontalVertical(cameraHorizontal, cameraVertical);
 
 	renderer.draw();
 
@@ -278,7 +279,7 @@ void Game::update()
 	if (fabs(glm::length(movement)) > glm::epsilon<float>())
 	{
 		glm::vec3 scaledMovement = glm::normalize(movement) * timeDelta * 5.0f;
-		camera.transform.setPosition(camera.transform.getPosition() + camera.transform.getRotation() * scaledMovement);
+		camera->transform.setPosition(camera->transform.getPosition() + camera->transform.getRotation() * scaledMovement);
 	}
 
 	modelRenderSystem->update(timeDelta, entities);

@@ -40,7 +40,7 @@ private:
 	SDL_Window* window;
 	SDL_GLContext context;
 
-	Camera camera;
+	std::shared_ptr<Camera> camera;
 	Renderer renderer;
 	ModelLoader modelLoader;
 

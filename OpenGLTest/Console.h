@@ -8,14 +8,6 @@
 #include "Shader.h"
 #include "Callbacks.h"
 
-struct ConsoleCallback
-{
-	ConsoleCallback(std::function<void(std::vector<std::string>)> function, unsigned int args)
-		: function(function), args(args) {}
-	std::function<void(std::vector<std::string>)> function;
-	unsigned int args;
-};
-
 class Console
 {
 public:
