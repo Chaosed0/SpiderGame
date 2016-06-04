@@ -209,7 +209,7 @@ int Game::setup()
 	std::shared_ptr<CameraComponent> cameraComponent = player.addComponent<CameraComponent>();
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
 	playerTransform = player.addComponent<TransformComponent>();
-	playerTransform->transform.setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
+	playerTransform->transform.setPosition(glm::vec3(0.0f, 0.0f, -10.0f));
 	entities.push_back(player);
 	renderer.setCamera(&cameraComponent->camera);
 

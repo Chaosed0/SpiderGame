@@ -183,12 +183,12 @@
     <None Include="Shaders\back.frag" />
     <None Include="Shaders\back.vert" />
     <None Include="Shaders\basic.vert" />
+    <None Include="Shaders\lightcolor.frag" />
     <None Include="Shaders\skybox.frag" />
     <None Include="Shaders\skybox.vert" />
     <None Include="Shaders\text.frag" />
     <None Include="Shaders\text.vert" />
     <None Include="Shaders\white.frag" />
-    <None Include="Console\lightcolor.frag" />
     <None Include="Shaders\textured.frag">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>

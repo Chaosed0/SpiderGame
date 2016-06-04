@@ -223,8 +223,6 @@
     <None Include="Shaders\white.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Console\lightcolor.frag">
-      <Filter>Shaders</Filter>
-    </None>
+    <None Include="Shaders\lightcolor.frag" />
   </ItemGroup>
 </Project>
