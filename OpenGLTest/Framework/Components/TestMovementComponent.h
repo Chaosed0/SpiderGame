@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Component.h"
+#include "Framework/Component.h"
 #include "Transform.h"
 
 struct TestMovementComponent : public Component

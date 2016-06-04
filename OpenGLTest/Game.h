@@ -6,17 +6,19 @@
 #include <vector>
 #include <memory>
 
-#include "Camera.h"
-#include "Shader.h"
-#include "Renderer.h"
-#include "ModelLoader.h"
-#include "Box.h"
-#include "Model.h"
-#include "Entity.h"
-#include "Console.h"
+#include "Renderer/Shader.h"
+#include "Renderer/Renderer.h"
+#include "Renderer/ModelLoader.h"
+#include "Renderer/Box.h"
+#include "Renderer/Model.h"
+#include "Framework/Entity.h"
+#include "Console/Console.h"
 
-#include "ModelRenderSystem.h"
-#include "CollisionUpdateSystem.h"
+#include "Framework/Systems/ModelRenderSystem.h"
+#include "Framework/Systems/CollisionUpdateSystem.h"
+#include "Framework/Systems/CameraSystem.h"
+
+#include "Framework/Components/TransformComponent.h"
 
 class Game
 {
@@ -40,7 +42,6 @@ private:
 	SDL_Window* window;
 	SDL_GLContext context;
 
-	std::shared_ptr<Camera> camera;
 	Renderer renderer;
 	ModelLoader modelLoader;
 
@@ -52,9 +53,13 @@ private:
 	Model pointLightModel;
 	Model skyboxModel;
 
+	Entity player;
+	std::shared_ptr<TransformComponent> playerTransform;
+
 	std::vector<Entity> entities;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
+	std::unique_ptr<CameraSystem> cameraSystem;
 
 	std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld;
 

@@ -1,8 +1,8 @@
 
 #include "TestMovementSystem.h"
 
-#include "TransformComponent.h"
-#include "TestMovementComponent.h"
+#include "Framework/Components/TransformComponent.h"
+#include "Framework/Components/TestMovementComponent.h"
 
 TestMovementSystem::TestMovementSystem()
 {

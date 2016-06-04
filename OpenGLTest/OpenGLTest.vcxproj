@@ -79,6 +79,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>freetype263d.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimpd.lib;glew32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -127,62 +128,68 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Box.cpp" />
-    <ClCompile Include="Callbacks.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="CollisionUpdateSystem.cpp" />
-    <ClCompile Include="Console.cpp" />
-    <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Framework\Systems\CameraSystem.cpp" />
+    <ClCompile Include="Renderer\Box.cpp" />
+    <ClCompile Include="Console\Callbacks.cpp" />
+    <ClCompile Include="Renderer\Camera.cpp" />
+    <ClCompile Include="Framework\Systems\CollisionUpdateSystem.cpp" />
+    <ClCompile Include="Console\Console.cpp" />
+    <ClCompile Include="Framework\Entity.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Renderer\Material.cpp" />
+    <ClCompile Include="Renderer\Model.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ModelLoader.cpp" />
-    <ClCompile Include="ModelRenderSystem.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="TestMovementSystem.cpp" />
-    <ClCompile Include="System.cpp" />
-    <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Renderer\ModelLoader.cpp" />
+    <ClCompile Include="Framework\Systems\ModelRenderSystem.cpp" />
+    <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Framework\Systems\TestMovementSystem.cpp" />
+    <ClCompile Include="Framework\System.cpp" />
+    <ClCompile Include="Renderer\RenderUtil.cpp" />
+    <ClCompile Include="Renderer\Texture.cpp" />
+    <ClCompile Include="Renderer\Shader.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Box.h" />
-    <ClInclude Include="Callbacks.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="CollisionComponent.h" />
-    <ClInclude Include="CollisionUpdateSystem.h" />
-    <ClInclude Include="Component.h" />
-    <ClInclude Include="Console.h" />
-    <ClInclude Include="Entity.h" />
+    <ClInclude Include="Framework\Systems\CameraSystem.h" />
+    <ClInclude Include="Renderer\Box.h" />
+    <ClInclude Include="Console\Callbacks.h" />
+    <ClInclude Include="Renderer\Camera.h" />
+    <ClInclude Include="Framework\Components\CameraComponent.h" />
+    <ClInclude Include="Framework\Components\CollisionComponent.h" />
+    <ClInclude Include="Framework\Systems\CollisionUpdateSystem.h" />
+    <ClInclude Include="Framework\Component.h" />
+    <ClInclude Include="Console\Console.h" />
+    <ClInclude Include="Framework\Entity.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="ModelRenderComponent.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="ModelLoader.h" />
-    <ClInclude Include="ModelRenderSystem.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="System.h" />
-    <ClInclude Include="TestMovementComponent.h" />
-    <ClInclude Include="TestMovementSystem.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Renderer\Material.h" />
+    <ClInclude Include="Framework\Components\ModelRenderComponent.h" />
+    <ClInclude Include="Renderer\Model.h" />
+    <ClInclude Include="Renderer\ModelLoader.h" />
+    <ClInclude Include="Framework\Systems\ModelRenderSystem.h" />
+    <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Framework\System.h" />
+    <ClInclude Include="Framework\Components\TestMovementComponent.h" />
+    <ClInclude Include="Framework\Systems\TestMovementSystem.h" />
+    <ClInclude Include="Renderer\RenderUtil.h" />
+    <ClInclude Include="Renderer\Texture.h" />
+    <ClInclude Include="Renderer\Shader.h" />
     <ClInclude Include="Transform.h" />
-    <ClInclude Include="TransformComponent.h" />
+    <ClInclude Include="Framework\Components\TransformComponent.h" />
     <ClInclude Include="Util.h" />
-    <ClInclude Include="World.h" />
+    <ClInclude Include="Framework\World.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="back.frag" />
-    <None Include="back.vert" />
-    <None Include="basic.vert" />
-    <None Include="skybox.frag" />
-    <None Include="skybox.vert" />
-    <None Include="text.frag" />
-    <None Include="text.vert" />
-    <None Include="white.frag" />
-    <None Include="lightcolor.frag" />
-    <None Include="textured.frag">
+    <None Include="Shaders\back.frag" />
+    <None Include="Shaders\back.vert" />
+    <None Include="Shaders\basic.vert" />
+    <None Include="Shaders\skybox.frag" />
+    <None Include="Shaders\skybox.vert" />
+    <None Include="Shaders\text.frag" />
+    <None Include="Shaders\text.vert" />
+    <None Include="Shaders\white.frag" />
+    <None Include="Console\lightcolor.frag" />
+    <None Include="Shaders\textured.frag">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </None>

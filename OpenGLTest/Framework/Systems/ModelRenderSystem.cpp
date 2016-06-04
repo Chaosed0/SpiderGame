@@ -1,7 +1,7 @@
 
 #include "ModelRenderSystem.h"
-#include "ModelRenderComponent.h"
-#include "TransformComponent.h"
+#include "Framework/Components/ModelRenderComponent.h"
+#include "Framework/Components/TransformComponent.h"
 
 ModelRenderSystem::ModelRenderSystem(Renderer& renderer)
 	: renderer(renderer)

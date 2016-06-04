@@ -1,5 +1,6 @@
 
 #include "Shader.h"
+#include "RenderUtil.h"
 
 #include <fstream>
 #include <vector>
@@ -109,6 +110,7 @@ void Shader::compileAndLink(const std::string& vertexShaderPath, const std::stri
 void Shader::use() const
 {
 	glUseProgram(shaderID);
+	glCheckError();
 }
 
 bool Shader::isReady() const
@@ -129,14 +131,17 @@ GLuint Shader::getUniformLocation(const std::string& uniformIdentifier) const
 void Shader::setViewMatrix(const GLfloat* matrix) const
 {
 	glUniformMatrix4fv(this->getUniformLocation("view"), 1, GL_FALSE, matrix);
+	glCheckError();
 }
 
 void Shader::setProjectionMatrix(const GLfloat* matrix) const
 {
 	glUniformMatrix4fv(this->getUniformLocation("projection"), 1, GL_FALSE, matrix);
+	glCheckError();
 }
 
 void Shader::setModelMatrix(const GLfloat* matrix) const
 {
 	glUniformMatrix4fv(this->getUniformLocation("model"), 1, GL_FALSE, matrix);
+	glCheckError();
 }

@@ -1,5 +1,6 @@
 
 #include "Renderer.h"
+#include "RenderUtil.h"
 
 #include <sstream>
 
@@ -9,6 +10,33 @@ Renderer::Renderer()
 	: pointLights(4)
 {
 	nextId = 1;
+}
+
+void Renderer::setDebugLogCallback(const DebugLogCallback& callback)
+{
+	this->debugLogCallback = callback;
+	GLint flags;
+	glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(glDebugOutput, (void*)&this->debugLogCallback);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	}
+}
+
+bool Renderer::initialize()
+{
+	glewExperimental = true;
+	if (glewInit() != GLEW_OK)
+	{
+		fprintf(stderr, "Could not initialize GLEW\n");
+		return false;
+	}
+	// Known bug in glew, clear the error flag
+	glGetError();
+
+	return true;
 }
 
 unsigned int Renderer::getHandle(const Model& model, const Shader& shader)
@@ -59,12 +87,14 @@ void Renderer::draw()
 			glUniform3f(shader.getUniformLocation((sstream.str() + ".diffuse").c_str()), light.diffuse.x, light.diffuse.y, light.diffuse.z);
 			glUniform3f(shader.getUniformLocation((sstream.str() + ".specular").c_str()), light.specular.x, light.specular.y, light.specular.z);
 			glUniform3f(shader.getUniformLocation((sstream.str() + ".position").c_str()), light.position.x, light.position.y, light.position.z);
+			glCheckError();
 		}
 		
 		glUniform3f(shader.getUniformLocation("dirLight.direction"), dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
 		glUniform3f(shader.getUniformLocation("dirLight.ambient"), dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
 		glUniform3f(shader.getUniformLocation("dirLight.diffuse"), dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
 		glUniform3f(shader.getUniformLocation("dirLight.specular"), dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
+		glCheckError();
 	}
 
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
@@ -81,11 +111,12 @@ void Renderer::draw()
 			glBindVertexArray(mesh.VAO);
 			glDrawElements(GL_TRIANGLES, mesh.nIndices, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
+			glCheckError();
 		}
 	}
 }
 
-void Renderer::setCamera(std::shared_ptr<Camera> camera)
+void Renderer::setCamera(Camera* camera)
 {
 	this->camera = camera;
 }

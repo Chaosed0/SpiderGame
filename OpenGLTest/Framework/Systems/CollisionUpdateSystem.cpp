@@ -1,8 +1,8 @@
 
 #include "CollisionUpdateSystem.h"
 
-#include "CollisionComponent.h"
-#include "TransformComponent.h"
+#include "Framework/Components/CollisionComponent.h"
+#include "Framework/Components/TransformComponent.h"
 
 CollisionUpdateSystem::CollisionUpdateSystem()
 {

@@ -5,7 +5,7 @@
 #include <functional>
 #include <sstream>
 
-#include "Shader.h"
+#include "Renderer/Shader.h"
 #include "Callbacks.h"
 
 class Console

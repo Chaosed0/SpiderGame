@@ -4,6 +4,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <memory>
+
 class Transform
 {
 public:
@@ -21,6 +23,9 @@ public:
 	glm::vec3 getScale() const;
 	void setScale(glm::vec3 newScale);
 
+	std::shared_ptr<Transform> getParent() const;
+	void setParent(const std::shared_ptr<Transform>& parent);
+
 	glm::vec3 getForward() const;
 
 	glm::mat4 matrix() const;
@@ -30,4 +35,6 @@ private:
 	glm::vec3 position;
 	glm::quat rotation;
 	glm::vec3 scale;
+
+	std::shared_ptr<Transform> parent;
 };

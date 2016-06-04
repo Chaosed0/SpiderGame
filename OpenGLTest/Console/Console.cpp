@@ -136,12 +136,12 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 
 	glm::mat4 projection = glm::ortho(0.0f, windowWidth, 0.0f, windowHeight);
 
-	backShader.compileAndLink("back.vert", "back.frag");
+	backShader.compileAndLink("Shaders/back.vert", "Shaders/back.frag");
 	backShader.use();
 	glUniform3f(backShader.getUniformLocation("backColor"), 0.2f, 0.8f, 0.2f);
 	glUniformMatrix4fv(backShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
 
-	textShader.compileAndLink("text.vert", "text.frag");
+	textShader.compileAndLink("Shaders/text.vert", "Shaders/text.frag");
 	textShader.use();
 	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
 	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);

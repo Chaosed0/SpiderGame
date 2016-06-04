@@ -1,7 +1,7 @@
 #pragma once
 
-#include "System.h"
-#include "Renderer.h"
+#include "Framework/System.h"
+#include "Renderer/Renderer.h"
 
 class ModelRenderSystem : public System
 {

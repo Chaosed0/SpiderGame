@@ -18,12 +18,12 @@
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 
-#include "Camera.h"
+#include "Renderer/Camera.h"
 #include "Util.h"
 
-#include "TransformComponent.h"
-#include "ModelRenderComponent.h"
-#include "CollisionComponent.h"
+#include "Framework/Components/ModelRenderComponent.h"
+#include "Framework/Components/CollisionComponent.h"
+#include "Framework/Components/CameraComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1280;
@@ -39,8 +39,6 @@ Game::Game()
 	wireframe = false;
 	lastUpdate = UINT32_MAX;
 	consoleIsVisible = false;
-
-	camera = std::shared_ptr<Camera>(new Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f));
 }
 
 int Game::run()
@@ -83,6 +81,7 @@ int Game::setup()
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
 	window = SDL_CreateWindow("window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
@@ -100,26 +99,26 @@ int Game::setup()
 		return -1;
 	}
 
-	glewExperimental = true;
-	if (glewInit() != GLEW_OK)
-	{
-		printf("Could not initialize GLEW\n");
+	if (!renderer.initialize()) {
 		return -1;
 	}
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	/* Console */
-	console = std::unique_ptr<Console>(new Console((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight));
+	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
+
+	// Initialize renderer debugging output
+	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
 	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-	dynamicsWorld = std::unique_ptr<btDiscreteDynamicsWorld>(new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration));
+	dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
 
 	btStaticPlaneShape* planeShape = new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 0.0f);
@@ -128,11 +127,9 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(body);
 
 	/* Scene */
-	renderer.setCamera(camera);
-
-	lightShader.compileAndLink("basic.vert", "white.frag");
-	shader.compileAndLink("basic.vert", "lightcolor.frag");
-	skyboxShader.compileAndLink("skybox.vert", "skybox.frag");
+	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/white.frag");
+	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
+	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(0.7f,  0.2f,  2.0f),
@@ -177,8 +174,6 @@ int Game::setup()
 	pointLightModel = modelLoader.loadModelById("pointLight");
 	skyboxModel = modelLoader.loadModelById("skybox");
 
-	camera->transform.setPosition(glm::vec3(0, 0, -10.0f));
-
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.obj");
 
 	std::default_random_engine generator;
@@ -211,6 +206,13 @@ int Game::setup()
 		entities.push_back(shroom);
 	}
 
+	std::shared_ptr<CameraComponent> cameraComponent = player.addComponent<CameraComponent>();
+	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
+	playerTransform = player.addComponent<TransformComponent>();
+	playerTransform->transform.setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
+	entities.push_back(player);
+	renderer.setCamera(&cameraComponent->camera);
+
 	unsigned int skyboxHandle = renderer.getHandle(skyboxModel, skyboxShader);
 	renderer.updateTransform(skyboxHandle, Transform::identity);
 	for (unsigned int i = 0; i < pointLightTransforms.size(); i++) {
@@ -218,8 +220,9 @@ int Game::setup()
 		renderer.updateTransform(lightHandle, pointLightTransforms[i]);
 	}
 
-	modelRenderSystem = std::unique_ptr<ModelRenderSystem>(new ModelRenderSystem(renderer));
-	collisionUpdateSystem = std::unique_ptr<CollisionUpdateSystem>(new CollisionUpdateSystem());
+	modelRenderSystem = std::make_unique<ModelRenderSystem>(renderer);
+	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>();
+	cameraSystem = std::make_unique<CameraSystem>(renderer);
 
 	return 0;
 }
@@ -255,8 +258,6 @@ void Game::draw()
 	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, this->wireframe ? GL_LINE : GL_FILL);
 
-	camera->rotateHorizontalVertical(cameraHorizontal, cameraVertical);
-
 	renderer.draw();
 
 	if (consoleIsVisible) {
@@ -276,14 +277,15 @@ void Game::update()
 		this->handleEvent(event);
 	}
 	
-	if (fabs(glm::length(movement)) > glm::epsilon<float>())
-	{
+	if (fabs(glm::length(movement)) > glm::epsilon<float>()) {
 		glm::vec3 scaledMovement = glm::normalize(movement) * timeDelta * 5.0f;
-		camera->transform.setPosition(camera->transform.getPosition() + camera->transform.getRotation() * scaledMovement);
+		playerTransform->transform.setPosition(playerTransform->transform.getPosition() + playerTransform->transform.getRotation() * scaledMovement);
 	}
+	playerTransform->transform.setRotation(Util::rotateHorizontalVertical(cameraHorizontal, cameraVertical, glm::vec3(0.0f, 1.0f, 0.0f)));
 
-	modelRenderSystem->update(timeDelta, entities);
+	cameraSystem->update(timeDelta, entities);
 	collisionUpdateSystem->update(timeDelta, entities);
+	modelRenderSystem->update(timeDelta, entities);
 
 	dynamicsWorld->stepSimulation(timeDelta);
 }

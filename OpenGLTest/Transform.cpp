@@ -57,6 +57,16 @@ glm::vec3 Transform::getForward() const
 	return rotation * glm::vec3(0,0,1);
 }
 
+std::shared_ptr<Transform> Transform::getParent() const
+{
+	return this->parent;
+}
+void Transform::setParent(const std::shared_ptr<Transform>& parent)
+{
+	assert(parent.get() != this);
+	this->parent = parent;
+}
+
 glm::mat4 Transform::matrix() const
 {
 	glm::mat4 posMatrix = glm::mat4(
@@ -72,6 +82,7 @@ glm::mat4 Transform::matrix() const
 		0.0f, 0.0f, scale.z, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f
 		);
+	glm::mat4 parentMatrix = (this->parent == nullptr ? glm::mat4() : this->parent->matrix());
 
-	return posMatrix * rotMatrix * scaleMatrix;
+	return parentMatrix * posMatrix * rotMatrix * scaleMatrix;
 }

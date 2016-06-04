@@ -1,5 +1,6 @@
 
 #include "Material.h"
+#include "RenderUtil.h"
 
 Material::Material()
 {
@@ -39,6 +40,7 @@ void Material::apply(const Shader& shader) const
 			glUniform1f(propertyId, property.value.flt);
 			break;
 		}
+		glCheckError();
 	}
 
 	glDepthFunc(drawOrder);

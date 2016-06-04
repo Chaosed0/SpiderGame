@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Component.h"
-#include "Model.h"
-#include "Shader.h"
+#include "Framework/Component.h"
+#include "Renderer/Model.h"
+#include "Renderer/Shader.h"
 
 struct ModelRenderComponent : public Component
 {

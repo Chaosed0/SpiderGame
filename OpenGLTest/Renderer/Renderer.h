@@ -8,12 +8,12 @@
 #include <glm/glm.hpp>
 
 #include <unordered_map>
-#include <memory>
 #include <map>
 
 #include "Model.h"
 #include "Material.h"
 #include "Camera.h"
+#include "RenderUtil.h"
 
 struct PointLight
 {
@@ -51,7 +51,9 @@ class Renderer
 public:
 	Renderer();
 
-	void setCamera(std::shared_ptr<Camera> camera);
+	bool initialize();
+	void setDebugLogCallback(const DebugLogCallback& callback);
+	void setCamera(Camera* camera);
 
 	void setDirLight(DirLight dirLight);
 	void setPointLight(unsigned int index, PointLight pointLight);
@@ -61,7 +63,7 @@ public:
 	void updateTransform(unsigned int handle, const Transform& transform);
 	void draw();
 private:
-	std::shared_ptr<Camera> camera;
+	Camera* camera;
 
 	DirLight dirLight;
 	std::vector<PointLight> pointLights;
@@ -70,5 +72,6 @@ private:
 	std::unordered_map<unsigned int, Model> modelMap;
 	std::map<unsigned int, Renderable> renderableMap;
 
+	DebugLogCallback debugLogCallback;
 	unsigned int nextId;
 };
