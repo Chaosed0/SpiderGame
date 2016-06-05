@@ -25,12 +25,16 @@ class Game
 public:
 	Game();
 	int run();
+
+	// Shouldn't be called outside of the physics timestep
+	void fixedUpdate(btDynamicsWorld* world, float dt);
 private:
 	int setup();
 	int loop();
 	int teardown();
 
 	void update();
+
 	void handleEvent(SDL_Event& event);
 	void draw();
 
@@ -54,7 +58,8 @@ private:
 	Model skyboxModel;
 
 	Entity player;
-	std::shared_ptr<btRigidBody> playerBody;
+	btRigidBody* playerBody;
+	btRigidBody* floorBody;
 	std::shared_ptr<TransformComponent> cameraTransformComponent;
 
 	std::vector<Entity> entities;
@@ -62,7 +67,7 @@ private:
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
 	std::unique_ptr<CameraSystem> cameraSystem;
 
-	std::unique_ptr<btDiscreteDynamicsWorld> dynamicsWorld;
+	btDiscreteDynamicsWorld* dynamicsWorld;
 
 	std::unique_ptr<Console> console;
 	bool consoleIsVisible;

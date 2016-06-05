@@ -8,5 +8,5 @@
 
 struct CollisionComponent : public Component
 {
-	std::shared_ptr<btRigidBody> body;
+	btRigidBody* body;
 };

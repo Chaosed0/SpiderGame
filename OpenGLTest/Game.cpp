@@ -29,9 +29,18 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1280;
 const static int windowHeight = 1024;
 
+// Temp stuff for player movement, will be refactored later
 static float cameraHorizontal = 0.0f;
 static float cameraVertical = 0.0f;
 static glm::vec3 movement(0,0,0);
+static bool jump = false;
+static bool canJump = false;
+
+static void bulletTickCallback(btDynamicsWorld *world, btScalar timeStep)
+{
+	Game *g = static_cast<Game*>(world->getWorldUserInfo());
+	g->fixedUpdate(world, timeStep);
+}
 
 Game::Game()
 {
@@ -118,13 +127,14 @@ int Game::setup()
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
 	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-	dynamicsWorld = std::make_unique<btDiscreteDynamicsWorld>(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
+	dynamicsWorld->setInternalTickCallback(bulletTickCallback, static_cast<void *>(this));
 
 	btStaticPlaneShape* planeShape = new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 0.0f);
 	btDefaultMotionState* planeMotionState = new btDefaultMotionState(btTransform::getIdentity());
-	btRigidBody* body = new btRigidBody(0.0f, planeMotionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
-	dynamicsWorld->addRigidBody(body);
+	floorBody = new btRigidBody(0.0f, planeMotionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
+	dynamicsWorld->addRigidBody(floorBody);
 
 	/* Scene */
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/white.frag");
@@ -198,8 +208,8 @@ int Game::setup()
 
 		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::transformToBt(transformComponent->transform));
-		collisionComponent->body = std::shared_ptr<btRigidBody>(new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f)));
-		dynamicsWorld->addRigidBody(collisionComponent->body.get());
+		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+		dynamicsWorld->addRigidBody(collisionComponent->body);
 
 		unsigned int shroomHandle = renderer.getHandle(shroomModel, shader);
 		modelComponent->rendererHandle = shroomHandle;
@@ -210,12 +220,12 @@ int Game::setup()
 	std::shared_ptr<CollisionComponent> playerCollisionComponent = player.addComponent<CollisionComponent>();
 	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, -10.0f));
 
-	btCapsuleShape* shape = new btCapsuleShape(0.5 * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
+	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::transformToBt(playerTransform->transform));
-	playerBody = std::make_shared<btRigidBody>(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerCollisionComponent->body = playerBody;
-	dynamicsWorld->addRigidBody(playerCollisionComponent->body.get());
+	dynamicsWorld->addRigidBody(playerCollisionComponent->body);
 
 	entities.push_back(player);
 
@@ -291,20 +301,29 @@ void Game::draw()
 void Game::update()
 {
 	SDL_Event event;
+	btVector3 playerVelocity(0.0f, 0.0f, 0.0f);
 
 	while (SDL_PollEvent(&event)) {
 		this->handleEvent(event);
 	}
 	
 	if (fabs(glm::length(movement)) > glm::epsilon<float>()) {
-		glm::vec3 scaledMovement = -glm::normalize(movement) * timeDelta * 1000.0f;
+		glm::vec3 scaledMovement = -glm::normalize(movement) * timeDelta * 300.0f;
 		btQuaternion playerRotation = playerBody->getWorldTransform().getRotation();
-		btVector3 velocity = btVector3(scaledMovement.x, scaledMovement.y, scaledMovement.z).rotate(playerRotation.getAxis(), playerRotation.getAngle());
-		velocity.setY(playerBody->getLinearVelocity().y());
-		playerBody->setLinearVelocity(velocity);
+		playerVelocity = btVector3(scaledMovement.x, scaledMovement.y, scaledMovement.z).rotate(playerRotation.getAxis(), playerRotation.getAngle());
+		playerVelocity.setY(playerBody->getLinearVelocity().y());
 	} else {
-		playerBody->setLinearVelocity(btVector3(0.0f, playerBody->getLinearVelocity().y(), 0.0f));
+		playerVelocity = btVector3(0.0f, playerBody->getLinearVelocity().y(), 0.0f);
 	}
+
+	if (canJump && jump) {
+		playerVelocity.setY(5.0f);
+		canJump = false;
+	}
+	jump = false;
+
+	playerBody->setLinearVelocity(playerVelocity);
+
 	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), cameraHorizontal));
 	cameraTransformComponent->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
 
@@ -313,6 +332,23 @@ void Game::update()
 	modelRenderSystem->update(timeDelta, entities);
 
 	dynamicsWorld->stepSimulation(timeDelta);
+}
+
+void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
+	assert(world == this->dynamicsWorld);
+
+	canJump = false;
+	int numManifolds = world->getDispatcher()->getNumManifolds();
+	for (int i = 0; i < numManifolds; i++) {
+		btPersistentManifold* contactManifold = world->getDispatcher()->getManifoldByIndexInternal(i);
+		const btCollisionObject* obA = contactManifold->getBody0();
+		const btCollisionObject* obB = contactManifold->getBody1();
+		int numContacts = contactManifold->getNumContacts();
+
+		if ((obA == playerBody || obB == playerBody) && numContacts > 0) {
+			canJump = true;
+		}
+	}
 }
 
 void Game::handleEvent(SDL_Event& event)
@@ -376,6 +412,9 @@ void Game::handleEvent(SDL_Event& event)
 			break;
 		case SDLK_a:
 			movement.x -= 1.0f;
+			break;
+		case SDLK_SPACE:
+			jump = true;
 			break;
 		}
 		break;
