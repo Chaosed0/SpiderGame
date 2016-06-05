@@ -20,6 +20,19 @@ Transform::Transform(glm::vec3 position, glm::quat rotation, glm::vec3 scale)
 	setPosition(position);
 	setRotation(rotation);
 	setScale(scale);
+
+	parent = nullptr;
+}
+
+Transform::~Transform()
+{
+	for (int i = 0; i < children.size(); i++) {
+		children[i]->setParent(nullptr);
+	}
+
+	if (parent != nullptr) {
+		parent->removeChild(this);
+	}
 }
 
 glm::vec3 Transform::getPosition() const
@@ -57,13 +70,25 @@ glm::vec3 Transform::getForward() const
 	return rotation * glm::vec3(0,0,1);
 }
 
-std::shared_ptr<Transform> Transform::getParent() const
+void Transform::addChild(Transform* child)
 {
-	return this->parent;
+	children.push_back(child);
+	child->setParent(this);
 }
-void Transform::setParent(const std::shared_ptr<Transform>& parent)
+
+void Transform::removeChild(Transform* child)
 {
-	assert(parent.get() != this);
+	for (int i = 0; i < children.size(); i++) {
+		if (children[i] == child) {
+			children[i] = children[children.size()-1];
+			children.pop_back();
+		}
+	}
+}
+
+void Transform::setParent(Transform* parent)
+{
+	assert(parent != this);
 	this->parent = parent;
 }
 

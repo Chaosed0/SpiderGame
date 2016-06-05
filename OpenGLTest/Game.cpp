@@ -22,8 +22,8 @@
 #include "Util.h"
 
 #include "Framework/Components/ModelRenderComponent.h"
-#include "Framework/Components/CollisionComponent.h"
 #include "Framework/Components/CameraComponent.h"
+#include "Framework/Components/CollisionComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1280;
@@ -122,8 +122,8 @@ int Game::setup()
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
 
 	btStaticPlaneShape* planeShape = new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 0.0f);
-	btDefaultMotionState* motionState = new btDefaultMotionState(btTransform::getIdentity());
-	btRigidBody* body = new btRigidBody(0.0f, motionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
+	btDefaultMotionState* planeMotionState = new btDefaultMotionState(btTransform::getIdentity());
+	btRigidBody* body = new btRigidBody(0.0f, planeMotionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
 	dynamicsWorld->addRigidBody(body);
 
 	/* Scene */
@@ -197,8 +197,8 @@ int Game::setup()
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
 		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
-		btDefaultMotionState* motionState = new btDefaultMotionState(Util::transformToBt(transformComponent->transform));
-		collisionComponent->body = std::shared_ptr<btRigidBody>(new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f)));
+		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::transformToBt(transformComponent->transform));
+		collisionComponent->body = std::shared_ptr<btRigidBody>(new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f)));
 		dynamicsWorld->addRigidBody(collisionComponent->body.get());
 
 		unsigned int shroomHandle = renderer.getHandle(shroomModel, shader);
@@ -206,11 +206,30 @@ int Game::setup()
 		entities.push_back(shroom);
 	}
 
-	std::shared_ptr<CameraComponent> cameraComponent = player.addComponent<CameraComponent>();
-	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	playerTransform = player.addComponent<TransformComponent>();
-	playerTransform->transform.setPosition(glm::vec3(0.0f, 0.0f, -10.0f));
+	std::shared_ptr<TransformComponent> playerTransform = player.addComponent<TransformComponent>();
+	std::shared_ptr<CollisionComponent> playerCollisionComponent = player.addComponent<CollisionComponent>();
+	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, -10.0f));
+
+	btCapsuleShape* shape = new btCapsuleShape(0.5 * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
+	btDefaultMotionState* motionState = new btDefaultMotionState(Util::transformToBt(playerTransform->transform));
+	playerBody = std::make_shared<btRigidBody>(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
+	playerCollisionComponent->body = playerBody;
+	dynamicsWorld->addRigidBody(playerCollisionComponent->body.get());
+
 	entities.push_back(player);
+
+	Entity camera;
+	cameraTransformComponent = camera.addComponent<TransformComponent>();
+
+	std::shared_ptr<CameraComponent> cameraComponent = camera.addComponent<CameraComponent>();
+	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
+	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, 2.0f, 0.0f));
+
+	entities.push_back(camera);
+
+	playerTransform->transform.addChild(&cameraTransformComponent->transform);
+
 	renderer.setCamera(&cameraComponent->camera);
 
 	unsigned int skyboxHandle = renderer.getHandle(skyboxModel, skyboxShader);
@@ -278,10 +297,16 @@ void Game::update()
 	}
 	
 	if (fabs(glm::length(movement)) > glm::epsilon<float>()) {
-		glm::vec3 scaledMovement = glm::normalize(movement) * timeDelta * 5.0f;
-		playerTransform->transform.setPosition(playerTransform->transform.getPosition() + playerTransform->transform.getRotation() * scaledMovement);
+		glm::vec3 scaledMovement = -glm::normalize(movement) * timeDelta * 1000.0f;
+		btQuaternion playerRotation = playerBody->getWorldTransform().getRotation();
+		btVector3 velocity = btVector3(scaledMovement.x, scaledMovement.y, scaledMovement.z).rotate(playerRotation.getAxis(), playerRotation.getAngle());
+		velocity.setY(playerBody->getLinearVelocity().y());
+		playerBody->setLinearVelocity(velocity);
+	} else {
+		playerBody->setLinearVelocity(btVector3(0.0f, playerBody->getLinearVelocity().y(), 0.0f));
 	}
-	playerTransform->transform.setRotation(Util::rotateHorizontalVertical(cameraHorizontal, cameraVertical, glm::vec3(0.0f, 1.0f, 0.0f)));
+	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), cameraHorizontal));
+	cameraTransformComponent->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
 
 	cameraSystem->update(timeDelta, entities);
 	collisionUpdateSystem->update(timeDelta, entities);

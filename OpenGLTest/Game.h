@@ -54,7 +54,8 @@ private:
 	Model skyboxModel;
 
 	Entity player;
-	std::shared_ptr<TransformComponent> playerTransform;
+	std::shared_ptr<btRigidBody> playerBody;
+	std::shared_ptr<TransformComponent> cameraTransformComponent;
 
 	std::vector<Entity> entities;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
