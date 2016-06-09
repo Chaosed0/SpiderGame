@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Console\Font.cpp" />
     <ClCompile Include="Framework\Systems\CameraSystem.cpp" />
     <ClCompile Include="Renderer\Box.cpp" />
     <ClCompile Include="Console\Callbacks.cpp" />
@@ -151,6 +152,7 @@
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Console\Font.h" />
     <ClInclude Include="Framework\Systems\CameraSystem.h" />
     <ClInclude Include="Renderer\Box.h" />
     <ClInclude Include="Console\Callbacks.h" />
