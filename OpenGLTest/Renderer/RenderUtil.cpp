@@ -52,9 +52,9 @@ void APIENTRY glDebugOutput(GLenum source,
 	if (userParam != nullptr) {
 		DebugLogCallback* callback = (DebugLogCallback*)userParam;
 		(*callback)(sstream.str());
-	} else {
-		fprintf(stderr, sstream.str().c_str());
 	}
+	fprintf(stderr, sstream.str().c_str());
+	fprintf(stderr, "\n");
 }
 
 GLenum glCheckError_(const char *file, int line)

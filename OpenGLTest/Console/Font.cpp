@@ -7,8 +7,10 @@
 #include <SDL.h>
 
 Font::Font()
-	: textureSize(256,256)
-{ }
+	: textureSize(64,64)
+{
+	buffer.resize(textureSize.y*textureSize.x);
+}
 
 void Font::loadCharacters(const std::string& fontPath, int height)
 {
@@ -28,6 +30,13 @@ void Font::loadCharacters(const std::string& fontPath, int height)
 
 	FT_Set_Pixel_Sizes(face, 0, height);
 
+	rootNode = std::make_unique<Node>();
+	rootNode->origin = glm::ivec2(0,0);
+	rootNode->size = glm::ivec2(INT_MAX,INT_MAX);
+	rootNode->empty = true;
+	rootNode->left = nullptr;
+	rootNode->right = nullptr;
+
 	for (int i = 0; i < 128; i++)
 	{
 		char c = (char)i;
@@ -46,75 +55,95 @@ void Font::loadCharacters(const std::string& fontPath, int height)
 			face->glyph->advance.x,
 		};
 		characters.push_back(character);
+
+		this->packCharacter(characters[i], face->glyph->bitmap);
 	}
-
-	rootNode = std::make_unique<Node>();
-	rootNode->origin = glm::ivec2(0,0);
-	rootNode->size = glm::ivec2(INT_MAX,INT_MAX);
-	rootNode->empty = true;
-	rootNode->left = nullptr;
-	rootNode->right = nullptr;
-
-	for (unsigned int i = 0; i < characters.size(); i++) {
-		if (characters[i].size.x == 0 || characters[i].size.y == 0) {
-			continue;
-		}
-
-		Node* node = pack(rootNode.get(), characters[i].size);
-		if (node == NULL) {
-			textureSize.x *= 2;
-			textureSize.y *= 2;
-			node = pack(rootNode.get(), characters[i].size);
-			assert(node != NULL);
-		}
-
-		assert(characters[i].size.x == node->size.x);
-		assert(characters[i].size.y == node->size.y);
-		characters[i].origin = node->origin;
-	}
-
-	SDL_Surface* fontSurface = SDL_CreateRGBSurface(0, textureSize.x, textureSize.y, 8, 0, 0, 0, 0);
-	SDL_Color colors[256];
-	for (int i = 0; i < 256; i++) {
-		colors[i].r = colors[i].g = colors[i].b = i;
-	}
-
-	SDL_SetPaletteColors(fontSurface->format->palette, colors, 0, 256);
-	for (unsigned int i = 0; i < characters.size(); i++) {
-		if (characters[i].size.x == 0 || characters[i].size.y == 0) {
-			continue;
-		}
-
-		char c = (char)i;
-		// Load character glyph
-		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-		{
-			fprintf(stderr, "ERROR::FREETYTPE: Failed to load Glyph %c", c);
-			continue;
-		}
-
-		SDL_Surface* characterSurface = SDL_CreateRGBSurface(0, characters[i].size.x, characters[i].size.y, 8, 0, 0, 0, 0);
-		SDL_SetPaletteColors(characterSurface->format->palette, colors, 0, 256);
-
-		uint8_t* pixels = (uint8_t*)characterSurface->pixels;
-		for (int y = 0; y < characterSurface->h; y++) {
-			for (int x = 0; x < characterSurface->pitch; x++) {
-				pixels[y * characterSurface->pitch + x] = face->glyph->bitmap.buffer[y * face->glyph->bitmap.pitch + x];
-			}
-		}
-
-		std::stringstream sstr;
-		sstr << "test/" << i << ".bmp";
-		SDL_SaveBMP(characterSurface, sstr.str().c_str());
-
-		SDL_Rect target { characters[i].origin.x, characters[i].origin.y, characters[i].size.x, characters[i].size.y };
-		SDL_Rect origin { 0, 0, characters[i].size.x, characters[i].size.y };
-		SDL_BlitSurface(characterSurface, &origin, fontSurface, &target);
-	}
-	SDL_SaveBMP(fontSurface, "kek.bmp");
 
 	FT_Done_Face(face);
 	FT_Done_FreeType(ft);
+
+	// Give OpenGL the data
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glGenTextures(1, &this->textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RED, textureSize.x, textureSize.y, 0, GL_RED, GL_UNSIGNED_BYTE, buffer.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+void Font::saveAtlasToFile(const std::string& file)
+{
+	SDL_Surface* surface = SDL_CreateRGBSurface(0, textureSize.x, textureSize.y, 8,0,0,0,0);
+	SDL_Color colors[256];
+	for (int i = 0; i < 256; i++) {
+		colors[i].r = colors[i].b = colors[i].g = i;
+		colors[i].a = 255;
+	}
+	SDL_SetPaletteColors(surface->format->palette, colors, 0, 256);
+	surface->pixels = (void*)buffer.data();
+
+	SDL_SaveBMP(surface, file.c_str());
+	SDL_FreeSurface(surface);
+}
+
+GLuint Font::getTextureId()
+{
+	return textureID;
+}
+
+Character Font::getCharacter(unsigned int i)
+{
+	if (i < characters.size()) {
+		return characters[i];
+	}
+	return Character { glm::ivec2(0,0), glm::ivec2(0,0), glm::ivec2(0,0), 0 };
+}
+
+glm::ivec2 Font::getTextureSize()
+{
+	return textureSize;
+}
+
+void Font::packCharacter(Character& character, const FT_Bitmap& bitmap)
+{
+	if (character.size.x == 0 || character.size.y == 0) {
+		return;
+	}
+
+	Node* node = pack(rootNode.get(), character.size);
+	if (node == NULL) {
+		this->resizeBuffer(glm::ivec2(textureSize.x*2, textureSize.y*2));
+		node = pack(rootNode.get(), character.size);
+		assert(node != NULL);
+	}
+
+	assert(character.size.x == node->size.x);
+	assert(character.size.y == node->size.y);
+	character.origin = node->origin;
+
+	for (int ly = 0; ly < bitmap.rows; ly++) {
+		for (int lx = 0; lx < bitmap.width; lx++) {
+			int y = character.origin.y + ly;
+			int x = character.origin.x + lx;
+			buffer[y * textureSize.x + x] = bitmap.buffer[ly * std::abs(bitmap.pitch) + lx];
+		}
+	}
+}
+
+void Font::resizeBuffer(const glm::ivec2 newSize)
+{
+	std::vector<unsigned char> newBuffer;
+	newBuffer.resize(newSize.y*newSize.x);
+	for (int y = 0; y < textureSize.y; y++) {
+		for (int x = 0; x < textureSize.x; x++) {
+			newBuffer[y * newSize.x + x] = buffer[y * textureSize.x + x];
+		}
+	}
+	
+	textureSize = newSize;
+	buffer = std::move(newBuffer);
 }
 
 Node* Font::pack(Node* node, const glm::ivec2& size)

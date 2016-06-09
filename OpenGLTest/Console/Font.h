@@ -14,11 +14,10 @@
 #include <memory>
 
 struct Character {
-	glm::ivec2 origin;     // Size of glyph
+	glm::ivec2 origin;     // Position of glyph on texture atlas
 	glm::ivec2 size;       // Size of glyph
 	glm::ivec2 bearing;    // Offset from baseline to left/top of glyph
 	FT_Pos     advance;    // Offset to advance to next glyph
-	unsigned char* buffer;
 };
 
 struct Node
@@ -41,11 +40,18 @@ class Font
 public:
 	Font();
 	void loadCharacters(const std::string& fontPath, int height);
+	GLuint getTextureId();
+	Character getCharacter(unsigned int i);
+	glm::ivec2 getTextureSize();
 private:
 	GLuint textureID;
 	std::vector<Character> characters;
 	std::unique_ptr<Node> rootNode;
+	std::vector<unsigned char> buffer;
 	glm::ivec2 textureSize;
 
+	void packCharacter(Character& character, const FT_Bitmap& bitmap);
+	void resizeBuffer(const glm::ivec2 newSize);
+	void saveAtlasToFile(const std::string& file);
 	Node* pack(Node* node, const glm::ivec2& size);
 };

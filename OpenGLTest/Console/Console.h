@@ -7,6 +7,7 @@
 
 #include "Renderer/Shader.h"
 #include "Callbacks.h"
+#include "Font.h"
 
 class Console
 {
@@ -24,6 +25,7 @@ public:
 private:
 	std::string input;
 	std::vector<std::string> buffer;
+	Font font;
 	unsigned int bufferEnd, numBufferedLines;
 
 	float width, height;

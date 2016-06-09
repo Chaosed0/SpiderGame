@@ -119,6 +119,14 @@ int Game::setup()
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
 
+	for (int i = 0; i < 30; i++) {
+		std::string gibberish;
+		for (int j = 0; j < 250; j++) {
+			gibberish += (char)(65 + (j%26));
+		}
+		console->print(gibberish);
+	}
+
 	// Initialize renderer debugging output
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
 
