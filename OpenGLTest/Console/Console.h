@@ -41,6 +41,7 @@ private:
 	const static float yPadding;
 	const static float linePadding;
 	const static unsigned int maxBufferLines;
+	const static unsigned int maxLineSize;
 	
 	void drawLine(std::string line, unsigned int top);
 

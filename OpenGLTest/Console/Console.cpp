@@ -18,6 +18,7 @@ const float Console::xPadding = 5.0f;
 const float Console::yPadding = 2.0f;
 const float Console::linePadding = 2.0f;
 const unsigned int Console::maxBufferLines = 30;
+const unsigned int Console::maxLineSize = 250;
 
 Console::Console(float width, float height, float windowWidth, float windowHeight)
 	: width(width), height(height), bottom(windowHeight - height), buffer(maxBufferLines)
@@ -43,7 +44,7 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	
 	glBindVertexArray(glyphVao);
 	glBindBuffer(GL_ARRAY_BUFFER, glyphQuad);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4 * maxLineSize, NULL, GL_DYNAMIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -158,10 +159,14 @@ void Console::drawLine(std::string line, unsigned int top)
 {
 	unsigned int x = (unsigned int)xPadding;
 	unsigned int y = top;
-	float scale = 1.1f;
+	unsigned int lineSize = std::min(line.size(), maxLineSize);
+	float scale = 1.0f;
 	glm::ivec2 textureSize = font.getTextureSize();
 
-	for (unsigned int i = 0; i < line.size(); i++) {
+	// six verts * four floats, per character
+	GLfloat vertices[6 * 4 * maxLineSize];
+
+	for (unsigned int i = 0; i < lineSize; i++) {
 		Character ch = font.getCharacter(line[i]);
 
 		GLfloat xpos = x + ch.bearing.x * scale;
@@ -175,25 +180,27 @@ void Console::drawLine(std::string line, unsigned int top)
 		float texRight = (ch.origin.x + ch.size.x) / (float)textureSize.x;
 		float texBot = ch.origin.y / (float)textureSize.y;
 		float texTop = (ch.origin.y + ch.size.y) / (float)textureSize.y;
-		GLfloat vertices[6][4] = {
-			{ xpos,     ypos + h,   texLeft, texBot },
-			{ xpos,     ypos,       texLeft, texTop },
-			{ xpos + w, ypos,       texRight, texTop },
+		GLfloat charVerts[24] = {
+			xpos,     ypos + h,   texLeft, texBot,
+			xpos,     ypos,       texLeft, texTop,
+			xpos + w, ypos,       texRight, texTop,
 
-			{ xpos,     ypos + h,   texLeft, texBot },
-			{ xpos + w, ypos,       texRight, texTop },
-			{ xpos + w, ypos + h,   texRight, texBot }
+			xpos,     ypos + h,   texLeft, texBot,
+			xpos + w, ypos,       texRight, texTop,
+			xpos + w, ypos + h,   texRight, texBot
 		};
 
-		// Update content of VBO memory
-		glBindBuffer(GL_ARRAY_BUFFER, glyphQuad);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		// Render quad
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		memcpy(vertices + i*24, charVerts, sizeof(charVerts));
 
 		// Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
 		x += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
 	}
+
+	// Update content of VBO memory
+	glBindBuffer(GL_ARRAY_BUFFER, glyphQuad);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 24 * lineSize, vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// Render quads
+	glDrawArrays(GL_TRIANGLES, 0, lineSize * 6);
 }
