@@ -17,8 +17,8 @@
 #include "Framework/Systems/ModelRenderSystem.h"
 #include "Framework/Systems/CollisionUpdateSystem.h"
 #include "Framework/Systems/CameraSystem.h"
-
-#include "Framework/Components/TransformComponent.h"
+#include "Framework/Systems/RigidbodyMotorSystem.h"
+#include "Framework/Systems/PlayerInputSystem.h"
 
 class Game
 {
@@ -58,14 +58,16 @@ private:
 	Model skyboxModel;
 
 	Entity player;
+	Entity camera;
 	btRigidBody* playerBody;
 	btRigidBody* floorBody;
-	std::shared_ptr<TransformComponent> cameraTransformComponent;
 
 	std::vector<Entity> entities;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
 	std::unique_ptr<CameraSystem> cameraSystem;
+	std::unique_ptr<RigidbodyMotorSystem> rigidbodyMotorSystem;
+	std::unique_ptr<PlayerInputSystem> playerInputSystem;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 

@@ -130,6 +130,8 @@
   <ItemGroup>
     <ClCompile Include="Console\Font.cpp" />
     <ClCompile Include="Framework\Systems\CameraSystem.cpp" />
+    <ClCompile Include="Framework\Systems\PlayerInputSystem.cpp" />
+    <ClCompile Include="Framework\Systems\RigidbodyMotorSystem.cpp" />
     <ClCompile Include="Renderer\Box.cpp" />
     <ClCompile Include="Console\Callbacks.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
@@ -153,7 +155,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Console\Font.h" />
+    <ClInclude Include="Framework\Components\PlayerComponent.h" />
+    <ClInclude Include="Framework\Components\RigidbodyMotorComponent.h" />
     <ClInclude Include="Framework\Systems\CameraSystem.h" />
+    <ClInclude Include="Framework\Systems\PlayerInputSystem.h" />
+    <ClInclude Include="Framework\Systems\RigidbodyMotorSystem.h" />
     <ClInclude Include="Renderer\Box.h" />
     <ClInclude Include="Console\Callbacks.h" />
     <ClInclude Include="Renderer\Camera.h" />

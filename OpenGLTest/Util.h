@@ -8,11 +8,27 @@ class Util
 {
 public:
 	/*! Remember that this doesn't account for scale - do it yourself in the btShape */
-	static btTransform transformToBt(Transform transform)
+	static btTransform gameToBt(Transform transform)
 	{
 		glm::quat rotation = transform.getRotation();
 		glm::vec3 position = transform.getPosition();
 		return btTransform(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w), btVector3(position.x, position.y, position.z));
+	}
+
+	static glm::vec3 btToGlm(const btVector3& vec3) {
+		return glm::vec3(vec3.x(), vec3.y(), vec3.z());
+	} 
+
+	static glm::quat btToGlm(const btQuaternion& quat) {
+		return glm::quat(quat.x(), quat.y(), quat.z(), quat.w());
+	}
+
+	static btVector3 glmToBt(const glm::vec3& vec3) {
+		return btVector3(vec3.x, vec3.y, vec3.z);
+	} 
+
+	static btQuaternion glmToBt(const glm::quat& quat) {
+		return btQuaternion(quat.x, quat.y, quat.z, quat.w);
 	}
 
 	static glm::quat lookAt(glm::vec3 position, glm::vec3 target, glm::vec3 up)

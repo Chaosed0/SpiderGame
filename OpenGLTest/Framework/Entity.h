@@ -10,10 +10,10 @@ class Entity
 {
 public:
 	template <class T>
-	std::shared_ptr<T> addComponent();
+	T* addComponent();
 
 	template <class T>
-	std::shared_ptr<T> getComponent();
+	T* getComponent();
 
 	bool hasComponent(size_t typeinfo) const;
 private:
@@ -21,16 +21,18 @@ private:
 };
 
 template <class T>
-std::shared_ptr<T> Entity::addComponent()
+T* Entity::addComponent()
 {
-	std::shared_ptr<T> newComponent(new T());
-	componentTypeMap[typeid(T).hash_code()] = newComponent;
-	return newComponent;
+	size_t hash = typeid(T).hash_code();
+	componentTypeMap.emplace(hash, std::shared_ptr<Component>(static_cast<Component*>(new T)));
+	return static_cast<T*>(componentTypeMap[hash].get());
+	return NULL;
 }
 
 template <class T>
-std::shared_ptr<T> Entity::getComponent()
+T* Entity::getComponent()
 {
 	auto iter = componentTypeMap.find(typeid(T).hash_code());
-	return iter == componentTypeMap.end() ? std::shared_ptr<T>(nullptr) : std::static_pointer_cast<T>(iter->second);
+	return iter == componentTypeMap.end() ? nullptr : static_cast<T*>(iter->second.get());
+	return NULL;
 }

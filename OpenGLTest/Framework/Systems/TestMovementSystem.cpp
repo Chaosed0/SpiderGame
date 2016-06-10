@@ -12,8 +12,8 @@ TestMovementSystem::TestMovementSystem()
 
 void TestMovementSystem::updateEntity(float dt, Entity& entity)
 {
-	std::shared_ptr<TransformComponent> transformComponent = entity.getComponent<TransformComponent>();
-	std::shared_ptr<TestMovementComponent> testMovementComponent = entity.getComponent<TestMovementComponent>();
+	TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
+	TestMovementComponent* testMovementComponent = entity.getComponent<TestMovementComponent>();
 	Transform& transform = transformComponent->transform;
 
 	totalTime += dt;

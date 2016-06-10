@@ -12,8 +12,8 @@ CollisionUpdateSystem::CollisionUpdateSystem()
 
 void CollisionUpdateSystem::updateEntity(float dt, Entity& entity)
 {
-	std::shared_ptr<CollisionComponent> collisionComponent(entity.getComponent<CollisionComponent>());
-	std::shared_ptr<TransformComponent> transformComponent(entity.getComponent<TransformComponent>());
+	CollisionComponent* collisionComponent(entity.getComponent<CollisionComponent>());
+	TransformComponent* transformComponent(entity.getComponent<TransformComponent>());
 
 	btTransform transform = collisionComponent->body->getWorldTransform();
 	transformComponent->transform.setPosition(glm::vec3(transform.getOrigin().x(), transform.getOrigin().y(), transform.getOrigin().z()));

@@ -13,8 +13,8 @@ CameraSystem::CameraSystem(Renderer& renderer)
 
 void CameraSystem::updateEntity(float dt, Entity& entity)
 {
-	 std::shared_ptr<CameraComponent> cameraComponent = entity.getComponent<CameraComponent>();
-	 std::shared_ptr<TransformComponent> transformComponent = entity.getComponent<TransformComponent>();
+	 CameraComponent* cameraComponent = entity.getComponent<CameraComponent>();
+	 TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
 
 	 cameraComponent->camera.transform = transformComponent->transform;
 }

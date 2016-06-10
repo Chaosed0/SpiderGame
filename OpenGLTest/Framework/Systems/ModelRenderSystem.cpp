@@ -12,8 +12,8 @@ ModelRenderSystem::ModelRenderSystem(Renderer& renderer)
 
 void ModelRenderSystem::updateEntity(float dt, Entity& entity)
 {
-	std::shared_ptr<ModelRenderComponent> modelComponent = entity.getComponent<ModelRenderComponent>();
-	std::shared_ptr<TransformComponent> transformComponent = entity.getComponent<TransformComponent>();
+	ModelRenderComponent* modelComponent = entity.getComponent<ModelRenderComponent>();
+	TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
 
 	renderer.updateTransform(modelComponent->rendererHandle, transformComponent->transform);
 }

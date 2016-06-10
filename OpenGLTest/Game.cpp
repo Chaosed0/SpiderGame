@@ -24,6 +24,9 @@
 #include "Framework/Components/ModelRenderComponent.h"
 #include "Framework/Components/CameraComponent.h"
 #include "Framework/Components/CollisionComponent.h"
+#include "Framework/Components/TransformComponent.h"
+#include "Framework/Components/PlayerComponent.h"
+#include "Framework/Components/RigidbodyMotorComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1280;
@@ -32,9 +35,6 @@ const static int windowHeight = 1024;
 // Temp stuff for player movement, will be refactored later
 static float cameraHorizontal = 0.0f;
 static float cameraVertical = 0.0f;
-static glm::vec3 movement(0,0,0);
-static bool jump = false;
-static bool canJump = false;
 
 static void bulletTickCallback(btDynamicsWorld *world, btScalar timeStep)
 {
@@ -119,14 +119,6 @@ int Game::setup()
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
 
-	for (int i = 0; i < 30; i++) {
-		std::string gibberish;
-		for (int j = 0; j < 250; j++) {
-			gibberish += (char)(65 + (j%26));
-		}
-		console->print(gibberish);
-	}
-
 	// Initialize renderer debugging output
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
 
@@ -203,9 +195,9 @@ int Game::setup()
 
 	for (int i = 0; i < 10; i++) {
 		Entity shroom;
-		std::shared_ptr<ModelRenderComponent> modelComponent = shroom.addComponent<ModelRenderComponent>();
-		std::shared_ptr<TransformComponent> transformComponent = shroom.addComponent<TransformComponent>();
-		std::shared_ptr<CollisionComponent> collisionComponent = shroom.addComponent<CollisionComponent>();
+		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
+		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
+		CollisionComponent* collisionComponent = shroom.addComponent<CollisionComponent>();
 
 		float z = axisRand(generator);
 		float axisAngle = angleRand(generator);
@@ -215,7 +207,7 @@ int Game::setup()
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
 		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
-		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::transformToBt(transformComponent->transform));
+		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 		dynamicsWorld->addRigidBody(collisionComponent->body);
 
@@ -224,23 +216,27 @@ int Game::setup()
 		entities.push_back(shroom);
 	}
 
-	std::shared_ptr<TransformComponent> playerTransform = player.addComponent<TransformComponent>();
-	std::shared_ptr<CollisionComponent> playerCollisionComponent = player.addComponent<CollisionComponent>();
+	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
+	CollisionComponent* playerCollisionComponent = player.addComponent<CollisionComponent>();
+	PlayerComponent* playerComponent = player.addComponent<PlayerComponent>();
+	RigidbodyMotorComponent* playerRigidbodyMotorComponent = player.addComponent<RigidbodyMotorComponent>();
+
 	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, -10.0f));
 
 	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
-	btDefaultMotionState* motionState = new btDefaultMotionState(Util::transformToBt(playerTransform->transform));
+	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(playerTransform->transform));
 	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerCollisionComponent->body = playerBody;
 	dynamicsWorld->addRigidBody(playerCollisionComponent->body);
 
+	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
+	playerRigidbodyMotorComponent->moveSpeed = 7.0f;
+
 	entities.push_back(player);
 
-	Entity camera;
-	cameraTransformComponent = camera.addComponent<TransformComponent>();
-
-	std::shared_ptr<CameraComponent> cameraComponent = camera.addComponent<CameraComponent>();
+	TransformComponent* cameraTransformComponent = camera.addComponent<TransformComponent>();
+	CameraComponent* cameraComponent = camera.addComponent<CameraComponent>();
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
 	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, 2.0f, 0.0f));
 
@@ -257,6 +253,8 @@ int Game::setup()
 		renderer.updateTransform(lightHandle, pointLightTransforms[i]);
 	}
 
+	playerInputSystem = std::make_unique<PlayerInputSystem>();
+	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>();
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>();
 	cameraSystem = std::make_unique<CameraSystem>(renderer);
@@ -309,31 +307,16 @@ void Game::draw()
 void Game::update()
 {
 	SDL_Event event;
-	btVector3 playerVelocity(0.0f, 0.0f, 0.0f);
 
 	while (SDL_PollEvent(&event)) {
 		this->handleEvent(event);
 	}
-	
-	if (fabs(glm::length(movement)) > glm::epsilon<float>()) {
-		glm::vec3 scaledMovement = -glm::normalize(movement) * timeDelta * 300.0f;
-		btQuaternion playerRotation = playerBody->getWorldTransform().getRotation();
-		playerVelocity = btVector3(scaledMovement.x, scaledMovement.y, scaledMovement.z).rotate(playerRotation.getAxis(), playerRotation.getAngle());
-		playerVelocity.setY(playerBody->getLinearVelocity().y());
-	} else {
-		playerVelocity = btVector3(0.0f, playerBody->getLinearVelocity().y(), 0.0f);
-	}
-
-	if (canJump && jump) {
-		playerVelocity.setY(5.0f);
-		canJump = false;
-	}
-	jump = false;
-
-	playerBody->setLinearVelocity(playerVelocity);
 
 	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), cameraHorizontal));
-	cameraTransformComponent->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
+	camera.getComponent<TransformComponent>()->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
+
+	playerInputSystem->update(timeDelta, entities);
+	rigidbodyMotorSystem->update(timeDelta, entities);
 
 	cameraSystem->update(timeDelta, entities);
 	collisionUpdateSystem->update(timeDelta, entities);
@@ -345,7 +328,7 @@ void Game::update()
 void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
 	assert(world == this->dynamicsWorld);
 
-	canJump = false;
+	player.getComponent<RigidbodyMotorComponent>()->canJump = false;
 	int numManifolds = world->getDispatcher()->getNumManifolds();
 	for (int i = 0; i < numManifolds; i++) {
 		btPersistentManifold* contactManifold = world->getDispatcher()->getManifoldByIndexInternal(i);
@@ -354,7 +337,7 @@ void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
 		int numContacts = contactManifold->getNumContacts();
 
 		if ((obA == playerBody || obB == playerBody) && numContacts > 0) {
-			canJump = true;
+			player.getComponent<RigidbodyMotorComponent>()->canJump = true;
 		}
 	}
 }
@@ -410,19 +393,19 @@ void Game::handleEvent(SDL_Event& event)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			break;
 		case SDLK_w:
-			movement.z -= 1.0f;
+			playerInputSystem->startMoving(glm::vec2(1,0));
 			break;
 		case SDLK_s:
-			movement.z += 1.0f;
+			playerInputSystem->startMoving(glm::vec2(-1,0));
 			break;
 		case SDLK_d:
-			movement.x += 1.0f;
+			playerInputSystem->startMoving(glm::vec2(0,1));
 			break;
 		case SDLK_a:
-			movement.x -= 1.0f;
+			playerInputSystem->startMoving(glm::vec2(0,-1));
 			break;
 		case SDLK_SPACE:
-			jump = true;
+			playerInputSystem->startJump();
 			break;
 		}
 		break;
@@ -433,16 +416,16 @@ void Game::handleEvent(SDL_Event& event)
 
 		switch(event.key.keysym.sym) {
 		case SDLK_w:
-			movement.z += 1.0f;
+			playerInputSystem->stopMoving(glm::vec2(1,0));
 			break;
 		case SDLK_s:
-			movement.z -= 1.0f;
+			playerInputSystem->stopMoving(glm::vec2(-1,0));
 			break;
 		case SDLK_d:
-			movement.x -= 1.0f;
+			playerInputSystem->stopMoving(glm::vec2(0,1));
 			break;
 		case SDLK_a:
-			movement.x += 1.0f;
+			playerInputSystem->stopMoving(glm::vec2(0,-1));
 			break;
 		}
 		break;
