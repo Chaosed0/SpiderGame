@@ -248,5 +248,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\lightcolor.frag" />
+    <None Include="Shaders\skinned.vert" />
   </ItemGroup>
 </Project>

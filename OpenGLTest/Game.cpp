@@ -48,6 +48,7 @@ Game::Game()
 	wireframe = false;
 	lastUpdate = UINT32_MAX;
 	consoleIsVisible = false;
+	accumulator = 0.0f;
 }
 
 int Game::run()
@@ -184,7 +185,7 @@ int Game::setup()
 	pointLightModel = modelLoader.loadModelById("pointLight");
 	skyboxModel = modelLoader.loadModelById("skybox");
 
-	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.obj");
+	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 
 	std::default_random_engine generator;
 	generator.seed((unsigned int)time(NULL));
@@ -273,11 +274,12 @@ int Game::loop()
 	{
 		accumulator += SDL_GetTicks() - lastUpdate;
 		lastUpdate = SDL_GetTicks();
-		if (accumulator >= 1.0f / updatesPerSecond)
+		if (accumulator >= 1000.0f / updatesPerSecond)
 		{
+			printf("%g\n", accumulator);
 			timeDelta = 1.0f / updatesPerSecond;
 			update();
-			accumulator -= 1.0f / updatesPerSecond;
+			accumulator -= 1000.0f / updatesPerSecond;
 		}
 	
 		draw();

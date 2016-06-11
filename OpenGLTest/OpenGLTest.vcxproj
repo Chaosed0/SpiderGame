@@ -192,6 +192,7 @@
     <None Include="Shaders\back.vert" />
     <None Include="Shaders\basic.vert" />
     <None Include="Shaders\lightcolor.frag" />
+    <None Include="Shaders\skinned.vert" />
     <None Include="Shaders\skybox.frag" />
     <None Include="Shaders\skybox.vert" />
     <None Include="Shaders\text.frag" />
