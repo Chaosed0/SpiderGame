@@ -276,7 +276,6 @@ int Game::loop()
 		lastUpdate = SDL_GetTicks();
 		if (accumulator >= 1000.0f / updatesPerSecond)
 		{
-			printf("%g\n", accumulator);
 			timeDelta = 1.0f / updatesPerSecond;
 			update();
 			accumulator -= 1000.0f / updatesPerSecond;

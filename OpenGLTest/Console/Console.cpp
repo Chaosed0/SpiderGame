@@ -123,7 +123,7 @@ void Console::print(const std::string& message)
 {
 	this->buffer[this->bufferEnd] = message;
 	this->bufferEnd = (this->bufferEnd+1)%buffer.size();
-	this->numBufferedLines = std::min(this->buffer.size(), this->numBufferedLines+1);
+	this->numBufferedLines = std::min((unsigned int)this->buffer.size(), this->numBufferedLines+1);
 }
 
 void Console::draw()
@@ -159,7 +159,7 @@ void Console::drawLine(std::string line, unsigned int top)
 {
 	unsigned int x = (unsigned int)xPadding;
 	unsigned int y = top;
-	unsigned int lineSize = std::min(line.size(), maxLineSize);
+	unsigned int lineSize = std::min((unsigned int)line.size(), maxLineSize);
 	float scale = 1.0f;
 	glm::ivec2 textureSize = font.getTextureSize();
 
