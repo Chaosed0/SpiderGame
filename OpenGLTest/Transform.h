@@ -32,6 +32,8 @@ public:
 
 	glm::mat4 matrix() const;
 
+	void* userData;
+
 	static const Transform identity;
 private:
 	glm::vec3 position;

@@ -84,9 +84,10 @@ void Renderer::update(float dt)
 		std::string animName = iter->second.animName;
 		iter->second.time += dt;
 
-		// Cheat and get the first mesh
-		auto& animationMap = iter->second.model.meshes[0].animationData.animations;
+		auto& animationMap = iter->second.model.animationData.animations;
 		auto animIter = animationMap.find(animName);
+
+		// Loop if we're past the end
 		if (iter->second.time > animIter->second.duration) {
 			iter->second.time -= animIter->second.duration;
 		}
@@ -123,24 +124,32 @@ void Renderer::draw()
 		glCheckError();
 	}
 
+	// Render each renderable we have loaded through getHandle
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
-		const Model& model = iter->second.model;
-		const Shader& shader = iter->second.shader;
-		Transform transform = iter->second.transform;
+		const Renderable& renderable = iter->second;
+		const Model& model = renderable.model;
+		const Shader& shader = renderable.shader;
+		Transform transform = renderable.transform;
 
 		shader.use();
 		shader.setModelMatrix(&transform.matrix()[0][0]);
 
+		std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time);
 		for (unsigned int i = 0; i < model.meshes.size(); i++) {
 			Mesh mesh = model.meshes[i];
 			mesh.material.apply(shader);
 
-			if (mesh.animationData.animations.size() > 0 && iter->second.animName.size() > 0) {
-				std::vector<Transform> boneTransforms = mesh.getBoneTransforms(iter->second.animName, iter->second.time);
-				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
-					std::stringstream sstream;
-					sstream << "bones[" << j << "]";
-					glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransforms[j].matrix()[0][0]);
+			// If we are animating, load the bone transforms
+			if (mesh.boneData.size() > 0 && renderable.animName.size() > 0) {
+				if (nodeTransforms.size() <= 0) {
+					fprintf(stderr, "Tried to animate %s but no animation was found", renderable.animName.c_str());
+				} else {
+					std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
+					for (unsigned int j = 0; j < boneTransforms.size(); j++) {
+						std::stringstream sstream;
+						sstream << "bones[" << j << "]";
+						glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransforms[j][0][0]);
+					}
 				}
 			}
 			

@@ -26,7 +26,7 @@ Transform::Transform(glm::vec3 position, glm::quat rotation, glm::vec3 scale)
 
 Transform::~Transform()
 {
-	for (int i = 0; i < children.size(); i++) {
+	for (unsigned int i = 0; i < children.size(); i++) {
 		children[i]->setParent(nullptr);
 	}
 
@@ -78,7 +78,7 @@ void Transform::addChild(Transform* child)
 
 void Transform::removeChild(Transform* child)
 {
-	for (int i = 0; i < children.size(); i++) {
+	for (unsigned int i = 0; i < children.size(); i++) {
 		if (children[i] == child) {
 			children[i] = children[children.size()-1];
 			children.pop_back();

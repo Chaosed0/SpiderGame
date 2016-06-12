@@ -29,8 +29,8 @@
 #include "Framework/Components/RigidbodyMotorComponent.h"
 
 const static int updatesPerSecond = 60;
-const static int windowWidth = 800;
-const static int windowHeight = 600;
+const static int windowWidth = 1280;
+const static int windowHeight = 1024;
 
 // Temp stuff for player movement, will be refactored later
 static float cameraHorizontal = 0.0f;
@@ -186,7 +186,8 @@ int Game::setup()
 	pointLightModel = modelLoader.loadModelById("pointLight");
 	skyboxModel = modelLoader.loadModelById("skybox");
 
-	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
+	// Load some mushrooms
+	/*Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 
 	std::default_random_engine generator;
 	generator.seed((unsigned int)time(NULL));
@@ -195,7 +196,7 @@ int Game::setup()
 	std::uniform_real_distribution<float> axisRand(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
 
-	/*for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 10; i++) {
 		Entity shroom;
 		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
 		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
@@ -218,11 +219,13 @@ int Game::setup()
 		entities.push_back(shroom);
 	}*/
 
-	Model testModel = modelLoader.loadModelFromPath("assets/models/box.fbx");
+	// Load and animate a model
+	Model testModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 	unsigned int testHandle = renderer.getHandle(testModel, skinnedShader);
-	renderer.setAnimation(testHandle, "AnimStack::Armature|anim");
+	renderer.setAnimation(testHandle, "AnimStack::Armature|move");
 	renderer.updateTransform(testHandle, Transform::identity);
 
+	// Initialize the player
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
 	CollisionComponent* playerCollisionComponent = player.addComponent<CollisionComponent>();
 	PlayerComponent* playerComponent = player.addComponent<PlayerComponent>();

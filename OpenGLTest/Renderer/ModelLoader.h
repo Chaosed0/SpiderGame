@@ -26,12 +26,12 @@ private:
 	std::unordered_map<std::string, Model> modelIdCache;
 	std::unordered_map<std::string, Texture> textureCache;
 
-	void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes);
-	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
-	AnimationData loadBoneData(aiMesh* mesh, std::vector<Vertex>& vertices, const aiScene* scene);
+	Model processRootNode(aiNode* node, const aiScene* scene);
+	Mesh processMesh(aiMesh* mesh, const aiScene* scene, std::unordered_map<std::string, unsigned int> nodeIdMap);
+	void ModelLoader::loadBoneData(aiMesh* mesh, const aiScene* scene, std::unordered_map<std::string, unsigned int> nodeIdMap, std::vector<VertexBoneData>& vertexBoneData, std::vector<BoneData>& boneData);
 	std::vector<Texture> loadMaterialTextures(const std::string& relDir, aiMaterial* mat, aiTextureType type);
 
 	glm::vec3 aiToGlm(aiVector3D vec3);
 	glm::quat aiToGlm(aiQuaternion quat);
-	Transform aiToGame(aiMatrix4x4 transform);
+	glm::mat4 aiToGlm(aiMatrix4x4 mat4);
 };

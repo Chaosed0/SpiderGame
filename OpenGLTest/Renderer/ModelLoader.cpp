@@ -26,9 +26,8 @@ Model ModelLoader::loadModelFromPath(const std::string& path)
 
 		std::vector<Mesh> meshes;
 		this->curDir = path.substr(0, path.find_last_of('/')+1);
-		this->processNode(scene->mRootNode, scene, meshes);
+		Model model = this->processRootNode(scene->mRootNode, scene);
 
-		Model model(meshes);
 		this->modelIdCache[path] = model;
 		model.id = nextId;
 		nextId++;
@@ -53,19 +52,104 @@ void ModelLoader::assignModelToId(const std::string& id, std::vector<Mesh> meshe
 	this->modelIdCache[id] = model;
 }
 
-void ModelLoader::processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes)
+Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 {
-	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes.push_back(this->processMesh(mesh, scene));
+	std::vector<Mesh> meshes;
+	AnimationData animationData;
+
+	std::vector<aiNode*> nodesWithMeshes;
+	std::vector<aiNode*> processQueue;
+	processQueue.push_back(rootNode);
+
+	// First process the node hierarchy
+	while (processQueue.size() > 0) {
+		aiNode* ai_node = processQueue.back();
+		processQueue.pop_back();
+		std::string nodeName(ai_node->mName.data);
+
+		for (unsigned int i = 0; i < ai_node->mNumChildren; i++) {
+			processQueue.push_back(ai_node->mChildren[i]);
+		}
+
+		if (ai_node->mNumMeshes > 0) {
+			nodesWithMeshes.push_back(ai_node);
+		}
+
+		unsigned int nodeId = animationData.nodes.size();
+		animationData.nodeIdMap[nodeName] = nodeId;
+
+		ModelNode node;
+		node.transform = aiToGlm(ai_node->mTransformation);
+		if (ai_node->mParent != NULL) {
+			auto iter = animationData.nodeIdMap.find(ai_node->mParent->mName.data);
+			assert(iter != animationData.nodeIdMap.end());
+			// Assign parent
+			node.parent = iter->second;
+			// Assign self to parent's children
+			animationData.nodes[iter->second].children.push_back(nodeId);
+			node.isRoot = false;
+		} else {
+			node.isRoot = true;
+		}
+
+		animationData.nodes.push_back(node);
 	}
 
-	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		this->processNode(node->mChildren[i], scene, meshes);
+	// Find meshes, passing it the nodes (to allow mapping between bones/nodes)
+	for (unsigned int i = 0; i < nodesWithMeshes.size(); i++) {
+		aiNode* node = nodesWithMeshes[i];
+		for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+			aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+			meshes.push_back(this->processMesh(mesh, scene, animationData.nodeIdMap));
+		}
 	}
+
+	// Process the animations
+	for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
+		aiAnimation* ai_animation = scene->mAnimations[i];
+		std::string animName(ai_animation->mName.data);
+		Animation& animation = animationData.animations[animName];
+
+		animation.duration = (float)(ai_animation->mDuration / ai_animation->mTicksPerSecond);
+		
+		for (unsigned int j = 0; j < ai_animation->mNumChannels; j++) {
+			aiNodeAnim* ai_channel = ai_animation->mChannels[j];
+			std::string nodeName = ai_channel->mNodeName.data;
+
+			auto iter = animationData.nodeIdMap.find(nodeName);
+			assert(iter != animationData.nodeIdMap.end());
+
+			Channel channel;
+			channel.nodeId = iter->second;
+			channel.positionKeys.resize(ai_channel->mNumPositionKeys);
+			channel.rotationKeys.resize(ai_channel->mNumRotationKeys);
+			channel.scaleKeys.resize(ai_channel->mNumScalingKeys);
+
+			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
+				aiVectorKey ai_posKey = ai_channel->mPositionKeys[k];
+				channel.positionKeys[k].first = (float)(ai_posKey.mTime / ai_animation->mTicksPerSecond);
+				channel.positionKeys[k].second = glm::vec3(ai_posKey.mValue.x, ai_posKey.mValue.y, ai_posKey.mValue.z);
+			}
+			for (unsigned int k = 0; k < ai_channel->mNumRotationKeys; k++) {
+				aiQuatKey ai_rotKey = ai_channel->mRotationKeys[k];
+				channel.rotationKeys[k].first = (float)(ai_rotKey.mTime / ai_animation->mTicksPerSecond);
+				channel.rotationKeys[k].second = glm::quat(ai_rotKey.mValue.x, ai_rotKey.mValue.y, ai_rotKey.mValue.z, ai_rotKey.mValue.w);
+			}
+			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
+				aiVectorKey ai_scaleKey = ai_channel->mScalingKeys[k];
+				channel.scaleKeys[k].first = (float)(ai_scaleKey.mTime / ai_animation->mTicksPerSecond);
+				channel.scaleKeys[k].second = glm::vec3(ai_scaleKey.mValue.x, ai_scaleKey.mValue.y, ai_scaleKey.mValue.z);
+			}
+
+			animation.channelIdMap[channel.nodeId] = animation.channels.size();
+			animation.channels.push_back(channel);
+		}
+	}
+
+	return Model(meshes, animationData);
 }
 
-Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene)
+Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene, std::unordered_map<std::string, unsigned int> nodeIdMap)
 {
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
@@ -101,112 +185,33 @@ Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene)
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 	}
 
-	AnimationData animationData = loadBoneData(mesh, vertices, scene);
+	std::vector<VertexBoneData> vertexBoneData;
+	std::vector<BoneData> boneData;
+	loadBoneData(mesh, scene, nodeIdMap, vertexBoneData, boneData);
 
-	return Mesh(vertices, indices, textures, animationData);
+	return Mesh(vertices, indices, textures, vertexBoneData, boneData);
 }
 
-AnimationData ModelLoader::loadBoneData(aiMesh* mesh, std::vector<Vertex>& vertices, const aiScene* scene)
+void ModelLoader::loadBoneData(aiMesh* mesh, const aiScene* scene, std::unordered_map<std::string, unsigned int> nodeIdMap, std::vector<VertexBoneData>& vertexBoneData, std::vector<BoneData>& boneData)
 {
-	AnimationData animationData;
-
-	animationData.boneInfo.resize(mesh->mNumBones);
+	if (mesh->mNumBones > 0) {
+		boneData.resize(mesh->mNumBones);
+		vertexBoneData.resize(mesh->mNumVertices);
+	}
 
 	for (unsigned int i = 0; i < mesh->mNumBones; i++) {
 		aiBone* bone = mesh->mBones[i];
 		std::string boneName(bone->mName.data);
-		animationData.boneIdMap[boneName] = i;
 
-		aiMatrix4x4 offset = bone->mOffsetMatrix;
-		animationData.boneInfo[i].BoneOffset = glm::mat4(
-			offset.a1, offset.a2, offset.a3, offset.a4,
-			offset.b1, offset.b2, offset.b3, offset.b4,
-			offset.c1, offset.c2, offset.c3, offset.c4,
-			offset.d1, offset.d2, offset.d3, offset.d4 );
+		auto iter = nodeIdMap.find(boneName);
+		assert(iter != nodeIdMap.end());
+		boneData[i].nodeId = iter->second;
+		boneData[i].boneOffset = aiToGlm(bone->mOffsetMatrix);
 
 		for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-			vertices[bone->mWeights[j].mVertexId].addWeight(i, bone->mWeights[j].mWeight);
+			vertexBoneData[bone->mWeights[j].mVertexId].addWeight(i, bone->mWeights[j].mWeight);
 		}
 	}
-
-	std::vector<aiNode*> traverseQueue;
-	traverseQueue.push_back(scene->mRootNode);
-	while (traverseQueue.size() > 0) {
-		aiNode* node = traverseQueue.back();
-		traverseQueue.pop_back();
-
-		for (int i = 0; i < node->mNumChildren; i++) {
-			traverseQueue.push_back(node->mChildren[i]);
-		}
-
-		std::string boneName(node->mName.data);
-		auto iter = animationData.boneIdMap.find(boneName);
-		if (iter == animationData.boneIdMap.end()) {
-			// Not a node we care about
-			continue;
-		}
-
-		BoneInfo boneInfo = animationData.boneInfo[iter->second];
-		boneInfo.transform = aiToGame(node->mTransformation);
-
-		if (node->mParent == NULL) {
-			continue;
-		}
-
-		std::string parentBoneName(node->mParent->mName.data);
-		auto parentIter = animationData.boneIdMap.find(parentBoneName);
-		if (parentIter == animationData.boneIdMap.end()) {
-			// Parent not found, but we were found? This could be bad...
-			continue;
-		}
-
-		BoneInfo parentBoneInfo = animationData.boneInfo[parentIter->second];
-		parentBoneInfo.transform.addChild(&boneInfo.transform);
-	}
-
-	std::unordered_map<std::string, Animation>& animations = animationData.animations;
-	for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
-		aiAnimation* ai_animation = scene->mAnimations[i];
-		std::string animName(ai_animation->mName.data);
-		Animation& animation = animations[animName];
-
-		animation.duration = ai_animation->mDuration / ai_animation->mTicksPerSecond;
-		
-		for (unsigned int j = 0; j < ai_animation->mNumChannels; j++) {
-			aiNodeAnim* ai_channel = ai_animation->mChannels[j];
-			std::string boneName = ai_channel->mNodeName.data;
-			auto iter = animationData.boneIdMap.find(boneName);
-			if (iter == animationData.boneIdMap.end()) {
-				// We don't care about this node - it doesn't have any weight
-				continue;
-			}
-
-			animation.channels.emplace_back();
-			Channel& channel = animation.channels.back();
-			channel.boneId = animationData.boneIdMap[boneName];
-			
-			channel.positionKeys.resize(ai_channel->mNumPositionKeys);
-			channel.rotationKeys.resize(ai_channel->mNumRotationKeys);
-			channel.scaleKeys.resize(ai_channel->mNumScalingKeys);
-			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
-				aiVectorKey ai_posKey = ai_channel->mPositionKeys[k];
-				channel.positionKeys[k].first = ai_posKey.mTime / ai_animation->mTicksPerSecond;
-				channel.positionKeys[k].second = glm::vec3(ai_posKey.mValue.x, ai_posKey.mValue.y, ai_posKey.mValue.z);
-			}
-			for (unsigned int k = 0; k < ai_channel->mNumRotationKeys; k++) {
-				aiQuatKey ai_rotKey = ai_channel->mRotationKeys[k];
-				channel.rotationKeys[k].first = ai_rotKey.mTime / ai_animation->mTicksPerSecond;
-				channel.rotationKeys[k].second = glm::quat(ai_rotKey.mValue.x, ai_rotKey.mValue.y, ai_rotKey.mValue.z, ai_rotKey.mValue.w);
-			}
-			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
-				aiVectorKey ai_scaleKey = ai_channel->mScalingKeys[k];
-				channel.scaleKeys[k].first = ai_scaleKey.mTime / ai_animation->mTicksPerSecond;
-				channel.scaleKeys[k].second = glm::vec3(ai_scaleKey.mValue.x, ai_scaleKey.mValue.y, ai_scaleKey.mValue.z);
-			}
-		}
-	}
-
-	return animationData;
 }
 
 std::vector<Texture> ModelLoader::loadMaterialTextures(const std::string& relDir, aiMaterial* mat, aiTextureType type)
@@ -244,10 +249,11 @@ glm::quat ModelLoader::aiToGlm(aiQuaternion quat)
 	return glm::quat(quat.x, quat.y, quat.z, quat.w);
 }
 
-Transform ModelLoader::aiToGame(aiMatrix4x4 transform)
+glm::mat4 ModelLoader::aiToGlm(aiMatrix4x4 mat4)
 {
-	aiVector3D scaling, position;
-	aiQuaternion rotation;
-	transform.Decompose(scaling, rotation, position);
-	return Transform(aiToGlm(position), aiToGlm(rotation), aiToGlm(scaling));
+	return glm::mat4(
+			mat4.a1, mat4.a2, mat4.a3, mat4.a4,
+			mat4.b1, mat4.b2, mat4.b3, mat4.b4,
+			mat4.c1, mat4.c2, mat4.c3, mat4.c4,
+			mat4.d1, mat4.d2, mat4.d3, mat4.d4 );
 }

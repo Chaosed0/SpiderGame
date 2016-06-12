@@ -8,11 +8,13 @@
 Mesh::Mesh()
 {}
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures, AnimationData animationData)
-	: animationData(animationData)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures, std::vector<VertexBoneData> vertexBoneData, std::vector<BoneData> boneData)
+	: boneData(boneData)
 {
 	this->nVertices = vertices.size();
 	this->nIndices = indices.size();
+
+	assert(vertexBoneData.size() == 0 || vertexBoneData.size() == vertices.size());
 
 	glGenVertexArrays(1, &this->VAO);
 	glGenBuffers(1, &this->VBO);
@@ -40,13 +42,20 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, texCoords));
 	glCheckError();
 
-	glEnableVertexAttribArray(3);
-	glVertexAttribIPointer(3, MAX_BONES_PER_VERTEX, GL_UNSIGNED_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, boneIds));
-	glCheckError();
+	if (vertexBoneData.size() > 0) {
+		glGenBuffers(1, &this->VBO_bone);
+		glBindBuffer(GL_ARRAY_BUFFER, this->VBO_bone);
+		glBufferData(GL_ARRAY_BUFFER, vertexBoneData.size() * sizeof(VertexBoneData), &vertexBoneData[0], GL_STATIC_DRAW);
+		glCheckError();
 
-	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, boneWeights));
-	glCheckError();
+		glEnableVertexAttribArray(3);
+		glVertexAttribIPointer(3, MAX_BONES_PER_VERTEX, GL_UNSIGNED_INT, sizeof(VertexBoneData), (GLvoid*)offsetof(VertexBoneData, boneIds));
+		glCheckError();
+
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (GLvoid*)offsetof(VertexBoneData, boneWeights));
+		glCheckError();
+	}
 
 	glBindVertexArray(0);
 	glCheckError();
@@ -79,7 +88,7 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 }
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures)
-	: Mesh(vertices, indices, textures, AnimationData())
+	: Mesh(vertices, indices, textures, std::vector<VertexBoneData>(), std::vector<BoneData>())
 { }
 
 glm::vec3 interpolatePosition(const Channel& channel, float time)
@@ -163,25 +172,64 @@ glm::vec3 interpolateScale(const Channel& channel, float time)
 	return glm::mix(p1, p2, lerp);
 }
 
-std::vector<Transform> Mesh::getBoneTransforms(const std::string& animName, float time)
+std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nodeTransforms) const
 {
-	std::vector<Transform> boneTransforms;
-	auto iter = animationData.animations.find(animName);
-	if (iter == animationData.animations.end()) {
-		return boneTransforms;
-	}
+	std::vector<glm::mat4> boneTransforms;
+	boneTransforms.resize(this->boneData.size());
 
-	Animation& animation = iter->second;
-	for (unsigned int i = 0; i < animation.channels.size(); i++) {
-		Channel& channel = animation.channels[i];
-		BoneInfo& boneInfo = animationData.boneInfo[channel.boneId];
-
-		glm::vec3 pos = interpolatePosition(channel, time);
-		glm::quat rot = interpolateRotation(channel, time);
-		glm::vec3 scale = interpolateScale(channel, time);
-		Transform transform(pos, rot, scale);
-		boneTransforms.push_back(transform);
+	for (unsigned int i = 0; i < this->boneData.size(); i++) {
+		const BoneData& boneData = this->boneData[i];
+		glm::mat4 globalInverse = glm::inverse(nodeTransforms[0]);
+		glm::mat4 nodeTransform = nodeTransforms[boneData.nodeId];
+		boneTransforms[i] = globalInverse * nodeTransform * boneData.boneOffset;
 	}
 	
 	return boneTransforms;
+}
+
+std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, float time) const
+{
+	std::vector<glm::mat4> nodeTransforms;
+	nodeTransforms.resize(animationData.nodes.size());
+
+	auto iter = animationData.animations.find(animName);
+	if (iter == animationData.animations.end()) {
+		return nodeTransforms;
+	}
+
+	const Animation& animation = iter->second;
+	std::vector<std::pair<unsigned int, glm::mat4>> processQueue;
+	processQueue.push_back(std::make_pair(0, glm::mat4()));
+
+	while (processQueue.size() > 0) {
+		auto pair = processQueue.back();
+		processQueue.pop_back();
+
+		unsigned int nodeId = pair.first;
+		const ModelNode& node = animationData.nodes[nodeId];
+
+		glm::mat4 parentTransform = pair.second;
+		glm::mat4 nodeTransform;
+
+		auto channelIdIter = animation.channelIdMap.find(nodeId);
+		if (channelIdIter == animation.channelIdMap.end()) {
+			// Not an animated node
+			nodeTransform = node.transform;
+		} else {
+			const Channel& channel = animation.channels[channelIdIter->second];
+			glm::vec3 pos = interpolatePosition(channel, time);
+			glm::quat rot = interpolateRotation(channel, time);
+			glm::vec3 scale = interpolateScale(channel, time);
+			Transform transform(pos, rot, scale);
+			nodeTransform = transform.matrix();
+		}
+		glm::mat4 globalTransform = parentTransform * nodeTransform;
+		nodeTransforms[nodeId] = globalTransform;
+
+		for (unsigned int i = 0; i < node.children.size(); i++) {
+			processQueue.push_back(std::make_pair(node.children[i], globalTransform));
+		}
+	}
+
+	return nodeTransforms;
 }

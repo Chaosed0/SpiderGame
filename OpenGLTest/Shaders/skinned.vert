@@ -27,7 +27,7 @@ void main()
 	vec4 normal_anim = bone_transform * vec4(normal_in, 0.0f);
 
     gl_Position = projection * view * model * pos_anim;
-	fragPos = vec3(view * model * vec4(position, 1.0f));
+	fragPos = vec3(view * model * pos_anim);
 	normal = (transpose(inverse(view * model)) * normal_anim).xyz;
 	textureCoord = textureCoord_in;
 } 
