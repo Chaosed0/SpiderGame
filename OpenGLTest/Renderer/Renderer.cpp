@@ -67,6 +67,32 @@ void Renderer::updateTransform(unsigned int handle, const Transform& transform)
 	}
 }
 
+void Renderer::setAnimation(unsigned int handle, const std::string& animName)
+{
+	auto iter = renderableMap.find(handle);
+	if (iter == renderableMap.end()) {
+		return;
+	}
+
+	iter->second.animName = animName;
+	iter->second.time = 0.0f;
+}
+
+void Renderer::update(float dt)
+{
+	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
+		std::string animName = iter->second.animName;
+		iter->second.time += dt;
+
+		// Cheat and get the first mesh
+		auto& animationMap = iter->second.model.meshes[0].animationData.animations;
+		auto animIter = animationMap.find(animName);
+		if (iter->second.time > animIter->second.duration) {
+			iter->second.time -= animIter->second.duration;
+		}
+	}
+}
+
 void Renderer::draw()
 {
 	for (auto iter = shaderMap.begin(); iter != shaderMap.end(); iter++) {
@@ -108,6 +134,16 @@ void Renderer::draw()
 		for (unsigned int i = 0; i < model.meshes.size(); i++) {
 			Mesh mesh = model.meshes[i];
 			mesh.material.apply(shader);
+
+			if (mesh.animationData.animations.size() > 0 && iter->second.animName.size() > 0) {
+				std::vector<Transform> boneTransforms = mesh.getBoneTransforms(iter->second.animName, iter->second.time);
+				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
+					std::stringstream sstream;
+					sstream << "bones[" << j << "]";
+					glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransforms[j].matrix()[0][0]);
+				}
+			}
+			
 			glBindVertexArray(mesh.VAO);
 			glDrawElements(GL_TRIANGLES, mesh.nIndices, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);

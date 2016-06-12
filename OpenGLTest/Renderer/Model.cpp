@@ -41,11 +41,11 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 	glCheckError();
 
 	glEnableVertexAttribArray(3);
-	glVertexAttribIPointer(3, MAX_BONES_PER_VERTEX, GL_UNSIGNED_INT, sizeof(VertexBoneData), (GLvoid*)offsetof(VertexBoneData, ids));
+	glVertexAttribIPointer(3, MAX_BONES_PER_VERTEX, GL_UNSIGNED_INT, sizeof(Vertex), (GLvoid*)offsetof(Vertex, boneIds));
 	glCheckError();
 
 	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (GLvoid*)offsetof(VertexBoneData, weights));
+	glVertexAttribPointer(4, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, boneWeights));
 	glCheckError();
 
 	glBindVertexArray(0);
@@ -165,9 +165,10 @@ glm::vec3 interpolateScale(const Channel& channel, float time)
 
 std::vector<Transform> Mesh::getBoneTransforms(const std::string& animName, float time)
 {
+	std::vector<Transform> boneTransforms;
 	auto iter = animationData.animations.find(animName);
 	if (iter == animationData.animations.end()) {
-		return std::vector<Transform>{};
+		return boneTransforms;
 	}
 
 	Animation& animation = iter->second;
@@ -178,5 +179,9 @@ std::vector<Transform> Mesh::getBoneTransforms(const std::string& animName, floa
 		glm::vec3 pos = interpolatePosition(channel, time);
 		glm::quat rot = interpolateRotation(channel, time);
 		glm::vec3 scale = interpolateScale(channel, time);
+		Transform transform(pos, rot, scale);
+		boneTransforms.push_back(transform);
 	}
+	
+	return boneTransforms;
 }

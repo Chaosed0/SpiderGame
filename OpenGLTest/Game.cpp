@@ -29,8 +29,8 @@
 #include "Framework/Components/RigidbodyMotorComponent.h"
 
 const static int updatesPerSecond = 60;
-const static int windowWidth = 1280;
-const static int windowHeight = 1024;
+const static int windowWidth = 800;
+const static int windowHeight = 600;
 
 // Temp stuff for player movement, will be refactored later
 static float cameraHorizontal = 0.0f;
@@ -138,8 +138,9 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(floorBody);
 
 	/* Scene */
-	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/white.frag");
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
+	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
+	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/white.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
 
 	glm::vec3 pointLightPositions[] = {
@@ -194,7 +195,7 @@ int Game::setup()
 	std::uniform_real_distribution<float> axisRand(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
 
-	for (int i = 0; i < 10; i++) {
+	/*for (int i = 0; i < 10; i++) {
 		Entity shroom;
 		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
 		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
@@ -215,7 +216,12 @@ int Game::setup()
 		unsigned int shroomHandle = renderer.getHandle(shroomModel, shader);
 		modelComponent->rendererHandle = shroomHandle;
 		entities.push_back(shroom);
-	}
+	}*/
+
+	Model testModel = modelLoader.loadModelFromPath("assets/models/box.fbx");
+	unsigned int testHandle = renderer.getHandle(testModel, skinnedShader);
+	renderer.setAnimation(testHandle, "AnimStack::Armature|anim");
+	renderer.updateTransform(testHandle, Transform::identity);
 
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
 	CollisionComponent* playerCollisionComponent = player.addComponent<CollisionComponent>();
@@ -312,6 +318,8 @@ void Game::update()
 	while (SDL_PollEvent(&event)) {
 		this->handleEvent(event);
 	}
+
+	renderer.update(timeDelta);
 
 	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), cameraHorizontal));
 	camera.getComponent<TransformComponent>()->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));

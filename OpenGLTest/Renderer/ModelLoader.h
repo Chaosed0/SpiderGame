@@ -28,7 +28,7 @@ private:
 
 	void processNode(aiNode* node, const aiScene* scene, std::vector<Mesh>& meshes);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
-	AnimationData loadBoneData(aiMesh* mesh, const aiScene* scene);
+	AnimationData loadBoneData(aiMesh* mesh, std::vector<Vertex>& vertices, const aiScene* scene);
 	std::vector<Texture> loadMaterialTextures(const std::string& relDir, aiMaterial* mat, aiTextureType type);
 
 	glm::vec3 aiToGlm(aiVector3D vec3);

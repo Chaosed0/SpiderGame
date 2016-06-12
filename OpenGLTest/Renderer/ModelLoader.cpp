@@ -101,16 +101,15 @@ Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene)
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 	}
 
-	AnimationData animationData = loadBoneData(mesh, scene);
+	AnimationData animationData = loadBoneData(mesh, vertices, scene);
 
 	return Mesh(vertices, indices, textures, animationData);
 }
 
-AnimationData ModelLoader::loadBoneData(aiMesh* mesh, const aiScene* scene)
+AnimationData ModelLoader::loadBoneData(aiMesh* mesh, std::vector<Vertex>& vertices, const aiScene* scene)
 {
 	AnimationData animationData;
 
-	animationData.vertexBoneData.resize(mesh->mNumVertices);
 	animationData.boneInfo.resize(mesh->mNumBones);
 
 	for (unsigned int i = 0; i < mesh->mNumBones; i++) {
@@ -126,7 +125,7 @@ AnimationData ModelLoader::loadBoneData(aiMesh* mesh, const aiScene* scene)
 			offset.d1, offset.d2, offset.d3, offset.d4 );
 
 		for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-			animationData.vertexBoneData[bone->mWeights[j].mVertexId].addWeight(i, bone->mWeights[j].mWeight);
+			vertices[bone->mWeights[j].mVertexId].addWeight(i, bone->mWeights[j].mWeight);
 		}
 	}
 

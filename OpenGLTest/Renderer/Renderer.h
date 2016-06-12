@@ -44,6 +44,9 @@ struct Renderable
 	const Shader& shader;
 	const Model& model;
 	Transform transform;
+
+	std::string animName;
+	float time;
 };
 
 class Renderer
@@ -61,7 +64,10 @@ public:
 
 	unsigned int getHandle(const Model& model, const Shader& shader);
 	void updateTransform(unsigned int handle, const Transform& transform);
+	void setAnimation(unsigned int handle, const std::string& animation);
+
 	void draw();
+	void update(float dt);
 private:
 	Camera* camera;
 

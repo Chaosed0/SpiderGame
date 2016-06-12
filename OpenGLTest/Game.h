@@ -50,6 +50,7 @@ private:
 	ModelLoader modelLoader;
 
 	Shader shader;
+	Shader skinnedShader;
 	Shader lightShader;
 	Shader skyboxShader;
 

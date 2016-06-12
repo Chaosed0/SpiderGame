@@ -18,16 +18,16 @@ out vec2 textureCoord;
 
 void main()
 {
-	mat4 bone_transform = bones[BoneIDs[0]] * weights[0];
-	bone_transform += bones[BoneIDs[1]] * weights[1];
-	bone_transform += bones[BoneIDs[2]] * weights[2];
-	bone_transform += bones[BoneIDs[3]] * weights[3];
+	mat4 bone_transform = bones[boneIDs[0]] * weights[0];
+	bone_transform += bones[boneIDs[1]] * weights[1];
+	bone_transform += bones[boneIDs[2]] * weights[2];
+	bone_transform += bones[boneIDs[3]] * weights[3];
 
 	vec4 pos_anim = bone_transform * vec4(position, 1.0f);
-	vec4 normal_anim = bone_transform * vec4(normal_in, 0.0f)
+	vec4 normal_anim = bone_transform * vec4(normal_in, 0.0f);
 
     gl_Position = projection * view * model * pos_anim;
 	fragPos = vec3(view * model * vec4(position, 1.0f));
-	normal = mat3(transpose(inverse(view * model))) * normal_anim;
+	normal = (transpose(inverse(view * model)) * normal_anim).xyz;
 	textureCoord = textureCoord_in;
 } 

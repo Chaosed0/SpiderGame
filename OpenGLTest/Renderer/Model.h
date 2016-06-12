@@ -19,22 +19,19 @@
 
 struct Vertex
 {
+	Vertex() : boneWeights{0.0f}, boneIds{0} {}
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 texCoords;
-};
 
-struct VertexBoneData
-{
-	unsigned int ids[MAX_BONES_PER_VERTEX];
-	float weights[MAX_BONES_PER_VERTEX];
+	unsigned int boneIds[MAX_BONES_PER_VERTEX];
+	float boneWeights[MAX_BONES_PER_VERTEX];
 
-	VertexBoneData() : weights{0.0f}, ids{0} {}
 	void addWeight(unsigned int id, float weight) {
 		for (int i = 0; i < MAX_BONES_PER_VERTEX; i++) {
-			if (weights[i] == 0) {
-				weights[i] = weight;
-				ids[i] = id;
+			if (boneWeights[i] == 0) {
+				boneWeights[i] = weight;
+				boneIds[i] = id;
 				return;
 			}
 		}
@@ -68,7 +65,6 @@ struct AnimationData
 	std::unordered_map<std::string, Animation> animations;
 	std::unordered_map<std::string, unsigned int> boneIdMap;
 	std::vector<BoneInfo> boneInfo;
-	std::vector<VertexBoneData> vertexBoneData;
 };
 
 struct Mesh
