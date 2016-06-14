@@ -1,6 +1,8 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <Windows.h>
 #include <GL/glew.h>
@@ -13,7 +15,6 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Material.h"
-#include "Transform.h"
 
 #define MAX_BONES_PER_VERTEX 4
 
@@ -79,6 +80,7 @@ struct Animation
 
 struct ModelNode
 {
+	std::string name;
 	glm::mat4 transform;
 	bool isRoot;
 	unsigned int parent;

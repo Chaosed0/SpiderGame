@@ -220,8 +220,9 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 			glm::vec3 pos = interpolatePosition(channel, time);
 			glm::quat rot = interpolateRotation(channel, time);
 			glm::vec3 scale = interpolateScale(channel, time);
-			Transform transform(pos, rot, scale);
-			nodeTransform = transform.matrix();
+			nodeTransform = glm::scale(nodeTransform, scale);
+			nodeTransform = glm::rotate(nodeTransform, glm::angle(rot), glm::axis(rot));
+			nodeTransform = glm::translate(nodeTransform, pos);
 		}
 		glm::mat4 globalTransform = parentTransform * nodeTransform;
 		nodeTransforms[nodeId] = globalTransform;
@@ -229,6 +230,9 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 		for (unsigned int i = 0; i < node.children.size(); i++) {
 			processQueue.push_back(std::make_pair(node.children[i], globalTransform));
 		}
+
+		glm::vec4 test = globalTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		//printf("%s:\t\t%g %g %g\n", node.name.c_str(), test.x, test.y, test.z);
 	}
 
 	return nodeTransforms;

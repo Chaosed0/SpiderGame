@@ -34,7 +34,7 @@ bool Texture::loadFromFile(const std::string& imageLocation)
 {
 	SDL_Surface* texture = IMG_Load(imageLocation.c_str());
 	if (texture == NULL) {
-		fprintf(stderr, "Could not load texture %s\n", imageLocation.c_str());
+		fprintf(stderr, "Could not load texture %s: %s\n", imageLocation.c_str(), IMG_GetError());
 		return false;
 	}
 

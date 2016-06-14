@@ -139,17 +139,16 @@ void Renderer::draw()
 			Mesh mesh = model.meshes[i];
 			mesh.material.apply(shader);
 
-			// If we are animating, load the bone transforms
-			if (mesh.boneData.size() > 0 && renderable.animName.size() > 0) {
-				if (nodeTransforms.size() <= 0) {
-					fprintf(stderr, "Tried to animate %s but no animation was found", renderable.animName.c_str());
-				} else {
-					std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
-					for (unsigned int j = 0; j < boneTransforms.size(); j++) {
-						std::stringstream sstream;
-						sstream << "bones[" << j << "]";
-						glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransforms[j][0][0]);
+			if (nodeTransforms.size() > 0) {
+				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
+				for (unsigned int j = 0; j < 4; j++) {
+					std::stringstream sstream;
+					sstream << "bones[" << j << "]";
+					glm::mat4 boneTransform;
+					if (j < boneTransforms.size()) {
+						boneTransform = boneTransforms[j];
 					}
+					glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransform[0][0]);
 				}
 			}
 			

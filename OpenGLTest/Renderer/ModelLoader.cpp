@@ -67,10 +67,6 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 		processQueue.pop_back();
 		std::string nodeName(ai_node->mName.data);
 
-		for (unsigned int i = 0; i < ai_node->mNumChildren; i++) {
-			processQueue.push_back(ai_node->mChildren[i]);
-		}
-
 		if (ai_node->mNumMeshes > 0) {
 			nodesWithMeshes.push_back(ai_node);
 		}
@@ -79,6 +75,7 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 		animationData.nodeIdMap[nodeName] = nodeId;
 
 		ModelNode node;
+		node.name = nodeName;
 		node.transform = aiToGlm(ai_node->mTransformation);
 		if (ai_node->mParent != NULL) {
 			auto iter = animationData.nodeIdMap.find(ai_node->mParent->mName.data);
@@ -93,6 +90,10 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 		}
 
 		animationData.nodes.push_back(node);
+
+		for (unsigned int i = 0; i < ai_node->mNumChildren; i++) {
+			processQueue.push_back(ai_node->mChildren[i]);
+		}
 	}
 
 	// Find meshes, passing it the nodes (to allow mapping between bones/nodes)
@@ -128,17 +129,17 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
 				aiVectorKey ai_posKey = ai_channel->mPositionKeys[k];
 				channel.positionKeys[k].first = (float)(ai_posKey.mTime / ai_animation->mTicksPerSecond);
-				channel.positionKeys[k].second = glm::vec3(ai_posKey.mValue.x, ai_posKey.mValue.y, ai_posKey.mValue.z);
+				channel.positionKeys[k].second = aiToGlm(ai_posKey.mValue);
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumRotationKeys; k++) {
 				aiQuatKey ai_rotKey = ai_channel->mRotationKeys[k];
 				channel.rotationKeys[k].first = (float)(ai_rotKey.mTime / ai_animation->mTicksPerSecond);
-				channel.rotationKeys[k].second = glm::quat(ai_rotKey.mValue.x, ai_rotKey.mValue.y, ai_rotKey.mValue.z, ai_rotKey.mValue.w);
+				channel.rotationKeys[k].second = aiToGlm(ai_rotKey.mValue);
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
 				aiVectorKey ai_scaleKey = ai_channel->mScalingKeys[k];
 				channel.scaleKeys[k].first = (float)(ai_scaleKey.mTime / ai_animation->mTicksPerSecond);
-				channel.scaleKeys[k].second = glm::vec3(ai_scaleKey.mValue.x, ai_scaleKey.mValue.y, ai_scaleKey.mValue.z);
+				channel.scaleKeys[k].second = aiToGlm(ai_scaleKey.mValue);
 			}
 
 			animation.channelIdMap[channel.nodeId] = animation.channels.size();
@@ -209,7 +210,8 @@ void ModelLoader::loadBoneData(aiMesh* mesh, const aiScene* scene, std::unordere
 		boneData[i].boneOffset = aiToGlm(bone->mOffsetMatrix);
 
 		for (unsigned int j = 0; j < bone->mNumWeights; j++) {
-			vertexBoneData[bone->mWeights[j].mVertexId].addWeight(i, bone->mWeights[j].mWeight);
+			aiVertexWeight weight = bone->mWeights[j];
+			vertexBoneData[weight.mVertexId].addWeight(i, weight.mWeight);
 		}
 	}
 }
@@ -246,14 +248,22 @@ glm::vec3 ModelLoader::aiToGlm(aiVector3D vec3)
 
 glm::quat ModelLoader::aiToGlm(aiQuaternion quat)
 {
-	return glm::quat(quat.x, quat.y, quat.z, quat.w);
+	return glm::quat(aiToGlm(quat.GetMatrix()));
 }
 
 glm::mat4 ModelLoader::aiToGlm(aiMatrix4x4 mat4)
 {
 	return glm::mat4(
-			mat4.a1, mat4.a2, mat4.a3, mat4.a4,
-			mat4.b1, mat4.b2, mat4.b3, mat4.b4,
-			mat4.c1, mat4.c2, mat4.c3, mat4.c4,
-			mat4.d1, mat4.d2, mat4.d3, mat4.d4 );
+			mat4.a1, mat4.b1, mat4.c1, mat4.d1,
+			mat4.a2, mat4.b2, mat4.c2, mat4.d2,
+			mat4.a3, mat4.b3, mat4.c3, mat4.d3,
+			mat4.a4, mat4.b4, mat4.c4, mat4.d4 );
+}
+
+glm::mat3 ModelLoader::aiToGlm(aiMatrix3x3 mat3)
+{
+	return glm::mat3(
+			mat3.a1, mat3.b1, mat3.c1,
+			mat3.a2, mat3.b2, mat3.c2,
+			mat3.a3, mat3.b3, mat3.c3 );
 }

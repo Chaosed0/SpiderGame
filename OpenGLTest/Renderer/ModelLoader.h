@@ -34,4 +34,5 @@ private:
 	glm::vec3 aiToGlm(aiVector3D vec3);
 	glm::quat aiToGlm(aiQuaternion quat);
 	glm::mat4 aiToGlm(aiMatrix4x4 mat4);
+	glm::mat3 aiToGlm(aiMatrix3x3 mat3);
 };
