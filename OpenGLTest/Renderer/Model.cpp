@@ -220,9 +220,13 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 			glm::vec3 pos = interpolatePosition(channel, time);
 			glm::quat rot = interpolateRotation(channel, time);
 			glm::vec3 scale = interpolateScale(channel, time);
-			nodeTransform = glm::scale(nodeTransform, scale);
-			nodeTransform = glm::rotate(nodeTransform, glm::angle(rot), glm::axis(rot));
+
+			// Usually, transformations go the other way - scale, then rotate, then
+			// transform. However, it seems that assimp (our model loader) does it
+			// the other way.
 			nodeTransform = glm::translate(nodeTransform, pos);
+			nodeTransform = glm::rotate(nodeTransform, glm::angle(rot), glm::axis(rot));
+			nodeTransform = glm::scale(nodeTransform, scale);
 		}
 		glm::mat4 globalTransform = parentTransform * nodeTransform;
 		nodeTransforms[nodeId] = globalTransform;
@@ -232,7 +236,6 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 		}
 
 		glm::vec4 test = globalTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		//printf("%s:\t\t%g %g %g\n", node.name.c_str(), test.x, test.y, test.z);
 	}
 
 	return nodeTransforms;

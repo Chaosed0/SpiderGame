@@ -29,8 +29,8 @@
 #include "Framework/Components/RigidbodyMotorComponent.h"
 
 const static int updatesPerSecond = 60;
-const static int windowWidth = 1280;
-const static int windowHeight = 1024;
+const static int windowWidth = 1920;
+const static int windowHeight = 1080;
 
 // Temp stuff for player movement, will be refactored later
 static float cameraHorizontal = 0.0f;
@@ -47,7 +47,6 @@ Game::Game()
 	running = false;
 	wireframe = false;
 	lastUpdate = UINT32_MAX;
-	consoleIsVisible = false;
 	accumulator = 0.0f;
 }
 
@@ -187,7 +186,7 @@ int Game::setup()
 	skyboxModel = modelLoader.loadModelById("skybox");
 
 	// Load some mushrooms
-	/*Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
+	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 
 	std::default_random_engine generator;
 	generator.seed((unsigned int)time(NULL));
@@ -214,16 +213,11 @@ int Game::setup()
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 		dynamicsWorld->addRigidBody(collisionComponent->body);
 
-		unsigned int shroomHandle = renderer.getHandle(shroomModel, shader);
+		unsigned int shroomHandle = renderer.getHandle(shroomModel, skinnedShader);
+		renderer.setAnimation(shroomHandle, "AnimStack::Armature|move");
 		modelComponent->rendererHandle = shroomHandle;
 		entities.push_back(shroom);
-	}*/
-
-	// Load and animate a model
-	Model testModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
-	unsigned int testHandle = renderer.getHandle(testModel, skinnedShader);
-	renderer.setAnimation(testHandle, "AnimStack::Armature|move");
-	renderer.updateTransform(testHandle, Transform::identity);
+	}
 
 	// Initialize the player
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
@@ -237,6 +231,7 @@ int Game::setup()
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(playerTransform->transform));
 	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
+	playerBody->setActivationState(DISABLE_DEACTIVATION);
 	playerCollisionComponent->body = playerBody;
 	dynamicsWorld->addRigidBody(playerCollisionComponent->body);
 
@@ -279,9 +274,21 @@ int Game::teardown()
 
 int Game::loop()
 {
+	// Initialize lastUpdate to get an accurate time
+	lastUpdate = SDL_GetTicks();
+	consoleIsVisible = true;
 	while (running)
 	{
-		accumulator += SDL_GetTicks() - lastUpdate;
+		// Pause while the console is visible
+		if (!consoleIsVisible) {
+			accumulator += SDL_GetTicks() - lastUpdate;
+		}
+
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			this->handleEvent(event);
+		}
+
 		lastUpdate = SDL_GetTicks();
 		if (accumulator >= 1000.0f / updatesPerSecond)
 		{
@@ -316,12 +323,6 @@ void Game::draw()
 
 void Game::update()
 {
-	SDL_Event event;
-
-	while (SDL_PollEvent(&event)) {
-		this->handleEvent(event);
-	}
-
 	renderer.update(timeDelta);
 
 	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), cameraHorizontal));
@@ -330,11 +331,11 @@ void Game::update()
 	playerInputSystem->update(timeDelta, entities);
 	rigidbodyMotorSystem->update(timeDelta, entities);
 
+	dynamicsWorld->stepSimulation(timeDelta);
+
 	cameraSystem->update(timeDelta, entities);
 	collisionUpdateSystem->update(timeDelta, entities);
 	modelRenderSystem->update(timeDelta, entities);
-
-	dynamicsWorld->stepSimulation(timeDelta);
 }
 
 void Game::fixedUpdate(btDynamicsWorld* world, float dt) {

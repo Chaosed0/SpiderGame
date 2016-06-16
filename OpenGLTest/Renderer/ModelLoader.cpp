@@ -136,7 +136,7 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 				channel.rotationKeys[k].first = (float)(ai_rotKey.mTime / ai_animation->mTicksPerSecond);
 				channel.rotationKeys[k].second = aiToGlm(ai_rotKey.mValue);
 			}
-			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
+			for (unsigned int k = 0; k < ai_channel->mNumScalingKeys; k++) {
 				aiVectorKey ai_scaleKey = ai_channel->mScalingKeys[k];
 				channel.scaleKeys[k].first = (float)(ai_scaleKey.mTime / ai_animation->mTicksPerSecond);
 				channel.scaleKeys[k].second = aiToGlm(ai_scaleKey.mValue);
