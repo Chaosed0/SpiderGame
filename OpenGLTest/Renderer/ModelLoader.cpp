@@ -61,12 +61,13 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 	std::vector<aiNode*> processQueue;
 	processQueue.push_back(rootNode);
 
-	// First process the node hierarchy
+	// First process the node hierarchy and pack it into our vector
 	while (processQueue.size() > 0) {
 		aiNode* ai_node = processQueue.back();
 		processQueue.pop_back();
 		std::string nodeName(ai_node->mName.data);
 
+		// If this node has meshes, we'll want to save it for processing later
 		if (ai_node->mNumMeshes > 0) {
 			nodesWithMeshes.push_back(ai_node);
 		}
@@ -248,11 +249,13 @@ glm::vec3 ModelLoader::aiToGlm(aiVector3D vec3)
 
 glm::quat ModelLoader::aiToGlm(aiQuaternion quat)
 {
+	// Assimp uses wxyz order, where glm uses xyzw
 	return glm::quat(aiToGlm(quat.GetMatrix()));
 }
 
 glm::mat4 ModelLoader::aiToGlm(aiMatrix4x4 mat4)
 {
+	// Assimp matrices are column-major, where as glm's are row-major
 	return glm::mat4(
 			mat4.a1, mat4.b1, mat4.c1, mat4.d1,
 			mat4.a2, mat4.b2, mat4.c2, mat4.d2,

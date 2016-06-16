@@ -52,8 +52,8 @@ unsigned int Renderer::getHandle(const Model& model, const Shader& shader)
 		shaderMap[shader.getID()] = shader;
 	}
 
-	// Index modelMap to initialize this so we don't depend on the passed reference
 	unsigned int id = nextId;
+	// Index modelMap to initialize this so we don't depend on the passed reference
 	renderableMap.emplace(std::make_pair(id, Renderable(shaderMap[shader.getID()], modelMap[model.id], Transform::identity)));
 	nextId++;
 	return id;

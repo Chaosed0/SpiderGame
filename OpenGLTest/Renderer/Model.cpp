@@ -177,9 +177,10 @@ std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nod
 	std::vector<glm::mat4> boneTransforms;
 	boneTransforms.resize(this->boneData.size());
 
+	// Assume 0 is the root node
+	glm::mat4 globalInverse = glm::inverse(nodeTransforms[0]);
 	for (unsigned int i = 0; i < this->boneData.size(); i++) {
 		const BoneData& boneData = this->boneData[i];
-		glm::mat4 globalInverse = glm::inverse(nodeTransforms[0]);
 		glm::mat4 nodeTransform = nodeTransforms[boneData.nodeId];
 		boneTransforms[i] = globalInverse * nodeTransform * boneData.boneOffset;
 	}
