@@ -134,8 +134,11 @@ struct Channel
 /*! Data for a model's single animation. */
 struct Animation
 {
-	/*! Total duration of the animation. */
-	float duration;
+	/*! Start time of the animation in seconds. */
+	float startTime;
+
+	/*! Ending time of the animation in seconds. */
+	float endTime;
 
 	/*! Map of node IDs to the corresponding channel index in channels.
 		Necessary because not all nodes are animated. */

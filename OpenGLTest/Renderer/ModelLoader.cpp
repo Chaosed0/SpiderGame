@@ -17,7 +17,7 @@ Model ModelLoader::loadModelFromPath(const std::string& path)
 		return modelCacheIter->second;
 	} else {
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+		const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
 
 		if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
 			fprintf(stderr, "Assimp error while loading model: %s\n", importer.GetErrorString());
@@ -112,8 +112,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 		std::string animName(ai_animation->mName.data);
 		Animation& animation = animationData.animations[animName];
 
-		animation.duration = (float)(ai_animation->mDuration / ai_animation->mTicksPerSecond);
-		
+		float minTime = FLT_MAX;
+		float maxTime = FLT_MIN;
 		for (unsigned int j = 0; j < ai_animation->mNumChannels; j++) {
 			aiNodeAnim* ai_channel = ai_animation->mChannels[j];
 			std::string nodeName = ai_channel->mNodeName.data;
@@ -131,16 +131,44 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 				aiVectorKey ai_posKey = ai_channel->mPositionKeys[k];
 				channel.positionKeys[k].first = (float)(ai_posKey.mTime / ai_animation->mTicksPerSecond);
 				channel.positionKeys[k].second = aiToGlm(ai_posKey.mValue);
+				if (ai_channel->mNumPositionKeys > 1) {
+					// If there's only one keyframe, ignore it for time calculation purposes
+					minTime = min(minTime, (float)ai_channel->mPositionKeys[k].mTime);
+					maxTime = max(maxTime, (float)ai_channel->mPositionKeys[k].mTime);
+				}
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumRotationKeys; k++) {
 				aiQuatKey ai_rotKey = ai_channel->mRotationKeys[k];
 				channel.rotationKeys[k].first = (float)(ai_rotKey.mTime / ai_animation->mTicksPerSecond);
 				channel.rotationKeys[k].second = aiToGlm(ai_rotKey.mValue);
+				if (ai_channel->mNumRotationKeys > 1) {
+					// If there's only one keyframe, ignore it for time calculation purposes
+					minTime = min(minTime, (float)ai_channel->mRotationKeys[k].mTime);
+					maxTime = max(maxTime, (float)ai_channel->mRotationKeys[k].mTime);
+				}
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumScalingKeys; k++) {
 				aiVectorKey ai_scaleKey = ai_channel->mScalingKeys[k];
 				channel.scaleKeys[k].first = (float)(ai_scaleKey.mTime / ai_animation->mTicksPerSecond);
 				channel.scaleKeys[k].second = aiToGlm(ai_scaleKey.mValue);
+				if (ai_channel->mNumScalingKeys > 1) {
+					// If there's only one keyframe, ignore it for time calculation purposes
+					minTime = min(minTime, (float)ai_channel->mScalingKeys[k].mTime);
+					maxTime = max(maxTime, (float)ai_channel->mScalingKeys[k].mTime);
+				}
+			}
+
+			// Default to 30 ticks per second if unspecified
+			float ticksPerSecond = (ai_animation->mTicksPerSecond != 0 ? ai_animation->mTicksPerSecond : 1/30.0f);
+
+			// In most cases, ignore ai_animation->mDuration - it seems to be inaccurate for
+			// animations that don't start at time 0
+			if (minTime != FLT_MIN) {
+				animation.startTime = (float)(minTime / ticksPerSecond);
+				animation.endTime = (float)(maxTime / ticksPerSecond);
+			} else {
+				animation.startTime = 0.0f;
+				animation.endTime = (float)(ai_animation->mDuration / ticksPerSecond);
 			}
 
 			animation.channelIdMap[channel.nodeId] = animation.channels.size();
@@ -230,9 +258,10 @@ std::vector<Texture> ModelLoader::loadMaterialTextures(const std::string& relDir
 		Texture texture;
 		auto cacheIter = this->textureCache.find(path);
 		if (cacheIter == this->textureCache.end()) {
-			texture.loadFromFile(path);
-			texture.type = (type == aiTextureType_DIFFUSE ? TextureType_diffuse : TextureType_specular);
-			this->textureCache[path] = texture;
+			if (texture.loadFromFile(path)) {
+				texture.type = (type == aiTextureType_DIFFUSE ? TextureType_diffuse : TextureType_specular);
+				this->textureCache[path] = texture;
+			}
 		} else {
 			texture = cacheIter->second;
 		}

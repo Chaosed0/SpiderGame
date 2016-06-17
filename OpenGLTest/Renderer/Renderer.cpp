@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "RenderUtil.h"
 
+#include <algorithm>
 #include <sstream>
 
 static const unsigned int maxPointLights = 4;
@@ -78,6 +79,16 @@ void Renderer::setAnimation(unsigned int handle, const std::string& animName)
 	iter->second.time = 0.0f;
 }
 
+void Renderer::setAnimationTime(unsigned int handle, float time)
+{
+	auto iter = renderableMap.find(handle);
+	if (iter == renderableMap.end()) {
+		return;
+	}
+
+	iter->second.time = time;
+}
+
 void Renderer::update(float dt)
 {
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
@@ -88,8 +99,9 @@ void Renderer::update(float dt)
 		auto animIter = animationMap.find(animName);
 
 		// Loop if we're past the end
-		if (iter->second.time > animIter->second.duration) {
-			iter->second.time -= animIter->second.duration;
+		float duration = animIter->second.endTime - animIter->second.startTime;
+		if (iter->second.time > duration) {
+			iter->second.time -= duration;
 		}
 	}
 }
@@ -139,17 +151,15 @@ void Renderer::draw()
 			Mesh mesh = model.meshes[i];
 			mesh.material.apply(shader);
 
-			if (nodeTransforms.size() > 0) {
-				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
-				for (unsigned int j = 0; j < 4; j++) {
-					std::stringstream sstream;
-					sstream << "bones[" << j << "]";
-					glm::mat4 boneTransform;
-					if (j < boneTransforms.size()) {
-						boneTransform = boneTransforms[j];
-					}
-					glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransform[0][0]);
+			std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
+			for (unsigned int j = 0; j < 100; j++) {
+				std::stringstream sstream;
+				sstream << "bones[" << j << "]";
+				glm::mat4 boneTransform;
+				if (j < boneTransforms.size()) {
+					boneTransform = boneTransforms[j];
 				}
+				glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransform[0][0]);
 			}
 			
 			glBindVertexArray(mesh.VAO);

@@ -4,6 +4,7 @@
 
 #include <sstream>
 #include <string>
+#include <algorithm>
 
 Mesh::Mesh()
 {}
@@ -94,14 +95,12 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 glm::vec3 interpolatePosition(const Channel& channel, float time)
 {
 	unsigned int posKey = channel.positionKeys.size()-1;
-	if (time < 0) {
-		posKey = 0;
-	} else {
-		for (unsigned int i = 0; i < channel.positionKeys.size()-1; i++) {
-			if (channel.positionKeys[i].first <= time && time <= channel.positionKeys[i+1].first) {
-				posKey = i;
-				break;
-			}
+	time = max(time, channel.positionKeys[0].first);
+
+	for (unsigned int i = 0; i < channel.positionKeys.size()-1; i++) {
+		if (channel.positionKeys[i].first <= time && time <= channel.positionKeys[i+1].first) {
+			posKey = i;
+			break;
 		}
 	}
 
@@ -113,7 +112,11 @@ glm::vec3 interpolatePosition(const Channel& channel, float time)
 		t2 = channel.positionKeys[posKey+1].first;
 		p2 = channel.positionKeys[posKey+1].second;
 	}
+
 	float lerp = (time - t1) / (t2 - t1);
+	if (t2 == t1) {
+		lerp = 1.0f;
+	}
 
 	return glm::mix(p1, p2, lerp);
 }
@@ -121,14 +124,12 @@ glm::vec3 interpolatePosition(const Channel& channel, float time)
 glm::quat interpolateRotation(const Channel& channel, float time)
 {
 	unsigned int rotKey = channel.rotationKeys.size()-1;
-	if (time < 0) {
-		rotKey = 0;
-	} else {
-		for (unsigned int i = 0; i < channel.rotationKeys.size()-1; i++) {
-			if (channel.rotationKeys[i].first <= time && time <= channel.rotationKeys[i+1].first) {
-				rotKey = i;
-				break;
-			}
+	time = max(time, channel.rotationKeys[0].first);
+
+	for (unsigned int i = 0; i < channel.rotationKeys.size()-1; i++) {
+		if (channel.rotationKeys[i].first <= time && time <= channel.rotationKeys[i+1].first) {
+			rotKey = i;
+			break;
 		}
 	}
 
@@ -140,7 +141,11 @@ glm::quat interpolateRotation(const Channel& channel, float time)
 		t2 = channel.rotationKeys[rotKey+1].first;
 		p2 = channel.rotationKeys[rotKey+1].second;
 	}
+
 	float lerp = (time - t1) / (t2 - t1);
+	if (t2 == t1) {
+		lerp = 1.0f;
+	}
 
 	return glm::slerp(p1, p2, lerp);
 }
@@ -148,14 +153,12 @@ glm::quat interpolateRotation(const Channel& channel, float time)
 glm::vec3 interpolateScale(const Channel& channel, float time)
 {
 	unsigned int scaleKey = channel.scaleKeys.size()-1;
-	if (time < 0) {
-		scaleKey = 0;
-	} else {
-		for (unsigned int i = 0; i < channel.scaleKeys.size()-1; i++) {
-			if (channel.scaleKeys[i].first <= time && time <= channel.scaleKeys[i+1].first) {
-				scaleKey = i;
-				break;
-			}
+	time = max(time, channel.scaleKeys[0].first);
+
+	for (unsigned int i = 0; i < channel.scaleKeys.size()-1; i++) {
+		if (channel.scaleKeys[i].first <= time && time <= channel.scaleKeys[i+1].first) {
+			scaleKey = i;
+			break;
 		}
 	}
 
@@ -167,7 +170,11 @@ glm::vec3 interpolateScale(const Channel& channel, float time)
 		t2 = channel.scaleKeys[scaleKey+1].first;
 		p2 = channel.scaleKeys[scaleKey+1].second;
 	}
+
 	float lerp = (time - t1) / (t2 - t1);
+	if (t2 == t1) {
+		lerp = 1.0f;
+	}
 
 	return glm::mix(p1, p2, lerp);
 }
@@ -175,10 +182,14 @@ glm::vec3 interpolateScale(const Channel& channel, float time)
 std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nodeTransforms) const
 {
 	std::vector<glm::mat4> boneTransforms;
-	boneTransforms.resize(this->boneData.size());
+
+	if (nodeTransforms.size() <= 0) {
+		return boneTransforms;
+	}
 
 	// Assume 0 is the root node
 	glm::mat4 globalInverse = glm::inverse(nodeTransforms[0]);
+	boneTransforms.resize(this->boneData.size());
 	for (unsigned int i = 0; i < this->boneData.size(); i++) {
 		const BoneData& boneData = this->boneData[i];
 		glm::mat4 nodeTransform = nodeTransforms[boneData.nodeId];
@@ -191,16 +202,17 @@ std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nod
 std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, float time) const
 {
 	std::vector<glm::mat4> nodeTransforms;
-	nodeTransforms.resize(animationData.nodes.size());
 
 	auto iter = animationData.animations.find(animName);
 	if (iter == animationData.animations.end()) {
 		return nodeTransforms;
 	}
 
+	nodeTransforms.resize(animationData.nodes.size());
 	const Animation& animation = iter->second;
 	std::vector<std::pair<unsigned int, glm::mat4>> processQueue;
 	processQueue.push_back(std::make_pair(0, glm::mat4()));
+	time += animation.startTime;
 
 	while (processQueue.size() > 0) {
 		auto pair = processQueue.back();

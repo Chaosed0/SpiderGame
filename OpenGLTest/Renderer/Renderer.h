@@ -110,6 +110,12 @@ public:
 	 */
 	void setAnimation(unsigned int handle, const std::string& animation);
 
+	/*! 
+	 * \brief Sets the time at which to start the currently playing
+	 *		animation for the given object.
+	 */
+	void setAnimationTime(unsigned int handle, float time);
+
 	/*!
 	 * \brief Draws all renderable objects requested using getHandle.
 	 */
