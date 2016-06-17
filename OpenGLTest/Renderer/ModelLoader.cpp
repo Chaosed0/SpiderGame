@@ -159,7 +159,7 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 			}
 
 			// Default to 30 ticks per second if unspecified
-			float ticksPerSecond = (ai_animation->mTicksPerSecond != 0 ? ai_animation->mTicksPerSecond : 1/30.0f);
+			float ticksPerSecond = (ai_animation->mTicksPerSecond != 0 ? (float)ai_animation->mTicksPerSecond : 1/30.0f);
 
 			// In most cases, ignore ai_animation->mDuration - it seems to be inaccurate for
 			// animations that don't start at time 0

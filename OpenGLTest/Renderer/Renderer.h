@@ -14,6 +14,7 @@
 #include "Material.h"
 #include "Camera.h"
 #include "RenderUtil.h"
+#include "Shader.h"
 
 /*! A point light in space. */
 struct PointLight
@@ -39,15 +40,47 @@ struct DirLight
     glm::vec3 specular;
 };  
 
+/*! Shader cache. Stores a shader along with its uniform locations. */
+struct ShaderCache
+{
+	ShaderCache(const Shader& shader);
+
+	struct PointLightCache
+	{
+		GLuint position;
+
+		GLuint constant;
+		GLuint linear;
+		GLuint quadratic;
+	  
+		GLuint ambient;
+		GLuint diffuse;
+		GLuint specular;
+	};
+
+	struct DirLightCache
+	{
+		GLuint direction;
+		GLuint ambient;
+		GLuint diffuse;
+		GLuint specular;
+	};  
+
+	Shader shader;
+	DirLightCache dirLight;
+	std::vector<PointLightCache> pointLights;
+	std::vector<GLuint> bones;
+};
+
 /*! A renderable, stored internally in the renderer.
 	Renderables can be equated to entities. They reference a model and a shader, but have
 	their own transforms. */
 struct Renderable
 {
-	Renderable(const Shader& shader, const Model& model, Transform transform)
-		: shader(shader), model(model), transform(transform) { }
+	Renderable(const ShaderCache& shaderCache, const Model& model, Transform transform)
+		: shaderCache(shaderCache), model(model), transform(transform) { }
 
-	const Shader& shader;
+	const ShaderCache& shaderCache;
 	const Model& model;
 	Transform transform;
 
@@ -92,7 +125,7 @@ public:
 	/*!
 	 * \ brief Gets the maximum point lights allowed by the renderer.
 	 */
-	unsigned int maxPointLights();
+	unsigned int getMaxPointLights();
 
 	/*!
 	 * \brief Gets a handle to a renderable object.
@@ -137,7 +170,7 @@ private:
 	std::vector<PointLight> pointLights;
 
 	/*! Map of shader IDs to Shaders. */
-	std::map<unsigned int, Shader> shaderMap;
+	std::map<unsigned int, ShaderCache> shaderMap;
 
 	/*! Map of model IDs to Models. */
 	std::unordered_map<unsigned int, Model> modelMap;

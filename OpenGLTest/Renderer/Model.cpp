@@ -247,8 +247,6 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 		for (unsigned int i = 0; i < node.children.size(); i++) {
 			processQueue.push_back(std::make_pair(node.children[i], globalTransform));
 		}
-
-		glm::vec4 test = globalTransform * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
 	return nodeTransforms;

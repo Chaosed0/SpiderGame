@@ -219,6 +219,11 @@ int Game::setup()
 		entities.push_back(shroom);
 	}
 
+	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
+	unsigned int spiderHandle = renderer.getHandle(spiderModel, skinnedShader);
+	renderer.setAnimation(spiderHandle, "AnimStack::walk");
+	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));
+
 	// Initialize the player
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
 	CollisionComponent* playerCollisionComponent = player.addComponent<CollisionComponent>();

@@ -123,8 +123,8 @@ void Font::packCharacter(Character& character, const FT_Bitmap& bitmap)
 	assert(character.size.y == node->size.y);
 	character.origin = node->origin;
 
-	for (int ly = 0; ly < bitmap.rows; ly++) {
-		for (int lx = 0; lx < bitmap.width; lx++) {
+	for (unsigned int ly = 0; ly < bitmap.rows; ly++) {
+		for (unsigned int lx = 0; lx < bitmap.width; lx++) {
 			int y = character.origin.y + ly;
 			int x = character.origin.x + lx;
 			buffer[y * textureSize.x + x] = bitmap.buffer[ly * std::abs(bitmap.pitch) + lx];
@@ -166,8 +166,8 @@ Node* Font::pack(Node* node, const glm::ivec2& size)
 		} else {
 			// Large enough - split
 			std::unique_ptr<Node> left, right;
-			float remainX = realSize.x - size.x;
-			float remainY = realSize.y - size.y;
+			int remainX = realSize.x - size.x;
+			int remainY = realSize.y - size.y;
 
 			bool verticalSplit = remainX < remainY;
 			if (remainX == 0 && remainY == 0) {

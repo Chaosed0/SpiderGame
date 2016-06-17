@@ -6,9 +6,10 @@
 #include <sstream>
 
 static const unsigned int maxPointLights = 4;
+static const unsigned int maxBones = 100;
 
 Renderer::Renderer()
-	: pointLights(4)
+	: pointLights(maxPointLights)
 {
 	nextId = 1;
 }
@@ -46,16 +47,18 @@ unsigned int Renderer::getHandle(const Model& model, const Shader& shader)
 	auto shaderIter = shaderMap.find(shader.getID());
 
 	if (modelIter == modelMap.end()) {
-		modelMap[model.id] = model;
+		auto iterPair = modelMap.emplace(std::make_pair(model.id, model));
+		modelIter = iterPair.first;
 	}
 
 	if (shaderIter == shaderMap.end()) {
-		shaderMap[shader.getID()] = shader;
+		auto iterPair = shaderMap.emplace(std::make_pair(shader.getID(), shader));
+		shaderIter = iterPair.first;
 	}
 
 	unsigned int id = nextId;
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	renderableMap.emplace(std::make_pair(id, Renderable(shaderMap[shader.getID()], modelMap[model.id], Transform::identity)));
+	renderableMap.emplace(std::make_pair(id, Renderable(shaderIter->second, modelIter->second, Transform::identity)));
 	nextId++;
 	return id;
 }
@@ -109,30 +112,28 @@ void Renderer::update(float dt)
 void Renderer::draw()
 {
 	for (auto iter = shaderMap.begin(); iter != shaderMap.end(); iter++) {
-		const Shader& shader = iter->second;
+		const ShaderCache& shaderCache = iter->second;
 
-		shader.use();
-		shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
-		shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
+		shaderCache.shader.use();
+		shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
+		shaderCache.shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
 
 		for (unsigned int i = 0; i < pointLights.size(); i++) {
 			PointLight light = pointLights[i];
-			std::stringstream sstream;
-			sstream << "pointLight[" << i << "]";
-			glUniform1f(shader.getUniformLocation((sstream.str() + ".constant").c_str()), light.constant);
-			glUniform1f(shader.getUniformLocation((sstream.str() + ".linear").c_str()), light.linear);
-			glUniform1f(shader.getUniformLocation((sstream.str() + ".quadratic")), light.quadratic);
-			glUniform3f(shader.getUniformLocation((sstream.str() + ".ambient").c_str()), light.ambient.x, light.ambient.y, light.ambient.z);
-			glUniform3f(shader.getUniformLocation((sstream.str() + ".diffuse").c_str()), light.diffuse.x, light.diffuse.y, light.diffuse.z);
-			glUniform3f(shader.getUniformLocation((sstream.str() + ".specular").c_str()), light.specular.x, light.specular.y, light.specular.z);
-			glUniform3f(shader.getUniformLocation((sstream.str() + ".position").c_str()), light.position.x, light.position.y, light.position.z);
+			glUniform1f(shaderCache.pointLights[i].constant, light.constant);
+			glUniform1f(shaderCache.pointLights[i].linear, light.linear);
+			glUniform1f(shaderCache.pointLights[i].quadratic, light.quadratic);
+			glUniform3f(shaderCache.pointLights[i].ambient, light.ambient.x, light.ambient.y, light.ambient.z);
+			glUniform3f(shaderCache.pointLights[i].diffuse, light.diffuse.x, light.diffuse.y, light.diffuse.z);
+			glUniform3f(shaderCache.pointLights[i].specular, light.specular.x, light.specular.y, light.specular.z);
+			glUniform3f(shaderCache.pointLights[i].position, light.position.x, light.position.y, light.position.z);
 			glCheckError();
 		}
 		
-		glUniform3f(shader.getUniformLocation("dirLight.direction"), dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
-		glUniform3f(shader.getUniformLocation("dirLight.ambient"), dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
-		glUniform3f(shader.getUniformLocation("dirLight.diffuse"), dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
-		glUniform3f(shader.getUniformLocation("dirLight.specular"), dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
+		glUniform3f(shaderCache.dirLight.direction, dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
+		glUniform3f(shaderCache.dirLight.ambient, dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
+		glUniform3f(shaderCache.dirLight.diffuse, dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
+		glUniform3f(shaderCache.dirLight.specular, dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
 		glCheckError();
 	}
 
@@ -140,26 +141,20 @@ void Renderer::draw()
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
 		const Renderable& renderable = iter->second;
 		const Model& model = renderable.model;
-		const Shader& shader = renderable.shader;
+		const ShaderCache& shaderCache = renderable.shaderCache;
 		Transform transform = renderable.transform;
 
-		shader.use();
-		shader.setModelMatrix(&transform.matrix()[0][0]);
+		shaderCache.shader.use();
+		shaderCache.shader.setModelMatrix(&transform.matrix()[0][0]);
 
 		std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time);
 		for (unsigned int i = 0; i < model.meshes.size(); i++) {
 			Mesh mesh = model.meshes[i];
-			mesh.material.apply(shader);
+			mesh.material.apply(shaderCache.shader);
 
 			std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
-			for (unsigned int j = 0; j < 100; j++) {
-				std::stringstream sstream;
-				sstream << "bones[" << j << "]";
-				glm::mat4 boneTransform;
-				if (j < boneTransforms.size()) {
-					boneTransform = boneTransforms[j];
-				}
-				glUniformMatrix4fv(shader.getUniformLocation(sstream.str()), 1, GL_FALSE, &boneTransform[0][0]);
+			for (unsigned int j = 0; j < boneTransforms.size(); j++) {
+				glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
 			}
 			
 			glBindVertexArray(mesh.VAO);
@@ -187,7 +182,38 @@ void Renderer::setPointLight(unsigned int index, PointLight pointLight)
 	}
 }
 
-unsigned int Renderer::maxPointLights()
+unsigned int Renderer::getMaxPointLights()
 {
 	return pointLights.size();
+}
+
+ShaderCache::ShaderCache(const Shader& shader)
+	: shader(shader),
+	pointLights(maxPointLights),
+	bones(maxBones)
+{
+	for (unsigned int i = 0; i < pointLights.size(); i++) {
+		PointLightCache& light = this->pointLights[i];
+		std::stringstream sstream;
+		sstream << "pointLight[" << i << "]";
+		light.constant = shader.getUniformLocation((sstream.str() + ".constant").c_str());
+		light.linear = shader.getUniformLocation((sstream.str() + ".linear").c_str());
+		light.quadratic = shader.getUniformLocation((sstream.str() + ".quadratic"));
+		light.ambient = shader.getUniformLocation((sstream.str() + ".ambient").c_str());
+		light.diffuse = shader.getUniformLocation((sstream.str() + ".diffuse").c_str());
+		light.specular = shader.getUniformLocation((sstream.str() + ".specular").c_str());
+		light.position = shader.getUniformLocation((sstream.str() + ".position").c_str());
+		glCheckError();
+	}
+	
+	this->dirLight.direction = shader.getUniformLocation("dirLight.direction");
+	this->dirLight.ambient = shader.getUniformLocation("dirLight.ambient");
+	this->dirLight.diffuse = shader.getUniformLocation("dirLight.diffuse");
+	this->dirLight.specular = shader.getUniformLocation("dirLight.specular");
+
+	for (unsigned int i = 0; i < maxBones; i++) {
+		std::stringstream sstream;
+		sstream << "bones[" << i << "]";
+		this->bones[i] = shader.getUniformLocation(sstream.str());
+	}
 }
