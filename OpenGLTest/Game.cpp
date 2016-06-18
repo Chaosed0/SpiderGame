@@ -139,7 +139,7 @@ int Game::setup()
 	/* Scene */
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
-	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/white.frag");
+	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
 
 	glm::vec3 pointLightPositions[] = {
@@ -171,7 +171,13 @@ int Game::setup()
 	dirLight.specular = glm::vec3(1.0f);
 	renderer.setDirLight(dirLight);
 
-	modelLoader.assignModelToId("pointLight", std::vector<Mesh> { getBox(std::vector<Texture>{}) });
+	Mesh pointLightMesh = getBox(std::vector<Texture> {});
+	MaterialProperty pointLightColorProperty;
+	pointLightColorProperty.key = "color";
+	pointLightColorProperty.type = MaterialPropertyType_vec4;
+	pointLightColorProperty.value.vec4 = glm::vec4(1.0f);
+	pointLightMesh.material.setProperty(pointLightColorProperty);
+	modelLoader.assignModelToId("pointLight", std::vector<Mesh> { pointLightMesh });
 
 	std::vector<std::string> skyboxFaces;
 	skyboxFaces.push_back("assets/img/skybox/miramar_ft.tga");

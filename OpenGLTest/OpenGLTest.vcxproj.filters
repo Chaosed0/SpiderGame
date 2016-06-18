@@ -220,9 +220,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\back.frag">
-      <Filter>Shaders\Console</Filter>
-    </None>
     <None Include="Shaders\back.vert">
       <Filter>Shaders\Console</Filter>
     </None>
@@ -244,10 +241,10 @@
     <None Include="Shaders\text.frag">
       <Filter>Shaders\Console</Filter>
     </None>
-    <None Include="Shaders\white.frag">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\lightcolor.frag" />
     <None Include="Shaders\skinned.vert" />
+    <None Include="Shaders\singlecolor.frag">
+      <Filter>Shaders\Console</Filter>
+    </None>
   </ItemGroup>
 </Project>
