@@ -235,9 +235,6 @@
     <None Include="Shaders\textured.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\text.vert">
-      <Filter>Shaders\Console</Filter>
-    </None>
     <None Include="Shaders\text.frag">
       <Filter>Shaders\Console</Filter>
     </None>
@@ -246,5 +243,6 @@
     <None Include="Shaders\singlecolor.frag">
       <Filter>Shaders\Console</Filter>
     </None>
+    <None Include="Shaders\text.vert" />
   </ItemGroup>
 </Project>
