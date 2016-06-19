@@ -126,6 +126,9 @@
     <ClCompile Include="Terrain\TerrainPatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\BulletDebugDrawer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -230,6 +233,9 @@
     <ClInclude Include="Terrain\TerrainPatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\BulletDebugDrawer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\back.vert">
@@ -253,5 +259,8 @@
       <Filter>Shaders\Console</Filter>
     </None>
     <None Include="Shaders\text.vert" />
+    <None Include="Shaders\textured.frag" />
+    <None Include="Shaders\colors.vert" />
+    <None Include="Shaders\colors.frag" />
   </ItemGroup>
 </Project>

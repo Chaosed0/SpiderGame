@@ -145,6 +145,7 @@
     <ClCompile Include="Framework\Systems\RigidbodyMotorSystem.cpp" />
     <ClCompile Include="Renderer\Box.cpp" />
     <ClCompile Include="Console\Callbacks.cpp" />
+    <ClCompile Include="Renderer\BulletDebugDrawer.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Framework\Systems\CollisionUpdateSystem.cpp" />
     <ClCompile Include="Console\Console.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="Framework\Systems\RigidbodyMotorSystem.h" />
     <ClInclude Include="Renderer\Box.h" />
     <ClInclude Include="Console\Callbacks.h" />
+    <ClInclude Include="Renderer\BulletDebugDrawer.h" />
     <ClInclude Include="Renderer\Camera.h" />
     <ClInclude Include="Framework\Components\CameraComponent.h" />
     <ClInclude Include="Framework\Components\CollisionComponent.h" />
@@ -203,6 +205,8 @@
     <ClInclude Include="Framework\World.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\colors.frag" />
+    <None Include="Shaders\colors.vert" />
     <None Include="Shaders\singlecolor.frag" />
     <None Include="Shaders\back.vert" />
     <None Include="Shaders\basic.vert" />
@@ -212,6 +216,7 @@
     <None Include="Shaders\skybox.vert" />
     <None Include="Shaders\text.frag" />
     <None Include="Shaders\text.vert" />
+    <None Include="Shaders\textured.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

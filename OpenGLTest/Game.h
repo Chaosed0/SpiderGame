@@ -6,19 +6,32 @@
 #include <vector>
 #include <memory>
 
+#include "Renderer/BulletDebugDrawer.h"
 #include "Renderer/Shader.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/ModelLoader.h"
 #include "Renderer/Box.h"
 #include "Renderer/Model.h"
 #include "Framework/Entity.h"
+
 #include "Console/Console.h"
+#include "Terrain/Terrain.h"
 
 #include "Framework/Systems/ModelRenderSystem.h"
 #include "Framework/Systems/CollisionUpdateSystem.h"
 #include "Framework/Systems/CameraSystem.h"
 #include "Framework/Systems/RigidbodyMotorSystem.h"
 #include "Framework/Systems/PlayerInputSystem.h"
+
+struct GameTerrainData
+{
+	Model model;
+	TerrainPatch patch;
+	TerrainPatchCollision collision;
+	btTriangleIndexVertexArray* vertArray;
+	btBvhTriangleMeshShape* shape;
+	btCollisionObject* object;
+};
 
 class Game
 {
@@ -54,6 +67,7 @@ private:
 	Shader lightShader;
 	Shader skyboxShader;
 
+	std::vector<GameTerrainData> terrainData;
 	std::vector<Transform> pointLightTransforms;
 	Model pointLightModel;
 	Model skyboxModel;
@@ -71,6 +85,7 @@ private:
 	std::unique_ptr<PlayerInputSystem> playerInputSystem;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
+	BulletDebugDrawer debugDrawer;
 
 	std::unique_ptr<Console> console;
 	bool consoleIsVisible;

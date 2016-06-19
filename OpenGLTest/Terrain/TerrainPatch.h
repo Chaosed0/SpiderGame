@@ -2,6 +2,16 @@
 
 #include "Renderer/Model.h"
 
+#include <btBulletDynamicsCommon.h>
+
+struct TerrainQuad;
+
+struct TerrainPatchCollision
+{
+	std::vector<btScalar> vertices;
+	std::vector<int> indices;
+};
+
 struct TerrainPatch
 {
 	std::vector<float> terrain;
@@ -9,5 +19,8 @@ struct TerrainPatch
 	float max, min;
 
 	Model toModel(glm::vec2 origin, glm::vec3 scale);
+	TerrainPatchCollision getCollisionData(glm::vec2 origin, glm::vec3 scale);
 	void SaveHeightmapToFile(const std::string& file);
+private:
+	TerrainQuad getQuad(glm::vec2 origin, glm::vec3 scale, unsigned x, unsigned y);
 };

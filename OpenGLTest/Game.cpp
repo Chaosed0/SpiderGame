@@ -20,7 +20,6 @@
 
 #include "Renderer/Camera.h"
 #include "Util.h"
-#include "Terrain/Terrain.h"
 
 #include "Framework/Components/ModelRenderComponent.h"
 #include "Framework/Components/CameraComponent.h"
@@ -148,6 +147,10 @@ int Game::setup()
 	floorBody = new btRigidBody(0.0f, planeMotionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
 	dynamicsWorld->addRigidBody(floorBody);
 
+	debugDrawer.initialize();
+	dynamicsWorld->setDebugDrawer(&debugDrawer);
+	//debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+
 	/* Scene */
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/textured.frag");
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
@@ -243,18 +246,31 @@ int Game::setup()
 	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));*/
 
 	/* Test Terrain */
-
 	const unsigned patchSize = 257;
 	const float xzsize = 0.5f;
 	Terrain terrain;
 	terrain.setPatchSize(patchSize);
 	for (unsigned i = 0; i < 4; i++) {
+		GameTerrainData terrainData;
 		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
-		TerrainPatch patch = terrain.generatePatch(origin.x, origin.y);
-		modelLoader.assignModelToId("terrain" + i, patch.toModel(glm::ivec2(), glm::vec3(xzsize, 20.0f, xzsize)));
-		Model terrainModel = modelLoader.loadModelById("terrain" + i);
-		unsigned int terrainHandle = renderer.getHandle(terrainModel, shader);
-		renderer.updateTransform(terrainHandle, Transform(glm::vec3(origin.x * (int)(patchSize-1) * xzsize, 0.0f, origin.y * (int)(patchSize-1) * xzsize)));
+		glm::vec3 scale(xzsize, 20.0f, xzsize);
+		glm::vec3 position(origin.x * (int)(patchSize - 1) * xzsize, 0.0f, origin.y * (int)(patchSize - 1) * xzsize);
+
+		terrainData.patch = terrain.generatePatch(origin.x, origin.y);
+		modelLoader.assignModelToId("terrain" + i, terrainData.patch.toModel(glm::ivec2(), scale));
+		terrainData.model = modelLoader.loadModelById("terrain" + i);
+		unsigned int terrainHandle = renderer.getHandle(terrainData.model, shader);
+		renderer.updateTransform(terrainHandle, Transform(position));
+
+		terrainData.collision = terrainData.patch.getCollisionData(glm::ivec2(), scale);
+		terrainData.vertArray = new btTriangleIndexVertexArray(terrainData.collision.indices.size() / 3, terrainData.collision.indices.data(), 3 * sizeof(unsigned), terrainData.collision.vertices.size(), terrainData.collision.vertices.data(), 3 * sizeof(float));
+		terrainData.shape = new btBvhTriangleMeshShape(terrainData.vertArray, true);
+		terrainData.object = new btCollisionObject();
+		terrainData.object->setCollisionShape(terrainData.shape);
+		terrainData.object->setWorldTransform(btTransform(btQuaternion(), Util::glmToBt(position)));
+		dynamicsWorld->addCollisionObject(terrainData.object);
+
+		this->terrainData.emplace_back(std::move(terrainData));
 	}
 
 	// Initialize the player
@@ -282,13 +298,14 @@ int Game::setup()
 	TransformComponent* cameraTransformComponent = camera.addComponent<TransformComponent>();
 	CameraComponent* cameraComponent = camera.addComponent<CameraComponent>();
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, 2.0f, 0.0f));
+	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -0.5f, 0.0f));
 
 	entities.push_back(camera);
 
 	playerTransform->transform.addChild(&cameraTransformComponent->transform);
 
 	renderer.setCamera(&cameraComponent->camera);
+	debugDrawer.setCamera(&cameraComponent->camera);
 
 	unsigned int skyboxHandle = renderer.getHandle(skyboxModel, skyboxShader);
 	renderer.updateTransform(skyboxHandle, Transform::identity);
@@ -350,6 +367,7 @@ void Game::draw()
 	glPolygonMode(GL_FRONT_AND_BACK, this->wireframe ? GL_LINE : GL_FILL);
 
 	renderer.draw();
+	debugDrawer.draw();
 
 	if (consoleIsVisible) {
 		glDisable(GL_DEPTH_TEST);
@@ -370,6 +388,13 @@ void Game::update()
 	rigidbodyMotorSystem->update(timeDelta, entities);
 
 	dynamicsWorld->stepSimulation(timeDelta);
+
+	static bool feh = true;
+	if (feh) {
+		debugDrawer.reset();
+		dynamicsWorld->debugDrawWorld();
+		feh = false;
+	}
 
 	cameraSystem->update(timeDelta, entities);
 	collisionUpdateSystem->update(timeDelta, entities);
