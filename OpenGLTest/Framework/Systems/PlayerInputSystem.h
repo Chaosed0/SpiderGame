@@ -13,7 +13,11 @@ public:
 	void startMoving(glm::vec2 movement);
 	void stopMoving(glm::vec2 movement);
 	void startJump();
+	void setHorizontalVerticalRotation(float horizontal, float vertical);
 private:
 	bool forward, back, left, right;
 	bool jump;
+
+	float horizontal;
+	float vertical;
 };

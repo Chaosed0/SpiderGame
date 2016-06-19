@@ -27,6 +27,8 @@ void PlayerInputSystem::updateEntity(float dt, Entity& entity)
 	if (left) {
 		movement.y -= 1.0f;
 	}
+
+	rigidbodyMotorComponent->facing = horizontal;
 	
 	rigidbodyMotorComponent->movement = movement;
 
@@ -62,4 +64,10 @@ void PlayerInputSystem::stopMoving(glm::vec2 movement)
 void PlayerInputSystem::startJump()
 {
 	jump = true;
+}
+
+void PlayerInputSystem::setHorizontalVerticalRotation(float horizontal, float vertical)
+{
+	this->horizontal = horizontal;
+	this->vertical = vertical;
 }

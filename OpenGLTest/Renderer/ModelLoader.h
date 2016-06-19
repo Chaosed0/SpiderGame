@@ -28,7 +28,7 @@ public:
 	/*!
 	 * \brief Assigns an already-existing model to the id. Load the model later using loadModelById.
 	 */
-	void assignModelToId(const std::string& id, std::vector<Mesh> meshes);
+	void assignModelToId(const std::string& id, Model model);
 private:
 	/*! Next model ID to assign. */
 	unsigned int nextId;
