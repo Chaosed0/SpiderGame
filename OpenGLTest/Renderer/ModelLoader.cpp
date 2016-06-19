@@ -45,9 +45,8 @@ Model ModelLoader::loadModelById(const std::string& id)
 	}
 }
 
-void ModelLoader::assignModelToId(const std::string& id, std::vector<Mesh> meshes)
+void ModelLoader::assignModelToId(const std::string& id, Model model)
 {
-	Model model(meshes);
 	model.id = nextId++;
 	this->modelIdCache[id] = model;
 }

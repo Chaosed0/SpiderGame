@@ -20,6 +20,7 @@
 
 #include "Renderer/Camera.h"
 #include "Util.h"
+#include "Terrain/Terrain.h"
 
 #include "Framework/Components/ModelRenderComponent.h"
 #include "Framework/Components/CameraComponent.h"
@@ -137,7 +138,7 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(floorBody);
 
 	/* Scene */
-	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
+	shader.compileAndLink("Shaders/basic.vert", "Shaders/textured.frag");
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
@@ -225,10 +226,25 @@ int Game::setup()
 		entities.push_back(shroom);
 	}
 
-	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
+	/*Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	unsigned int spiderHandle = renderer.getHandle(spiderModel, skinnedShader);
 	renderer.setAnimation(spiderHandle, "AnimStack::walk");
-	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));
+	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));*/
+
+	/* Test Terrain */
+
+	const unsigned patchSize = 256;
+	const float xzsize = 0.5f;
+	Terrain terrain;
+	terrain.setPatchSize(patchSize);
+	for (unsigned i = 0; i < 4; i++) {
+		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
+		TerrainPatch patch = terrain.generatePatch(origin.x, origin.y);
+		Model terrainModel = patch.toModel(glm::vec2(), glm::vec3(xzsize, 20.0f, xzsize));
+		modelLoader.assignModelToId("terrain" + i, terrainModel);
+		unsigned int terrainHandle = renderer.getHandle(terrainModel, shader);
+		renderer.updateTransform(terrainHandle, Transform(glm::vec3(origin.x * (int)patchSize * xzsize, 0.0f, origin.y * (int)patchSize * xzsize)));
+	}
 
 	// Initialize the player
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
@@ -336,7 +352,6 @@ void Game::update()
 {
 	renderer.update(timeDelta);
 
-	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), cameraHorizontal));
 	camera.getComponent<TransformComponent>()->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
 
 	playerInputSystem->update(timeDelta, entities);

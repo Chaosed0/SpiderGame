@@ -1,7 +1,7 @@
 #version 330 core
 
 struct Material {
-	sampler2D texture_diffuse1;
+	sampler2D texture_diffuse;
 };
 
 in vec2 textureCoord;
@@ -12,5 +12,5 @@ uniform Material material;
 
 void main() {
     // Output color = color of the texture at the specified UV
-    color = texture( material.texture_diffuse1, textureCoord ).rgba;
+    color = texture( material.texture_diffuse, textureCoord ).rgba;
 }

@@ -38,4 +38,5 @@ void RigidbodyMotorSystem::updateEntity(float dt, Entity& entity)
 	}
 
 	playerBody->setLinearVelocity(velocity);
+	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), rigidbodyMotorComponent->facing));
 }

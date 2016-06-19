@@ -71,12 +71,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>E:\Libraries\freetype-2.6.3\include\;E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\lib\Debug;E:\Libraries\SDL2-2.0.4\lib\x86;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\Debug\;E:\Libraries\glew-1.13.0\lib\Release\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Libraries\freetype-2.6.3\include\;D:\Libraries\bullet3\src\;D:\Libraries\SDL2-2.0.4\include;D:\Libraries\SDL2_image-2.0.1\include\;D:\Libraries\assimp-3.1.1\include\;D:\Libraries\glew-1.13.0\include;D:\Libraries\glm\;D:\Libraries\libnoise\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;D:\Libraries\bullet3\lib\Debug\;D:\Libraries\SDL2-2.0.4\lib\x86;D:\Libraries\SDL2_image-2.0.1\lib\x86;D:\Libraries\assimp-3.1.1\build\code\Debug\;D:\Libraries\glew-1.13.0\lib\Release\Win32;D:\Libraries\libnoise\bin\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>E:\Libraries\freetype-2.6.3\include\;E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\lib\Release\;E:\Libraries\SDL2-2.0.4\lib\x86\;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\MinSizeRel;E:\Libraries\glew-1.13.0\lib\Release\Win32;$(LibraryPath)</LibraryPath>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>D:\Libraries\freetype-2.6.3\include\;D:\Libraries\bullet3\src\;D:\Libraries\SDL2-2.0.4\include\;D:\LIbraries\SDL2_image-2.0.1\include\;D:\Libraries\assimp-3.1.1\include\;D:\LIbraries\glew-1.13.0\include\;D:\Libraries\glm\;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;D:\Libraries\bullet3\bin\;D:\Libraries\SDL2-2.0.4\lib\x86\;D:\Libraries\SDL2_image-2.0.1\lib\x86\;D:\Libraries\assimp-3.1.1\build\code\debug\;D:\Libraries\glew-1.13.0\lib\Release\Win32\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,7 +88,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>freetype263d.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimpd.lib;glew32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype263d.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimpd.lib;glew32.lib;OpenGL32.lib;libnoise.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
     </Link>
@@ -106,7 +106,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>freetype263d.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimpd.lib;glew32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -161,6 +166,8 @@
     <ClCompile Include="Renderer\RenderUtil.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
     <ClCompile Include="Renderer\Shader.cpp" />
+    <ClCompile Include="Terrain\Terrain.cpp" />
+    <ClCompile Include="Terrain\TerrainPatch.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
@@ -193,6 +200,8 @@
     <ClInclude Include="Renderer\RenderUtil.h" />
     <ClInclude Include="Renderer\Texture.h" />
     <ClInclude Include="Renderer\Shader.h" />
+    <ClInclude Include="Terrain\Terrain.h" />
+    <ClInclude Include="Terrain\TerrainPatch.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Framework\Components\TransformComponent.h" />
     <ClInclude Include="Util.h" />
