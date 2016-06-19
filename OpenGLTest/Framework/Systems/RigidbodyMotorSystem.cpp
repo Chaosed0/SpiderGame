@@ -6,6 +6,8 @@
 
 #include "Util.h"
 
+#include <glm/gtx/vector_angle.hpp>
+
 RigidbodyMotorSystem::RigidbodyMotorSystem()
 {
 	require<RigidbodyMotorComponent>();
@@ -20,23 +22,41 @@ void RigidbodyMotorSystem::updateEntity(float dt, Entity& entity)
 	btRigidBody* playerBody = collisionComponent->body;
 	btVector3 velocity = playerBody->getLinearVelocity();
 
+	glm::vec2 movement;
 	if (glm::length(rigidbodyMotorComponent->movement) > glm::epsilon<float>()) {
-		glm::vec2 movement = glm::normalize(rigidbodyMotorComponent->movement) * rigidbodyMotorComponent->moveSpeed;
-		velocity.setZ(movement.x);
-		velocity.setX(movement.y);
-		
-		btQuaternion playerRotation = playerBody->getWorldTransform().getRotation();
-		velocity = velocity.rotate(playerRotation.getAxis(), playerRotation.getAngle());
-	} else {
-		velocity.setZ(0.0f);
-		velocity.setX(0.0f);
+		movement = glm::normalize(rigidbodyMotorComponent->movement) * rigidbodyMotorComponent->moveSpeed;
 	}
 
-	if (rigidbodyMotorComponent->jump && rigidbodyMotorComponent->canJump) {
-		velocity.setY(rigidbodyMotorComponent->jumpSpeed);
-		rigidbodyMotorComponent->canJump = false;
+	glm::vec3 facingVec = rigidbodyMotorComponent->facing * glm::vec3(0.0f, 0.0f, 1.0f);
+	facingVec.y = 0.0f;
+	float hFacing = glm::orientedAngle(glm::vec3(0.0f, 0.0f, -1.0f), glm::normalize(facingVec), glm::vec3(0.0f, 1.0f, 0.0f));
+	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), hFacing));
+
+	if (rigidbodyMotorComponent->noclip) {
+		if (glm::length(movement) > glm::epsilon<float>()) {
+			// I have no idea why I need to negate movement here
+			velocity = Util::glmToBt(rigidbodyMotorComponent->facing * glm::vec3(-movement.y, 0.0f, -movement.x) * 10.0f);
+		}
+		else {
+			velocity = btVector3(0.0f, 0.0f, 0.0f);
+		}
+	} else {
+		if (glm::length(movement) > glm::epsilon<float>()) {
+			velocity.setZ(movement.x);
+			velocity.setX(movement.y);
+			
+			btQuaternion playerRotation = playerBody->getWorldTransform().getRotation();
+			velocity = velocity.rotate(playerRotation.getAxis(), playerRotation.getAngle());
+		} else {
+			velocity.setZ(0.0f);
+			velocity.setX(0.0f);
+		}
+
+		if (rigidbodyMotorComponent->jump && rigidbodyMotorComponent->canJump) {
+			velocity.setY(rigidbodyMotorComponent->jumpSpeed);
+			rigidbodyMotorComponent->canJump = false;
+		}
 	}
 
 	playerBody->setLinearVelocity(velocity);
-	playerBody->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), rigidbodyMotorComponent->facing));
 }

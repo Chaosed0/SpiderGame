@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include <glm/gtc/quaternion.hpp>
+
 #include "Framework/Component.h"
 
 class RigidbodyMotorComponent : public Component
@@ -9,8 +11,9 @@ class RigidbodyMotorComponent : public Component
 public:
 	float moveSpeed;
 	float jumpSpeed;
-	float facing;
+	glm::quat facing;
 	glm::vec2 movement;
 	bool jump;
+	bool noclip;
 	bool canJump;
 };

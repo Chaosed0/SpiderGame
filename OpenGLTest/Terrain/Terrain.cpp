@@ -5,7 +5,7 @@
 
 Terrain::Terrain()
 {
-	patchSize = 512;
+	patchSize = 513;
 	stepSize = 0.001;
 }
 
@@ -26,7 +26,7 @@ Terrain::Terrain(unsigned patchSize, float stepSize, unsigned octaves, float bas
 
 TerrainPatch Terrain::generatePatch(int x, int y)
 {
-	glm::vec2 start(x * (int)patchSize * stepSize, y * (int)patchSize * stepSize);
+	glm::vec2 start(x * (int)(patchSize-1) * stepSize, y * (int)(patchSize-1) * stepSize);
 	TerrainPatch patch;
 	patch.size.x = patchSize;
 	patch.size.y = patchSize;

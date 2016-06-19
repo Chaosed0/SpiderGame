@@ -1,6 +1,7 @@
 
 #include "PlayerInputSystem.h"
 
+#include "Util.h"
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/PlayerComponent.h"
 
@@ -28,11 +29,10 @@ void PlayerInputSystem::updateEntity(float dt, Entity& entity)
 		movement.y -= 1.0f;
 	}
 
-	rigidbodyMotorComponent->facing = horizontal;
-	
+	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontal, vertical, glm::vec3(0.0f, 1.0f, 0.0f));
 	rigidbodyMotorComponent->movement = movement;
-
 	rigidbodyMotorComponent->jump = jump;
+	rigidbodyMotorComponent->noclip = noclip;
 	jump = false;
 }
 
@@ -64,6 +64,11 @@ void PlayerInputSystem::stopMoving(glm::vec2 movement)
 void PlayerInputSystem::startJump()
 {
 	jump = true;
+}
+
+void PlayerInputSystem::setNoclip(bool noclip)
+{
+	this->noclip = noclip;
 }
 
 void PlayerInputSystem::setHorizontalVerticalRotation(float horizontal, float vertical)

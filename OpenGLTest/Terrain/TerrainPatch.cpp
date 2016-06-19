@@ -4,7 +4,7 @@
 Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 {
 	std::vector<Vertex> vertices;
-	vertices.resize(this->size.y * this->size.x * 6);
+	vertices.resize((this->size.y - 1) * (this->size.x - 1) * 6);
 	unsigned vi = 0;
 
 	for (unsigned y = 0; y < this->size.y - 1; y++) {
@@ -16,10 +16,10 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 			float blv = this->terrain[(y+1) * this->size.x + x] * scale.y;
 			float brv = this->terrain[(y+1) * this->size.x + (x+1)] * scale.y;
 
-			glm::vec3 tlp = glm::vec3(origin.x + x * scale.x, tlv, origin.y + y * scale.z);
-			glm::vec3 trp = glm::vec3(origin.x + (x+1) * scale.x, trv, origin.y + y * scale.z);
-			glm::vec3 blp = glm::vec3(origin.x + x * scale.x, blv, origin.y + (y+1) * scale.z);
-			glm::vec3 brp = glm::vec3(origin.x + (x+1) * scale.x, brv, origin.y + (y+1) * scale.z);
+			glm::vec3 tlp = glm::vec3(origin.x + (int)x * scale.x, tlv, origin.y + (int)y * scale.z);
+			glm::vec3 trp = glm::vec3(origin.x + (int)(x+1) * scale.x, trv, origin.y + (int)y * scale.z);
+			glm::vec3 blp = glm::vec3(origin.x + (int)x * scale.x, blv, origin.y + (int)(y+1) * scale.z);
+			glm::vec3 brp = glm::vec3(origin.x + (int)(x+1) * scale.x, brv, origin.y + (int)(y+1) * scale.z);
 
 			glm::vec3 n1 = glm::cross(tlp - blp, brp - blp);
 			glm::vec3 n2 = glm::cross(tlp - trp, brp - trp);

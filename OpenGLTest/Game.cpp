@@ -75,6 +75,16 @@ void Game::setWireframe(bool on)
 	wireframe = on;
 }
 
+void Game::setNoclip(bool on)
+{
+	if (on) {
+		playerBody->setGravity(btVector3(0.0f, 0.0f, 0.0f));
+	} else {
+		playerBody->setGravity(dynamicsWorld->getGravity());
+	}
+	playerInputSystem->setNoclip(on);
+}
+
 int Game::setup()
 {
 	if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -119,6 +129,7 @@ int Game::setup()
 	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
+	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
 
 	// Initialize renderer debugging output
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
@@ -233,17 +244,17 @@ int Game::setup()
 
 	/* Test Terrain */
 
-	const unsigned patchSize = 256;
+	const unsigned patchSize = 257;
 	const float xzsize = 0.5f;
 	Terrain terrain;
 	terrain.setPatchSize(patchSize);
 	for (unsigned i = 0; i < 4; i++) {
 		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
 		TerrainPatch patch = terrain.generatePatch(origin.x, origin.y);
-		Model terrainModel = patch.toModel(glm::vec2(), glm::vec3(xzsize, 20.0f, xzsize));
-		modelLoader.assignModelToId("terrain" + i, terrainModel);
+		modelLoader.assignModelToId("terrain" + i, patch.toModel(glm::ivec2(), glm::vec3(xzsize, 20.0f, xzsize)));
+		Model terrainModel = modelLoader.loadModelById("terrain" + i);
 		unsigned int terrainHandle = renderer.getHandle(terrainModel, shader);
-		renderer.updateTransform(terrainHandle, Transform(glm::vec3(origin.x * (int)patchSize * xzsize, 0.0f, origin.y * (int)patchSize * xzsize)));
+		renderer.updateTransform(terrainHandle, Transform(glm::vec3(origin.x * (int)(patchSize-1) * xzsize, 0.0f, origin.y * (int)(patchSize-1) * xzsize)));
 	}
 
 	// Initialize the player
@@ -264,6 +275,7 @@ int Game::setup()
 
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 7.0f;
+	playerRigidbodyMotorComponent->noclip = false;
 
 	entities.push_back(player);
 
@@ -391,6 +403,7 @@ void Game::handleEvent(SDL_Event& event)
 		cameraHorizontal -= event.motion.xrel * timeDelta * 0.2f;
 		cameraVertical -= event.motion.yrel * timeDelta * 0.2f;
 		cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + glm::epsilon<float>(), glm::half_pi<float>() - glm::epsilon<float>());
+		playerInputSystem->setHorizontalVerticalRotation(cameraHorizontal, cameraVertical);
 		break;
 	case SDL_TEXTINPUT:
 		if (consoleIsVisible) {

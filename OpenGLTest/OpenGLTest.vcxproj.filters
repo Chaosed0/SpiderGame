@@ -244,9 +244,6 @@
     <None Include="Shaders\skybox.vert">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\textured.frag">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\text.frag">
       <Filter>Shaders\Console</Filter>
     </None>

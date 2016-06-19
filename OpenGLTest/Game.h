@@ -77,5 +77,6 @@ private:
 
 	void exit();
 	void setWireframe(bool on);
+	void setNoclip(bool on);
 	bool wireframe;
 };
