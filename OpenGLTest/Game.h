@@ -75,7 +75,6 @@ private:
 	Entity player;
 	Entity camera;
 	btRigidBody* playerBody;
-	btRigidBody* floorBody;
 
 	std::vector<Entity> entities;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;

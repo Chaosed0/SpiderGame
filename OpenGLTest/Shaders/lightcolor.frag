@@ -31,6 +31,7 @@ struct DirLight {
 in vec3 fragPos;
 in vec3 normal;
 in vec2 textureCoord;
+in vec3 tintColor;
 
 out vec4 color;
   
@@ -97,5 +98,6 @@ void main()
 		result += CalcPointLight(pointLight[i], normal_n, fragPos);
 	}
 
+	result = result * tintColor;
 	color = vec4(result, 1.0f);
 }

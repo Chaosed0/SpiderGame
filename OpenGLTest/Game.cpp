@@ -142,11 +142,6 @@ int Game::setup()
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
 	dynamicsWorld->setInternalTickCallback(bulletTickCallback, static_cast<void *>(this));
 
-	btStaticPlaneShape* planeShape = new btStaticPlaneShape(btVector3(0.0f, 1.0f, 0.0f), 0.0f);
-	btDefaultMotionState* planeMotionState = new btDefaultMotionState(btTransform::getIdentity());
-	floorBody = new btRigidBody(0.0f, planeMotionState, planeShape, btVector3(0.0f, 0.0f, 0.0f));
-	dynamicsWorld->addRigidBody(floorBody);
-
 	debugDrawer.initialize();
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
 	//debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
@@ -246,10 +241,10 @@ int Game::setup()
 	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));*/
 
 	/* Test Terrain */
+	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
 	const unsigned patchSize = 257;
 	const float xzsize = 0.5f;
-	Terrain terrain;
-	terrain.setPatchSize(patchSize);
+	Terrain terrain(patchSize, 0.005, 6, 1.0f, 0.5f, seedRand(generator));
 	for (unsigned i = 0; i < 4; i++) {
 		GameTerrainData terrainData;
 		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);

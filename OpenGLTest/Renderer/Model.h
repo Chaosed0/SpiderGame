@@ -21,9 +21,11 @@
 /*! Vertex structure common to every mesh. */
 struct Vertex
 {
+	Vertex() : position(0.0f), normal(0.0f), texCoords(0.0f), tintColor(1.0f) { };
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 texCoords;
+	glm::vec3 tintColor;
 };
 
 /*! Bone data for a single vertex. */

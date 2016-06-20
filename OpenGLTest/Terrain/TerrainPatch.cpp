@@ -1,6 +1,9 @@
 
 #include "TerrainPatch.h"
 
+static const glm::vec3 testColor(1 / 255.0f, 142 / 255.0f, 14 / 255.0f);
+static const float textureTiling = 3.5f;
+
 struct TerrainQuad
 {
 	// Top left, top right, bottom left, bottom right
@@ -35,32 +38,43 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 			// Make one quad
 			TerrainQuad quad = getQuad(origin, scale, x, y);
 
+			float ltc = fmod(quad.tl.x, textureTiling) / textureTiling;
+			float ttc = fmod(quad.tl.z, textureTiling) / textureTiling;
+			float rtc = ltc + scale.x / textureTiling;
+			float btc = ttc + scale.x / textureTiling;
+
 			glm::vec3 n1 = glm::cross(quad.tl - quad.bl, quad.br - quad.bl);
 			glm::vec3 n2 = glm::cross(quad.tl - quad.tr, quad.br - quad.tr);
 
 			vertices[vi + 0].position = quad.tl;
 			vertices[vi + 0].normal = n1;
-			vertices[vi + 0].texCoords = glm::vec2(0.0f, 0.0f);
+			vertices[vi + 0].texCoords = glm::vec2(ttc, ltc);
+			vertices[vi + 0].tintColor = testColor;
 
 			vertices[vi + 1].position = quad.br;
 			vertices[vi + 1].normal = n1;
-			vertices[vi + 1].texCoords = glm::vec2(1.0f, 1.0f);
+			vertices[vi + 1].texCoords = glm::vec2(btc, rtc);
+			vertices[vi + 1].tintColor = testColor;
 			
 			vertices[vi + 2].position = quad.bl;
 			vertices[vi + 2].normal = n1;
-			vertices[vi + 2].texCoords = glm::vec2(0.0f, 1.0f);
+			vertices[vi + 2].texCoords = glm::vec2(btc, ltc);
+			vertices[vi + 2].tintColor = testColor;
 
 			vertices[vi + 3].position = quad.tl;
 			vertices[vi + 3].normal = n2;
-			vertices[vi + 3].texCoords = glm::vec2(0.0f, 0.0f);
+			vertices[vi + 3].texCoords = glm::vec2(ttc, ltc);
+			vertices[vi + 3].tintColor = testColor;
 
 			vertices[vi + 4].position = quad.tr;
 			vertices[vi + 4].normal = n2;
-			vertices[vi + 4].texCoords = glm::vec2(1.0f, 0.0f);
+			vertices[vi + 4].texCoords = glm::vec2(ttc, rtc);
+			vertices[vi + 4].tintColor = testColor;
 
 			vertices[vi + 5].position = quad.br;
 			vertices[vi + 5].normal = n2;
-			vertices[vi + 5].texCoords = glm::vec2(1.0f, 1.0f);
+			vertices[vi + 5].texCoords = glm::vec2(btc, rtc);
+			vertices[vi + 5].tintColor = testColor;
 
 			vi += 6;
 		}
@@ -72,7 +86,7 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 	}
 
 	std::vector<Texture> textures(1);
-	textures[0].loadFromFile("assets/img/test.png");
+	textures[0].loadFromFile("assets/img/terrain_shading.png");
 	textures[0].type = TextureType_diffuse;
 
 	return Model(std::vector<Mesh> { Mesh(vertices, indices, textures) });
