@@ -72,11 +72,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <IncludePath>E:\Libraries\freetype-2.6.3\include\;E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;E:\Libraries\libnoise\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\lib\Debug;E:\Libraries\SDL2-2.0.4\lib\x86;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\Debug\;E:\Libraries\glew-1.13.0\lib\Release\Win32;E:\Libraries\libnoise\bin\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\lib\Debug;E:\Libraries\SDL2-2.0.4\lib\x86;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\Debug\;E:\Libraries\glew-1.13.0\lib\Release\Win32;E:\Libraries\libnoise\win32\Debug\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>E:\Libraries\freetype-2.6.3\include\;E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\lib\Release\;E:\Libraries\SDL2-2.0.4\lib\x86\;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\MinSizeRel;E:\Libraries\glew-1.13.0\lib\Release\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Libraries\freetype-2.6.3\include\;E:\Libraries\bullet3\src\;E:\Libraries\SDL2-2.0.4\include;E:\Libraries\SDL2_image-2.0.1\include\;E:\Libraries\assimp-3.1.1\include\;E:\Libraries\glew-1.13.0\include;E:\Libraries\glm\;E:\Libraries\libnoise\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Libraries\freetype-2.6.3\objs\vc2010\Win32\;E:\Libraries\bullet3\lib\Release\;E:\Libraries\SDL2-2.0.4\lib\x86\;E:\Libraries\SDL2_image-2.0.1\lib\x86;E:\Libraries\assimp-3.1.1\build\code\MinSizeRel;E:\Libraries\glew-1.13.0\lib\Release\Win32;E:\Libraries\libnoise\win32\Release\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -121,7 +121,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>freetype263.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimp.lib;glew32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype263.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;assimp.lib;glew32.lib;OpenGL32.lib;libnoise.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>

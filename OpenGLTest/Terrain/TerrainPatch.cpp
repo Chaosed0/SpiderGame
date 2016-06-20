@@ -4,85 +4,76 @@
 static const glm::vec3 testColor(1 / 255.0f, 142 / 255.0f, 14 / 255.0f);
 static const float textureTiling = 3.5f;
 
-struct TerrainQuad
-{
-	// Top left, top right, bottom left, bottom right
-	glm::vec3 tl, tr, bl, br;
-};
-
-TerrainQuad TerrainPatch::getQuad(glm::vec2 origin, glm::vec3 scale, unsigned x, unsigned y)
-{
-	TerrainQuad quad;
-
-	float tlv = this->terrain[y * this->size.x + x] * scale.y;
-	float trv = this->terrain[y * this->size.x + (x+1)] * scale.y;
-	float blv = this->terrain[(y+1) * this->size.x + x] * scale.y;
-	float brv = this->terrain[(y+1) * this->size.x + (x+1)] * scale.y;
-
-	quad.tl = glm::vec3(origin.x + (int)x * scale.x, tlv, origin.y + (int)y * scale.z);
-	quad.tr = glm::vec3(origin.x + (int)(x+1) * scale.x, trv, origin.y + (int)y * scale.z);
-	quad.bl = glm::vec3(origin.x + (int)x * scale.x, blv, origin.y + (int)(y+1) * scale.z);
-	quad.br = glm::vec3(origin.x + (int)(x+1) * scale.x, brv, origin.y + (int)(y+1) * scale.z);
-
-	return quad;
-}
-
 Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 {
 	std::vector<Vertex> vertices;
-	vertices.resize((this->size.y - 1) * (this->size.x - 1) * 6);
 	unsigned vi = 0;
 
-	for (unsigned y = 0; y < this->size.y - 1; y++) {
-		for (unsigned x = 0; x < this->size.x - 1; x++) {
-			// Make one quad
-			TerrainQuad quad = getQuad(origin, scale, x, y);
-
-			float ltc = fmod(quad.tl.x, textureTiling) / textureTiling;
-			float ttc = fmod(quad.tl.z, textureTiling) / textureTiling;
-			float rtc = ltc + scale.x / textureTiling;
-			float btc = ttc + scale.x / textureTiling;
-
-			glm::vec3 n1 = glm::cross(quad.tl - quad.bl, quad.br - quad.bl);
-			glm::vec3 n2 = glm::cross(quad.tl - quad.tr, quad.br - quad.tr);
-
-			vertices[vi + 0].position = quad.tl;
-			vertices[vi + 0].normal = n1;
-			vertices[vi + 0].texCoords = glm::vec2(ttc, ltc);
-			vertices[vi + 0].tintColor = testColor;
-
-			vertices[vi + 1].position = quad.br;
-			vertices[vi + 1].normal = n1;
-			vertices[vi + 1].texCoords = glm::vec2(btc, rtc);
-			vertices[vi + 1].tintColor = testColor;
-			
-			vertices[vi + 2].position = quad.bl;
-			vertices[vi + 2].normal = n1;
-			vertices[vi + 2].texCoords = glm::vec2(btc, ltc);
-			vertices[vi + 2].tintColor = testColor;
-
-			vertices[vi + 3].position = quad.tl;
-			vertices[vi + 3].normal = n2;
-			vertices[vi + 3].texCoords = glm::vec2(ttc, ltc);
-			vertices[vi + 3].tintColor = testColor;
-
-			vertices[vi + 4].position = quad.tr;
-			vertices[vi + 4].normal = n2;
-			vertices[vi + 4].texCoords = glm::vec2(ttc, rtc);
-			vertices[vi + 4].tintColor = testColor;
-
-			vertices[vi + 5].position = quad.br;
-			vertices[vi + 5].normal = n2;
-			vertices[vi + 5].texCoords = glm::vec2(btc, rtc);
-			vertices[vi + 5].tintColor = testColor;
-
-			vi += 6;
+	for (unsigned y = 0; y < this->size.y; y++) {
+		for (unsigned x = 0; x < this->size.x; x++) {
+			Vertex vertex;
+			float val = this->terrain[y * this->size.x + x] * scale.y;
+			vertex.position = glm::vec3(origin.x + (int)x * scale.x, val, origin.y + (int)y * scale.z);
+			vertex.tintColor = testColor;
+			vertex.texCoords = glm::vec2(fmod(vertex.position.x, textureTiling) / textureTiling, fmod(vertex.position.z, textureTiling) / textureTiling);
+			vertices.emplace_back(std::move(vertex));
 		}
 	}
 
-	std::vector<GLuint> indices(vertices.size());
-	for (unsigned i = 0; i < indices.size(); i++) {
-		indices[i] = i;
+	for (unsigned y = 0; y < this->size.y; y++) {
+		for (unsigned x = 0; x < this->size.x; x++) {
+			Vertex& vertex = vertices[y * this->size.x + x];
+			glm::vec3 sum;
+			glm::vec3 left, right, up, down;
+			if (x > 0) {
+				Vertex& vLeft = vertices[y * this->size.x + (x - 1)];
+				left = vLeft.position - vertex.position;
+			}
+			if (x < this->size.x - 1) {
+				Vertex& vRight = vertices[y * this->size.x + (x + 1)];
+				right = vRight.position - vertex.position;
+			}
+			if (y > 0) {
+				Vertex& vUp = vertices[(y + 1) * this->size.x + x];
+				up = vUp.position - vertex.position;
+			}
+			if (y < this->size.y - 1) {
+				Vertex& vDown = vertices[(y + 1) * this->size.x + x];
+				up = vDown.position - vertex.position;
+			}
+
+			if (left.x != 0.0f && up.y != 0.0f) {
+				sum += glm::cross(left, up);
+			}
+			if (left.x != 0.0f && down.y != 0.0f) {
+				sum += glm::cross(down, left);
+			}
+			if (right.x != 0.0f && up.y != 0.0f) {
+				sum += glm::cross(up, right);
+			}
+			if (right.x != 0.0f && down.y != 0.0f) {
+				sum += glm::cross(right, down);
+			}
+
+			vertex.normal = glm::normalize(sum);
+		}
+	}
+
+	std::vector<GLuint> indices;
+	for (unsigned y = 0; y < this->size.y - 1; y++) {
+		for (unsigned x = 0; x < this->size.x - 1; x++) {
+			int tli = y * this->size.x + x;
+			int tri = tli + 1;
+			int bli = (y + 1) * this->size.x + x;
+			int bri = bli + 1;
+
+			indices.push_back(tli);
+			indices.push_back(bri);
+			indices.push_back(bli);
+			indices.push_back(tli);
+			indices.push_back(tri);
+			indices.push_back(bri);
+		}
 	}
 
 	std::vector<Texture> textures(1);
@@ -99,10 +90,9 @@ TerrainPatchCollision TerrainPatch::getCollisionData(glm::vec2 origin, glm::vec3
 	for (unsigned y = 0; y < this->size.y; y++) {
 		for (unsigned x = 0; x < this->size.x; x++) {
 			float val = this->terrain[y * this->size.x + x] * scale.y;
-			// Bullet triangle order is different than openGL's
+			data.vertices.push_back(origin.x + (int)x * scale.x);
 			data.vertices.push_back(val);
 			data.vertices.push_back(origin.y + (int)y * scale.z);
-			data.vertices.push_back(origin.x + (int)x * scale.x);
 		}
 	}
 

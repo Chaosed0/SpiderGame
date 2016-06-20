@@ -147,7 +147,7 @@ int Game::setup()
 	//debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 
 	/* Scene */
-	shader.compileAndLink("Shaders/basic.vert", "Shaders/textured.frag");
+	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
@@ -207,8 +207,6 @@ int Game::setup()
 	std::default_random_engine generator;
 	generator.seed((unsigned int)time(NULL));
 	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
-	std::uniform_real_distribution<float> angleRand(-glm::pi<float>(), glm::pi<float>());
-	std::uniform_real_distribution<float> axisRand(-1.0f, 1.0f);
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
 
 	for (int i = 0; i < 10; i++) {
@@ -217,11 +215,7 @@ int Game::setup()
 		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
 		CollisionComponent* collisionComponent = shroom.addComponent<CollisionComponent>();
 
-		float z = axisRand(generator);
-		float axisAngle = angleRand(generator);
-		float angle = angleRand(generator);
 		transformComponent->transform.setPosition(glm::vec3(positionRand(generator), positionRand(generator) + 5.0f, positionRand(generator)));
-		transformComponent->transform.setRotation(glm::angleAxis(angle, glm::vec3(sqrt(1 - z*z) * cos(axisAngle), sqrt(1 - z*z) * sin(axisAngle), z)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
 		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
@@ -246,7 +240,9 @@ int Game::setup()
 	const float xzsize = 0.5f;
 	Terrain terrain(patchSize, 0.005, 6, 1.0f, 0.5f, seedRand(generator));
 	for (unsigned i = 0; i < 4; i++) {
-		GameTerrainData terrainData;
+		this->terrainData.push_back(GameTerrainData());
+		GameTerrainData& terrainData = this->terrainData[i];
+
 		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
 		glm::vec3 scale(xzsize, 20.0f, xzsize);
 		glm::vec3 position(origin.x * (int)(patchSize - 1) * xzsize, 0.0f, origin.y * (int)(patchSize - 1) * xzsize);
@@ -262,10 +258,8 @@ int Game::setup()
 		terrainData.shape = new btBvhTriangleMeshShape(terrainData.vertArray, true);
 		terrainData.object = new btCollisionObject();
 		terrainData.object->setCollisionShape(terrainData.shape);
-		terrainData.object->setWorldTransform(btTransform(btQuaternion(), Util::glmToBt(position)));
+		terrainData.object->setWorldTransform(btTransform(Util::glmToBt(glm::quat()), Util::glmToBt(position)));
 		dynamicsWorld->addCollisionObject(terrainData.object);
-
-		this->terrainData.emplace_back(std::move(terrainData));
 	}
 
 	// Initialize the player
