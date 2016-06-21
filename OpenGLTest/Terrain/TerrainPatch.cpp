@@ -34,24 +34,24 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 				right = vRight.position - vertex.position;
 			}
 			if (y > 0) {
-				Vertex& vUp = vertices[(y + 1) * this->size.x + x];
+				Vertex& vUp = vertices[(y - 1) * this->size.x + x];
 				up = vUp.position - vertex.position;
 			}
 			if (y < this->size.y - 1) {
 				Vertex& vDown = vertices[(y + 1) * this->size.x + x];
-				up = vDown.position - vertex.position;
+				down = vDown.position - vertex.position;
 			}
 
-			if (left.x != 0.0f && up.y != 0.0f) {
+			if (left.x != 0.0f && up.z != 0.0f) {
 				sum += glm::cross(left, up);
 			}
-			if (left.x != 0.0f && down.y != 0.0f) {
+			if (left.x != 0.0f && down.z != 0.0f) {
 				sum += glm::cross(down, left);
 			}
-			if (right.x != 0.0f && up.y != 0.0f) {
+			if (right.x != 0.0f && up.z != 0.0f) {
 				sum += glm::cross(up, right);
 			}
-			if (right.x != 0.0f && down.y != 0.0f) {
+			if (right.x != 0.0f && down.z != 0.0f) {
 				sum += glm::cross(right, down);
 			}
 
