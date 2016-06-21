@@ -13,7 +13,7 @@ struct TerrainPatchCollision
 struct TerrainPatch
 {
 	std::vector<float> terrain;
-	glm::ivec2 size;
+	glm::uvec2 size;
 	float max, min;
 
 	Model toModel(glm::vec2 origin, glm::vec3 scale);

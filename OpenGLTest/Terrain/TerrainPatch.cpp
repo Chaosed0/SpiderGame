@@ -43,16 +43,16 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 			}
 
 			if (left.x != 0.0f && up.z != 0.0f) {
-				sum += glm::cross(left, up);
+				sum += glm::cross(up, left);
 			}
 			if (left.x != 0.0f && down.z != 0.0f) {
-				sum += glm::cross(down, left);
+				sum += glm::cross(left, down);
 			}
 			if (right.x != 0.0f && up.z != 0.0f) {
-				sum += glm::cross(up, right);
+				sum += glm::cross(right, up);
 			}
 			if (right.x != 0.0f && down.z != 0.0f) {
-				sum += glm::cross(right, down);
+				sum += glm::cross(down, right);
 			}
 
 			vertex.normal = glm::normalize(sum);
@@ -127,8 +127,8 @@ void TerrainPatch::SaveHeightmapToFile(const std::string& file)
 	SDL_SetPaletteColors(surface->format->palette, colors, 0, 256);
 
 	unsigned char* pixels = (unsigned char*)surface->pixels;
-	for (unsigned y = 0; y < surface->h; y++) {
-		for (unsigned x = 0; x < surface->pitch; x++) {
+	for (int y = 0; y < surface->h; y++) {
+		for (int x = 0; x < surface->pitch; x++) {
 			float value = (this->terrain[y * this->size.x + x] - this->min) / (this->max - this->min);
 			pixels[y * surface->pitch + x] = (unsigned char)(value * 255);
 		}

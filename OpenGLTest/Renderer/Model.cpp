@@ -66,30 +66,22 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 	glCheckError();
 
 	for (unsigned int i = 0; i < textures.size(); i++) {
-		MaterialProperty textureProperty;
+		MaterialProperty textureProperty(textures[i]);
+		std::string key;
 		if (textures[i].type == TextureType_diffuse) {
-			textureProperty.key = "texture_diffuse";
-			textureProperty.type = MaterialPropertyType_texture;
-			textureProperty.value.texture = textures[i];
+			key = "texture_diffuse";
 		} else if (textures[i].type == TextureType_specular) {
-			textureProperty.key = "texture_specular";
-			textureProperty.type = MaterialPropertyType_texture;
-			textureProperty.value.texture = textures[i];
+			key = "texture_specular";
 		} else if (textures[i].type == TextureType_cubemap) {
-			textureProperty.key = "cubemap";
-			textureProperty.type = MaterialPropertyType_texture;
-			textureProperty.value.texture = textures[i];
+			key = "cubemap";
 			// not all cubemaps are skyboxes, but they are for now!
 			material.drawOrder = GL_LEQUAL;
 		}
-		material.setProperty(textureProperty);
+		material.setProperty(key, textureProperty);
 	}
 
-	MaterialProperty shininessProperty;
-	shininessProperty.key = "shininess";
-	shininessProperty.type = MaterialPropertyType_float;
-	shininessProperty.value.flt = 32.0f;
-	material.setProperty(shininessProperty);
+	MaterialProperty shininessProperty(32.0f);
+	material.setProperty("shininess", shininessProperty);
 }
 
 Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures)

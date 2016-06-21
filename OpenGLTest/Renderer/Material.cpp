@@ -7,18 +7,34 @@ Material::Material()
 	drawOrder = GL_LESS;
 }
 
-void Material::setProperty(MaterialProperty property)
+MaterialProperty Material::getProperty(const std::string& key)
 {
-	properties.push_back(property);
+	auto iter = properties.find(key);
+	if (iter != properties.end()) {
+		return iter->second;
+	}
+	MaterialProperty invalid;
+	invalid.type = MaterialPropertyType_invalid;
+	return invalid;
+}
+
+void Material::setProperty(const std::string& key, MaterialProperty property)
+{
+	auto iter = properties.find(key);
+	if (iter != properties.end()) {
+		iter->second = property;
+	} else {
+		properties.emplace(key, property);
+	}
 }
 
 void Material::apply(const Shader& shader) const
 {
 	unsigned int curTexture = 0;
 
-	for (unsigned int i = 0; i < properties.size(); i++) {
-		const MaterialProperty& property = properties[i];
-		GLuint propertyId = shader.getUniformLocation(("material." + property.key).c_str());
+	for (auto iter = properties.begin(); iter != properties.end(); ++iter) {
+		const MaterialProperty& property = iter->second;
+		GLuint propertyId = shader.getUniformLocation(("material." + iter->first).c_str());
 		switch(property.type) {
 		case MaterialPropertyType_vec3:
 			glUniform3f(propertyId, property.value.vec3.x, property.value.vec3.y, property.value.vec3.z);

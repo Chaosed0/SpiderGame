@@ -183,10 +183,9 @@ int Game::setup()
 
 	Mesh pointLightMesh = getBox(std::vector<Texture> {});
 	MaterialProperty pointLightColorProperty;
-	pointLightColorProperty.key = "color";
 	pointLightColorProperty.type = MaterialPropertyType_vec4;
 	pointLightColorProperty.value.vec4 = glm::vec4(1.0f);
-	pointLightMesh.material.setProperty(pointLightColorProperty);
+	pointLightMesh.material.setProperty("color", pointLightColorProperty);
 	modelLoader.assignModelToId("pointLight", std::vector<Mesh> { pointLightMesh });
 
 	std::vector<std::string> skyboxFaces;
@@ -238,7 +237,7 @@ int Game::setup()
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
 	const unsigned patchSize = 257;
 	const float xzsize = 0.5f;
-	Terrain terrain(patchSize, 0.005, 6, 1.0f, 0.5f, seedRand(generator));
+	Terrain terrain(patchSize, 0.005f, 6, 1.0f, 0.5f, seedRand(generator));
 	for (unsigned i = 0; i < 4; i++) {
 		this->terrainData.push_back(GameTerrainData());
 		GameTerrainData& terrainData = this->terrainData[i];
@@ -250,6 +249,8 @@ int Game::setup()
 		terrainData.patch = terrain.generatePatch(origin.x, origin.y);
 		modelLoader.assignModelToId("terrain" + i, terrainData.patch.toModel(glm::ivec2(), scale));
 		terrainData.model = modelLoader.loadModelById("terrain" + i);
+		terrainData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
+
 		unsigned int terrainHandle = renderer.getHandle(terrainData.model, shader);
 		renderer.updateTransform(terrainHandle, Transform(position));
 
