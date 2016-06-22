@@ -2,7 +2,7 @@
 #include "TerrainPatch.h"
 
 static const glm::vec3 testColor(1 / 255.0f, 142 / 255.0f, 14 / 255.0f);
-static const float textureTiling = 3.5f;
+static const float textureTiling = 4.0f;
 
 Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 {
@@ -15,7 +15,7 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 			float val = this->terrain[y * this->size.x + x] * scale.y;
 			vertex.position = glm::vec3(origin.x + (int)x * scale.x, val, origin.y + (int)y * scale.z);
 			vertex.tintColor = testColor;
-			vertex.texCoords = glm::vec2(fmod(vertex.position.x, textureTiling) / textureTiling, fmod(vertex.position.z, textureTiling) / textureTiling);
+			vertex.texCoords = glm::vec2(vertex.position.x / textureTiling, vertex.position.z / textureTiling);
 			vertices.emplace_back(std::move(vertex));
 		}
 	}

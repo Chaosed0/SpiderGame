@@ -177,7 +177,7 @@ int Game::setup()
 	DirLight dirLight;
 	dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
 	dirLight.ambient = glm::vec3(0.2f);
-	dirLight.diffuse = glm::vec3(0.5f);
+	dirLight.diffuse = glm::vec3(0.9f);
 	dirLight.specular = glm::vec3(1.0f);
 	renderer.setDirLight(dirLight);
 
@@ -280,7 +280,7 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(playerCollisionComponent->body);
 
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
-	playerRigidbodyMotorComponent->moveSpeed = 7.0f;
+	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
 	playerRigidbodyMotorComponent->noclip = false;
 
 	entities.push_back(player);
@@ -288,7 +288,7 @@ int Game::setup()
 	TransformComponent* cameraTransformComponent = camera.addComponent<TransformComponent>();
 	CameraComponent* cameraComponent = camera.addComponent<CameraComponent>();
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -0.5f, 0.0f));
+	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -2.0f, 0.0f));
 
 	entities.push_back(camera);
 
