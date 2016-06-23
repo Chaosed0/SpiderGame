@@ -1,7 +1,11 @@
 
 #include "TerrainPatch.h"
 
-static const glm::vec3 testColor(1 / 255.0f, 142 / 255.0f, 14 / 255.0f);
+static const glm::vec3 grassColor(1 / 255.0f, 142 / 255.0f, 14 / 255.0f);
+static const glm::vec3 dirtColor(120 / 255.0f, 72 / 255.0f, 0 / 255.0f);
+static const glm::vec3 rockColor(160 / 255.0f, 170 / 255.0f, 200 / 255.0f);
+static const float dirtThreshold = 0.6f;
+static const float grassThreshold = 0.8f;
 static const float textureTiling = 4.0f;
 
 Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
@@ -14,7 +18,6 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 			Vertex vertex;
 			float val = this->terrain[y * this->size.x + x] * scale.y;
 			vertex.position = glm::vec3(origin.x + (int)x * scale.x, val, origin.y + (int)y * scale.z);
-			vertex.tintColor = testColor;
 			vertex.texCoords = glm::vec2(vertex.position.x / textureTiling, vertex.position.z / textureTiling);
 			vertices.emplace_back(std::move(vertex));
 		}
@@ -56,6 +59,14 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 			}
 
 			vertex.normal = glm::normalize(sum);
+			float steepness = glm::dot(vertex.normal, glm::vec3(0.0f, 1.0f, 0.0f));
+			if (std::abs(steepness) > grassThreshold) {
+				vertex.tintColor = grassColor;
+			} else if (std::abs(steepness) > dirtThreshold) {
+				vertex.tintColor = dirtColor;
+			} else {
+				vertex.tintColor = rockColor;
+			}
 		}
 	}
 
