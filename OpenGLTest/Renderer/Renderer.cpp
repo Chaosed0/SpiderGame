@@ -10,9 +10,7 @@ static const unsigned int maxBones = 100;
 
 Renderer::Renderer()
 	: pointLights(maxPointLights)
-{
-	nextId = 1;
-}
+{ }
 
 void Renderer::setDebugLogCallback(const DebugLogCallback& callback)
 {
@@ -43,24 +41,17 @@ bool Renderer::initialize()
 
 unsigned int Renderer::getHandle(const Model& model, const Shader& shader)
 {
-	auto modelIter = modelMap.find(model.id);
 	auto shaderIter = shaderMap.find(shader.getID());
-
-	if (modelIter == modelMap.end()) {
-		auto iterPair = modelMap.emplace(std::make_pair(model.id, model));
-		modelIter = iterPair.first;
-	}
-
 	if (shaderIter == shaderMap.end()) {
 		auto iterPair = shaderMap.emplace(std::make_pair(shader.getID(), shader));
 		shaderIter = iterPair.first;
 	}
 
-	unsigned int id = nextId;
+	unsigned int handle = this->nextHandle;
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	renderableMap.emplace(std::make_pair(id, Renderable(shaderIter->second, modelIter->second, Transform::identity)));
-	nextId++;
-	return id;
+	renderableMap.emplace(std::make_pair(nextHandle, Renderable(shader, model, Transform::identity)));
+	this->nextHandle++;
+	return handle;
 }
 
 void Renderer::updateTransform(unsigned int handle, const Transform& transform)

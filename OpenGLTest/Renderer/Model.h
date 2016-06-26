@@ -192,9 +192,6 @@ struct Model
 	/*! All the animations. */
 	AnimationData animationData;
 
-	/*! Model ID, used by the renderer.*/
-	unsigned int id;
-
 	Model() {}
 	Model(std::vector<Mesh> meshes) : meshes(meshes) {}
 	Model(std::vector<Mesh> meshes, AnimationData animationData) : meshes(meshes), animationData(animationData) {}

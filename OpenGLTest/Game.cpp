@@ -131,7 +131,7 @@ int Game::setup()
 	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
 
 	// Initialize renderer debugging output
-	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
+	//renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -186,7 +186,7 @@ int Game::setup()
 	pointLightColorProperty.type = MaterialPropertyType_vec4;
 	pointLightColorProperty.value.vec4 = glm::vec4(1.0f);
 	pointLightMesh.material.setProperty("color", pointLightColorProperty);
-	modelLoader.assignModelToId("pointLight", std::vector<Mesh> { pointLightMesh });
+	pointLightModel = std::vector<Mesh> { pointLightMesh };
 
 	std::vector<std::string> skyboxFaces;
 	skyboxFaces.push_back("assets/img/skybox/miramar_ft.tga");
@@ -195,19 +195,17 @@ int Game::setup()
 	skyboxFaces.push_back("assets/img/skybox/miramar_dn.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_rt.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_lf.tga");
-	modelLoader.assignModelToId("skybox", std::vector<Mesh> { getSkybox(skyboxFaces) });
-
-	pointLightModel = modelLoader.loadModelById("pointLight");
-	skyboxModel = modelLoader.loadModelById("skybox");
+	skyboxModel = std::vector<Mesh> { getSkybox(skyboxFaces) };
 
 	// Load some mushrooms
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 
-	std::default_random_engine generator;
-	generator.seed((unsigned int)time(NULL));
+	unsigned seed = time(NULL);
+	this->generator.seed(seed);
+	printf("USING SEED: %d\n", seed);
+
 	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
-
 	for (int i = 0; i < 10; i++) {
 		Entity shroom;
 		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
@@ -233,34 +231,53 @@ int Game::setup()
 	renderer.setAnimation(spiderHandle, "AnimStack::walk");
 	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));*/
 
-	/* Test Terrain */
+	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
-	const unsigned patchSize = 257;
-	const float xzsize = 0.5f;
-	Terrain terrain(patchSize, 0.005f, 6, 1.0f, 0.5f, seedRand(generator));
-	for (unsigned i = 0; i < 4; i++) {
-		this->terrainData.push_back(GameTerrainData());
-		GameTerrainData& terrainData = this->terrainData[i];
+	RoomGenerator roomGenerator(seedRand(generator));
+	Room room = roomGenerator.generate();
+	const unsigned height = 6;
+	Texture testTexture(TextureType_diffuse, "assets/img/test.png");
 
-		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
-		glm::vec3 scale(xzsize, 20.0f, xzsize);
-		glm::vec3 position(origin.x * (int)(patchSize - 1) * xzsize, 0.0f, origin.y * (int)(patchSize - 1) * xzsize);
+	for (unsigned i = 0; i < room.sides.size(); i++) {
+		RoomSide side = room.sides[i];
+		glm::vec3 scale(1.0f, height, 1.0f);
+		if (side.normal.x == 0.0f) {
+			scale.x = side.x1 - side.x0;
+			scale.z = side.normal.y;
+		} else {
+			scale.x = side.normal.x;
+			scale.z = side.y1 - side.y0;
+		}
+		Mesh box = getBox({ testTexture }, scale);
 
-		terrainData.patch = terrain.generatePatch(origin.x, origin.y);
-		modelLoader.assignModelToId("terrain" + i, terrainData.patch.toModel(glm::ivec2(), scale));
-		terrainData.model = modelLoader.loadModelById("terrain" + i);
-		terrainData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
+		// getBox() centers the mesh
+		unsigned handle = renderer.getHandle(std::vector<Mesh> { box }, shader);
+		renderer.updateTransform(handle, Transform(glm::vec3(side.x0 + scale.x / 2.0f, scale.y / 2.0f, side.y0 + scale.z / 2.0f)));
 
-		unsigned int terrainHandle = renderer.getHandle(terrainData.model, shader);
-		renderer.updateTransform(terrainHandle, Transform(position));
+		// box shape doesn't do well with negative extents
+		btBoxShape* wallShape = new btBoxShape(btVector3(std::abs(scale.x) / 2.0f, std::abs(scale.y) / 2.0f, std::abs(scale.z) / 2.0f));
+		btCollisionObject* wallCollider = new btCollisionObject();
+		wallCollider->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(side.x0 + scale.x / 2.0f, scale.y / 2.0f, side.y0 + scale.z / 2.0f)));
+		wallCollider->setCollisionShape(wallShape);
+		roomData.collisionObjects.push_back(wallCollider);
+		dynamicsWorld->addCollisionObject(wallCollider);
+	}
 
-		terrainData.collision = terrainData.patch.getCollisionData(glm::ivec2(), scale);
-		terrainData.vertArray = new btTriangleIndexVertexArray(terrainData.collision.indices.size() / 3, terrainData.collision.indices.data(), 3 * sizeof(unsigned), terrainData.collision.vertices.size(), terrainData.collision.vertices.data(), 3 * sizeof(float));
-		terrainData.shape = new btBvhTriangleMeshShape(terrainData.vertArray, true);
-		terrainData.object = new btCollisionObject();
-		terrainData.object->setCollisionShape(terrainData.shape);
-		terrainData.object->setWorldTransform(btTransform(Util::glmToBt(glm::quat()), Util::glmToBt(position)));
-		dynamicsWorld->addCollisionObject(terrainData.object);
+	for (unsigned i = 0; i < room.boxes.size(); i++) {
+		Box floor = room.boxes[i];
+		glm::vec3 scale(floor.right - floor.left, 1.0f, floor.top - floor.bottom);
+		Mesh mesh = getBox({ testTexture }, scale);
+		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
+		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + scale.x / 2.0f, scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));
+		/*unsigned ceilingHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
+		renderer.updateTransform(ceilingHandle, Transform(glm::vec3(floor.left + scale.x / 2.0f, height + scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));*/
+
+		btBoxShape* floorShape = new btBoxShape(Util::glmToBt(scale / 2.0f));
+		btCollisionObject* floorCollider = new btCollisionObject();
+		floorCollider->setCollisionShape(floorShape);
+		floorCollider->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(floor.left  + scale.x / 2.0f, scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));
+		roomData.collisionObjects.push_back(floorCollider);
+		dynamicsWorld->addCollisionObject(floorCollider);
 	}
 
 	// Initialize the player
@@ -269,7 +286,7 @@ int Game::setup()
 	PlayerComponent* playerComponent = player.addComponent<PlayerComponent>();
 	RigidbodyMotorComponent* playerRigidbodyMotorComponent = player.addComponent<RigidbodyMotorComponent>();
 
-	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, -10.0f));
+	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, 0.0f));
 
 	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(playerTransform->transform));
@@ -288,7 +305,7 @@ int Game::setup()
 	TransformComponent* cameraTransformComponent = camera.addComponent<TransformComponent>();
 	CameraComponent* cameraComponent = camera.addComponent<CameraComponent>();
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -2.0f, 0.0f));
+	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -0.5f, 0.0f));
 
 	entities.push_back(camera);
 
@@ -502,5 +519,37 @@ void Game::handleEvent(SDL_Event& event)
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			break;
 		}
+	}
+}
+
+void Game::generateTestTerrain()
+{
+	/* Test Terrain */
+	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
+	const unsigned patchSize = 257;
+	const float xzsize = 0.5f;
+	Terrain terrain(patchSize, 0.005f, 6, 1.0f, 0.5f, seedRand(generator));
+	for (unsigned i = 0; i < 4; i++) {
+		this->terrainData.push_back(GameTerrainData());
+		GameTerrainData& terrainData = this->terrainData[i];
+
+		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
+		glm::vec3 scale(xzsize, 20.0f, xzsize);
+		glm::vec3 position(origin.x * (int)(patchSize - 1) * xzsize, 0.0f, origin.y * (int)(patchSize - 1) * xzsize);
+
+		terrainData.patch = terrain.generatePatch(origin.x, origin.y);
+		terrainData.model = terrainData.patch.toModel(glm::ivec2(), scale);
+		terrainData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
+
+		unsigned int terrainHandle = renderer.getHandle(terrainData.model, shader);
+		renderer.updateTransform(terrainHandle, Transform(position));
+
+		terrainData.collision = terrainData.patch.getCollisionData(glm::ivec2(), scale);
+		terrainData.vertArray = new btTriangleIndexVertexArray(terrainData.collision.indices.size() / 3, terrainData.collision.indices.data(), 3 * sizeof(unsigned), terrainData.collision.vertices.size(), terrainData.collision.vertices.data(), 3 * sizeof(float));
+		terrainData.shape = new btBvhTriangleMeshShape(terrainData.vertArray, true);
+		terrainData.object = new btCollisionObject();
+		terrainData.object->setCollisionShape(terrainData.shape);
+		terrainData.object->setWorldTransform(btTransform(Util::glmToBt(glm::quat()), Util::glmToBt(position)));
+		dynamicsWorld->addCollisionObject(terrainData.object);
 	}
 }

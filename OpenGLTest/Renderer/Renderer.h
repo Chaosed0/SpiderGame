@@ -80,8 +80,8 @@ struct Renderable
 	Renderable(const ShaderCache& shaderCache, const Model& model, Transform transform)
 		: shaderCache(shaderCache), model(model), transform(transform) { }
 
-	const ShaderCache& shaderCache;
-	const Model& model;
+	ShaderCache shaderCache;
+	Model model;
 	Transform transform;
 
 	/*! Current animation playing. */
@@ -129,11 +129,17 @@ public:
 
 	/*!
 	 * \brief Gets a handle to a renderable object.
+	 *
+	 * If type is RenderableTypeDynamic, then model must have a unique ID assigned to the
+	 * id field.
+	 * If type is RenderableTypeStatic, then the model id is ignored (one is assigned
+	 * internally).
 	 */
 	unsigned int getHandle(const Model& model, const Shader& shader);
 
 	/*!
-	 * \brief Updates the transform of a renderable object.
+	 * \brief Updates the transform of a renderable object. The handle must have been
+	 *		specified as RenderableTypeDynamic.
 	 */
 	void updateTransform(unsigned int handle, const Transform& transform);
 
@@ -169,18 +175,15 @@ private:
 	/*! Point lights. */
 	std::vector<PointLight> pointLights;
 
-	/*! Map of shader IDs to Shaders. */
-	std::map<unsigned int, ShaderCache> shaderMap;
-
-	/*! Map of model IDs to Models. */
-	std::unordered_map<unsigned int, Model> modelMap;
+	/*! Map of shader ids to shaders. */
+	std::map<unsigned, Shader> shaderMap;
 	
 	/*! Map of renderable handles to Renderables. */
-	std::map<unsigned int, Renderable> renderableMap;
+	std::map<unsigned, Renderable> renderableMap;
 
 	/*! The callback to call when an OpenGL debug message is emitted. */
 	DebugLogCallback debugLogCallback;
 
 	/*! ID to assign to the next renderable requested through getHandle(). */
-	unsigned int nextId;
+	unsigned nextHandle;
 };

@@ -162,8 +162,9 @@
     <ClCompile Include="Renderer\RenderUtil.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
     <ClCompile Include="Renderer\Shader.cpp" />
-    <ClCompile Include="Terrain\Terrain.cpp" />
-    <ClCompile Include="Terrain\TerrainPatch.cpp" />
+    <ClCompile Include="Environment\Room.cpp" />
+    <ClCompile Include="Environment\Terrain.cpp" />
+    <ClCompile Include="Environment\TerrainPatch.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
@@ -197,8 +198,9 @@
     <ClInclude Include="Renderer\RenderUtil.h" />
     <ClInclude Include="Renderer\Texture.h" />
     <ClInclude Include="Renderer\Shader.h" />
-    <ClInclude Include="Terrain\Terrain.h" />
-    <ClInclude Include="Terrain\TerrainPatch.h" />
+    <ClInclude Include="Environment\Room.h" />
+    <ClInclude Include="Environment\Terrain.h" />
+    <ClInclude Include="Environment\TerrainPatch.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Framework\Components\TransformComponent.h" />
     <ClInclude Include="Util.h" />

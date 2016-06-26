@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <btBulletDynamicsCommon.h>
 
+#include <random>
 #include <vector>
 #include <memory>
 
@@ -15,7 +16,8 @@
 #include "Framework/Entity.h"
 
 #include "Console/Console.h"
-#include "Terrain/Terrain.h"
+#include "Environment/Terrain.h"
+#include "Environment/Room.h"
 
 #include "Framework/Systems/ModelRenderSystem.h"
 #include "Framework/Systems/CollisionUpdateSystem.h"
@@ -31,6 +33,11 @@ struct GameTerrainData
 	btTriangleIndexVertexArray* vertArray;
 	btBvhTriangleMeshShape* shape;
 	btCollisionObject* object;
+};
+
+struct RoomData
+{
+	std::vector<btCollisionObject*> collisionObjects;
 };
 
 class Game
@@ -51,6 +58,9 @@ private:
 	void handleEvent(SDL_Event& event);
 	void draw();
 
+	void generateTestTerrain();
+
+	bool wireframe;
 	bool running;
 	Uint32 lastUpdate;
 	float accumulator;
@@ -67,6 +77,7 @@ private:
 	Shader lightShader;
 	Shader skyboxShader;
 
+	RoomData roomData;
 	std::vector<GameTerrainData> terrainData;
 	std::vector<Transform> pointLightTransforms;
 	Model pointLightModel;
@@ -89,8 +100,9 @@ private:
 	std::unique_ptr<Console> console;
 	bool consoleIsVisible;
 
+	std::default_random_engine generator;
+
 	void exit();
 	void setWireframe(bool on);
 	void setNoclip(bool on);
-	bool wireframe;
 };

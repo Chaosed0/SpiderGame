@@ -6,7 +6,6 @@
 
 ModelLoader::ModelLoader()
 {
-	nextId = 1;
 	modelIdCache["error"] = Model(std::vector<Mesh>());
 }
 
@@ -29,26 +28,8 @@ Model ModelLoader::loadModelFromPath(const std::string& path)
 		Model model = this->processRootNode(scene->mRootNode, scene);
 
 		this->modelIdCache[path] = model;
-		model.id = nextId;
-		nextId++;
 		return model;
 	}
-}
-
-Model ModelLoader::loadModelById(const std::string& id)
-{
-	auto modelCacheIter = this->modelIdCache.find(id);
-	if (modelCacheIter != this->modelIdCache.end()) {
-		return modelCacheIter->second;
-	} else {
-		return this->modelIdCache["error"];
-	}
-}
-
-void ModelLoader::assignModelToId(const std::string& id, Model model)
-{
-	model.id = nextId++;
-	this->modelIdCache[id] = model;
 }
 
 Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)

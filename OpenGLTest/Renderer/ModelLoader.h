@@ -19,20 +19,7 @@ public:
 	 * \brief Loads a model from the given path.
 	 */
 	Model loadModelFromPath(const std::string& path);
-
-	/*!
-	 * \brief Gets a model by an ID. The model must have been loaded by assignModelToId first.
-	 */
-	Model loadModelById(const std::string& id);
-
-	/*!
-	 * \brief Assigns an already-existing model to the id. Load the model later using loadModelById.
-	 */
-	void assignModelToId(const std::string& id, Model model);
 private:
-	/*! Next model ID to assign. */
-	unsigned int nextId;
-
 	/*! The relative directory to the model we are currently loading. */
 	std::string curDir;
 
