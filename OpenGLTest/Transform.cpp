@@ -4,11 +4,11 @@
 const Transform Transform::identity = Transform();
 
 Transform::Transform()
-	: Transform(glm::vec3(0,0,0), glm::quat(glm::vec3(0,0,0)), glm::vec3(1,1,1))
+	: Transform(glm::vec3(0,0,0), glm::quat(), glm::vec3(1,1,1))
 { }
 
 Transform::Transform(glm::vec3 position)
-	: Transform(position, glm::quat(glm::vec3(0, 0, 0)), glm::vec3(1, 1, 1))
+	: Transform(position, glm::quat(), glm::vec3(1, 1, 1))
 { }
 
 Transform::Transform(glm::vec3 position, glm::quat rotation)
@@ -109,5 +109,5 @@ glm::mat4 Transform::matrix() const
 		);
 	glm::mat4 parentMatrix = (this->parent == nullptr ? glm::mat4() : this->parent->matrix());
 
-	return parentMatrix * posMatrix * rotMatrix * scaleMatrix;
+	return parentMatrix * (posMatrix * rotMatrix * scaleMatrix);
 }

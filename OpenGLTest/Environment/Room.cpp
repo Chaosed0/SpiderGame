@@ -105,14 +105,6 @@ Room RoomGenerator::generate()
 		}
 
 		boxes.push_back(newBox);
-
-		std::stringstream sstream;
-		sstream << "room" << i << ".bmp";
-		Room room = boxesToRoom(boxes);
-		SDL_Surface* surf = room.saveToSurface();
-		SDL_SaveBMP(surf, sstream.str().c_str());
-		SDL_FreeSurface(surf);
-		i++;
 	}
 
 	return boxesToRoom(boxes);

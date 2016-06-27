@@ -43,9 +43,9 @@ void PlayerInputSystem::startMoving(glm::vec2 movement)
 	} else if (movement.x < 0) {
 		back = true;
 	} else if (movement.y > 0) {
-		left = true;
-	} else if (movement.y < 0) {
 		right = true;
+	} else if (movement.y < 0) {
+		left = true;
 	}
 }
 void PlayerInputSystem::stopMoving(glm::vec2 movement)
@@ -55,9 +55,9 @@ void PlayerInputSystem::stopMoving(glm::vec2 movement)
 	} else if (movement.x < 0) {
 		back = false;
 	} else if (movement.y > 0) {
-		left = false;
-	} else if (movement.y < 0) {
 		right = false;
+	} else if (movement.y < 0) {
+		left = false;
 	}
 }
 

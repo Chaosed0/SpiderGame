@@ -4,6 +4,8 @@
 #include "Framework/Components/CollisionComponent.h"
 #include "Framework/Components/TransformComponent.h"
 
+#include "Util.h"
+
 CollisionUpdateSystem::CollisionUpdateSystem()
 {
 	this->require<CollisionComponent>();
@@ -16,6 +18,6 @@ void CollisionUpdateSystem::updateEntity(float dt, Entity& entity)
 	TransformComponent* transformComponent(entity.getComponent<TransformComponent>());
 
 	btTransform transform = collisionComponent->body->getWorldTransform();
-	transformComponent->transform.setPosition(glm::vec3(transform.getOrigin().x(), transform.getOrigin().y(), transform.getOrigin().z()));
-	transformComponent->transform.setRotation(glm::quat(transform.getRotation().x(), transform.getRotation().y(), transform.getRotation().z(), transform.getRotation().w()));
+	transformComponent->transform.setPosition(Util::btToGlm(transform.getOrigin()));
+	transformComponent->transform.setRotation(Util::btToGlm(transform.getRotation()));
 }

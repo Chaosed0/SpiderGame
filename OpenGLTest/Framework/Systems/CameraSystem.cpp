@@ -16,5 +16,5 @@ void CameraSystem::updateEntity(float dt, Entity& entity)
 	 CameraComponent* cameraComponent = entity.getComponent<CameraComponent>();
 	 TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
 
-	 cameraComponent->camera.transform = transformComponent->transform;
+	 cameraComponent->camera.inverseViewMatrix = transformComponent->transform.matrix();
 }

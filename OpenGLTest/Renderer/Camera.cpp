@@ -18,7 +18,7 @@ Camera::Camera(float fieldOfView, unsigned int width, unsigned int height, float
 
 glm::mat4 Camera::getViewMatrix()
 {
-	return glm::inverse(transform.matrix());
+	return glm::inverse(inverseViewMatrix);
 }
 
 glm::mat4 Camera::getProjectionMatrix()

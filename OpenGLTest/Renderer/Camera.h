@@ -11,7 +11,7 @@ public:
 	glm::mat4 getViewMatrix();
 	glm::mat4 getProjectionMatrix();
 
-	Transform transform;
+	glm::mat4 inverseViewMatrix;
 private:
 	float fieldOfView;
 	unsigned int width;

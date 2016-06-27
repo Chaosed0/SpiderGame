@@ -389,7 +389,8 @@ void Game::update()
 {
 	renderer.update(timeDelta);
 
-	camera.getComponent<TransformComponent>()->transform.setRotation(glm::quat(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
+	Transform& cameraTransform = camera.getComponent<TransformComponent>()->transform;
+	cameraTransform.setRotation(glm::angleAxis(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
 
 	playerInputSystem->update(timeDelta, entities);
 	rigidbodyMotorSystem->update(timeDelta, entities);
@@ -432,9 +433,9 @@ void Game::handleEvent(SDL_Event& event)
 		running = false;
 		break;
 	case SDL_MOUSEMOTION:
-		cameraHorizontal -= event.motion.xrel * timeDelta * 0.2f;
-		cameraVertical -= event.motion.yrel * timeDelta * 0.2f;
-		cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + glm::epsilon<float>(), glm::half_pi<float>() - glm::epsilon<float>());
+		cameraHorizontal += event.motion.xrel * timeDelta * 0.2f;
+		cameraVertical += event.motion.yrel * timeDelta * 0.2f;
+		cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
 		playerInputSystem->setHorizontalVerticalRotation(cameraHorizontal, cameraVertical);
 		break;
 	case SDL_TEXTINPUT:

@@ -20,7 +20,7 @@ public:
 	} 
 
 	static glm::quat btToGlm(const btQuaternion& quat) {
-		return glm::quat(quat.x(), quat.y(), quat.z(), quat.w());
+		return glm::quat(quat.w(), quat.x(), quat.y(), quat.z());
 	}
 
 	static btVector3 glmToBt(const glm::vec3& vec3) {
@@ -60,7 +60,7 @@ public:
 		glm::vec3 direction(
 			cos(vertical) * sin(horizontal),
 			sin(vertical),
-			cos(vertical) * cos(horizontal)
+			-cos(vertical) * cos(horizontal)
 		);
 
 		glm::vec3 right = glm::normalize(glm::cross(direction, up));
