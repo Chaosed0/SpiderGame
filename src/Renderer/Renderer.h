@@ -176,7 +176,7 @@ private:
 	std::vector<PointLight> pointLights;
 
 	/*! Map of shader ids to shaders. */
-	std::map<unsigned, Shader> shaderMap;
+	std::map<unsigned, ShaderCache> shaderMap;
 	
 	/*! Map of renderable handles to Renderables. */
 	std::map<unsigned, Renderable> renderableMap;
