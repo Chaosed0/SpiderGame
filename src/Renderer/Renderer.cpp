@@ -87,6 +87,11 @@ void Renderer::update(float dt)
 {
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
 		std::string animName = iter->second.animName;
+
+		if (animName.size() == 0) {
+			// Not being animated
+			continue;
+		}
 		iter->second.time += dt;
 
 		auto& animationMap = iter->second.model.animationData.animations;

@@ -24,9 +24,8 @@ template <class T>
 T* Entity::addComponent()
 {
 	size_t hash = typeid(T).hash_code();
-	componentTypeMap.emplace(hash, std::shared_ptr<Component>(static_cast<Component*>(new T)));
+	componentTypeMap.emplace(hash, std::shared_ptr<Component>(static_cast<Component*>(new T())));
 	return static_cast<T*>(componentTypeMap[hash].get());
-	return NULL;
 }
 
 template <class T>
@@ -34,5 +33,4 @@ T* Entity::getComponent()
 {
 	auto iter = componentTypeMap.find(typeid(T).hash_code());
 	return iter == componentTypeMap.end() ? nullptr : static_cast<T*>(iter->second.get());
-	return NULL;
 }

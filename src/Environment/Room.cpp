@@ -34,10 +34,10 @@ Room RoomGenerator::generate()
 	glm::ivec2 size(boxSizeRand(this->generator), boxSizeRand(this->generator));
 	currentArea += size.x * size.y;
 	boxes.push_back(Box());
-	boxes[0].right = std::ceil(size.x / 2.0f);
-	boxes[0].top = std::ceil(size.y / 2.0f);
-	boxes[0].left = -std::floor(size.x / 2.0f);
-	boxes[0].bottom = -std::floor(size.y / 2.0f);
+	boxes[0].right = (int)std::ceil(size.x / 2.0f);
+	boxes[0].top = (int)std::ceil(size.y / 2.0f);
+	boxes[0].left = (int)-std::floor(size.x / 2.0f);
+	boxes[0].bottom = (int)-std::floor(size.y / 2.0f);
 
 	int i = 0;
 	while (currentArea < minimumArea) {

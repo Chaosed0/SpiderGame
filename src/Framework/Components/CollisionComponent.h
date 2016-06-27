@@ -8,5 +8,6 @@
 
 struct CollisionComponent : public Component
 {
+	CollisionComponent() : body(nullptr) {}
 	btRigidBody* body;
 };

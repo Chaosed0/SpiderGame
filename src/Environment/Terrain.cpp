@@ -36,7 +36,7 @@ TerrainPatch Terrain::generatePatch(int x, int y)
 
 	for (unsigned y = 0; y < patchSize; y++) {
 		for (unsigned x = 0; x < patchSize; x++) {
-			float value = noise.GetValue(start.x + x * stepSize, start.y + y * stepSize, 0.0f);
+			float value = (float)noise.GetValue(start.x + x * stepSize, start.y + y * stepSize, 0.0f);
 			patch.terrain[y * patchSize + x] = value;
 			patch.min = min(value, patch.min);
 			patch.max = max(value, patch.max);

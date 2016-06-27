@@ -200,9 +200,9 @@ int Game::setup()
 	// Load some mushrooms
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 
-	unsigned seed = time(NULL);
+	unsigned seed = (unsigned)time(NULL);
 	this->generator.seed(seed);
-	printf("USING SEED: %d\n", seed);
+	printf("USING SEED: %ud\n", seed);
 
 	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
@@ -242,11 +242,11 @@ int Game::setup()
 		RoomSide side = room.sides[i];
 		glm::vec3 scale(1.0f, height, 1.0f);
 		if (side.normal.x == 0.0f) {
-			scale.x = side.x1 - side.x0;
-			scale.z = side.normal.y;
+			scale.x = (float)(side.x1 - side.x0);
+			scale.z = (float)side.normal.y;
 		} else {
-			scale.x = side.normal.x;
-			scale.z = side.y1 - side.y0;
+			scale.x = (float)side.normal.x;
+			scale.z = (float)(side.y1 - side.y0);
 		}
 		Mesh box = getBox({ testTexture }, scale);
 
@@ -532,25 +532,25 @@ void Game::generateTestTerrain()
 	Terrain terrain(patchSize, 0.005f, 6, 1.0f, 0.5f, seedRand(generator));
 	for (unsigned i = 0; i < 4; i++) {
 		this->terrainData.push_back(GameTerrainData());
-		GameTerrainData& terrainData = this->terrainData[i];
+		GameTerrainData& patchData = this->terrainData[i];
 
 		glm::ivec2 origin((i % 2) -1, (i >= 2) - 1);
 		glm::vec3 scale(xzsize, 20.0f, xzsize);
 		glm::vec3 position(origin.x * (int)(patchSize - 1) * xzsize, 0.0f, origin.y * (int)(patchSize - 1) * xzsize);
 
-		terrainData.patch = terrain.generatePatch(origin.x, origin.y);
-		terrainData.model = terrainData.patch.toModel(glm::ivec2(), scale);
-		terrainData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
+		patchData.patch = terrain.generatePatch(origin.x, origin.y);
+		patchData.model = patchData.patch.toModel(glm::ivec2(), scale);
+		patchData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
 
-		unsigned int terrainHandle = renderer.getHandle(terrainData.model, shader);
+		unsigned int terrainHandle = renderer.getHandle(patchData.model, shader);
 		renderer.updateTransform(terrainHandle, Transform(position));
 
-		terrainData.collision = terrainData.patch.getCollisionData(glm::ivec2(), scale);
-		terrainData.vertArray = new btTriangleIndexVertexArray(terrainData.collision.indices.size() / 3, terrainData.collision.indices.data(), 3 * sizeof(unsigned), terrainData.collision.vertices.size(), terrainData.collision.vertices.data(), 3 * sizeof(float));
-		terrainData.shape = new btBvhTriangleMeshShape(terrainData.vertArray, true);
-		terrainData.object = new btCollisionObject();
-		terrainData.object->setCollisionShape(terrainData.shape);
-		terrainData.object->setWorldTransform(btTransform(Util::glmToBt(glm::quat()), Util::glmToBt(position)));
-		dynamicsWorld->addCollisionObject(terrainData.object);
+		patchData.collision = patchData.patch.getCollisionData(glm::ivec2(), scale);
+		patchData.vertArray = new btTriangleIndexVertexArray(patchData.collision.indices.size() / 3, patchData.collision.indices.data(), 3 * sizeof(unsigned), patchData.collision.vertices.size(), patchData.collision.vertices.data(), 3 * sizeof(float));
+		patchData.shape = new btBvhTriangleMeshShape(patchData.vertArray, true);
+		patchData.object = new btCollisionObject();
+		patchData.object->setCollisionShape(patchData.shape);
+		patchData.object->setWorldTransform(btTransform(Util::glmToBt(glm::quat()), Util::glmToBt(position)));
+		dynamicsWorld->addCollisionObject(patchData.object);
 	}
 }

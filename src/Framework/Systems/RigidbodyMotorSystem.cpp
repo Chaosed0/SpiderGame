@@ -34,6 +34,7 @@ void RigidbodyMotorSystem::updateEntity(float dt, Entity& entity)
 
 	if (rigidbodyMotorComponent->noclip) {
 		if (glm::length(movement) > glm::epsilon<float>()) {
+			// TODO: There's something wrong with the vertical component of facing
 			velocity = Util::glmToBt(rigidbodyMotorComponent->facing * glm::vec3(movement.y, 0.0f, -movement.x) * 10.0f);
 		}
 		else {

@@ -6,6 +6,9 @@
 #include "Framework/Components/PlayerComponent.h"
 
 PlayerInputSystem::PlayerInputSystem()
+	: forward(false), back(false), left(false), right(false),
+	jump(false), noclip(false),
+	horizontal(0.0f), vertical(0.0f)
 {
 	require<RigidbodyMotorComponent>();
 	require<PlayerComponent>();

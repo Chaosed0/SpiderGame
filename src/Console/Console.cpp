@@ -193,7 +193,7 @@ void Console::drawLine(std::string line, unsigned int top)
 		memcpy(vertices + i*24, charVerts, sizeof(charVerts));
 
 		// Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-		x += (ch.advance >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
+		x += (unsigned)((ch.advance >> 6) * scale); // Bitshift by 6 to get value in pixels (2^6 = 64)
 	}
 
 	// Update content of VBO memory

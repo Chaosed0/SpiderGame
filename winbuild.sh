@@ -42,4 +42,4 @@ export SDL_IMAGE_LIBDIR=$libdir/SDL2_image-2.0.1/lib/x86/
 export GLEW_LIBDIR=$libdir/glew-1.13.0/lib/Release/Win32/
 export NOISE_LIBDIR=$libdir/libnoise/win32/Release/
 
-./premake5.exe vs2015 -f ./premake4.lua
+./premake5.exe vs2015 -f ./premake5.lua
