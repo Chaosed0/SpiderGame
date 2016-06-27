@@ -4,7 +4,7 @@
 #include <typeinfo>
 #include <memory>
 
-#include "Component.h"
+class Component;
 
 class Entity
 {
