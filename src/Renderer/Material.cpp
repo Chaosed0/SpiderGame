@@ -2,6 +2,9 @@
 #include "Material.h"
 #include "RenderUtil.h"
 
+uint64_t Material::nextId = 0;
+std::unordered_map<uint64_t, GLuint> Material::shaderUniformCache;
+
 Material::Material()
 {
 	drawOrder = GL_LESS;
@@ -21,6 +24,8 @@ MaterialProperty Material::getProperty(const std::string& key)
 void Material::setProperty(const std::string& key, MaterialProperty property)
 {
 	auto iter = properties.find(key);
+	property.propertyId = nextId++;
+
 	if (iter != properties.end()) {
 		iter->second = property;
 	} else {
@@ -33,14 +38,29 @@ void Material::apply(const Shader& shader) const
 	unsigned int curTexture = 0;
 
 	for (auto iter = properties.begin(); iter != properties.end(); ++iter) {
+		const std::string& propertyName = iter->first;
 		const MaterialProperty& property = iter->second;
-		GLuint propertyId = shader.getUniformLocation(("material." + iter->first).c_str());
+
+		// Simple hash - assume we'll never have more than 2^56 total material properties and 2^8
+		// shaders and that shaders are assigned ids sequentially (foolish to assume on all implementations?)
+		assert (property.propertyId < ((uint64_t)1 << 56) && shader.getID() < (1 << 8));
+		uint64_t hash = property.propertyId << 8 | shader.getID();
+		auto cacheIter = shaderUniformCache.find(hash);
+
+		if (cacheIter == shaderUniformCache.end()) {
+			// Miss - get the shader uniform and store it
+			GLuint shaderUniformId = shader.getUniformLocation(("material." + propertyName).c_str());
+			auto insertIterPair = shaderUniformCache.insert(std::make_pair(hash, shaderUniformId));
+			cacheIter = insertIterPair.first;
+		}
+		GLuint shaderUniformId = cacheIter->second;
+
 		switch(property.type) {
 		case MaterialPropertyType_vec3:
-			glUniform3f(propertyId, property.value.vec3.x, property.value.vec3.y, property.value.vec3.z);
+			glUniform3f(shaderUniformId, property.value.vec3.x, property.value.vec3.y, property.value.vec3.z);
 			break;
 		case MaterialPropertyType_vec4:
-			glUniform4f(propertyId, property.value.vec4.x, property.value.vec4.y, property.value.vec4.z, property.value.vec4.w);
+			glUniform4f(shaderUniformId, property.value.vec4.x, property.value.vec4.y, property.value.vec4.z, property.value.vec4.w);
 			break;
 		case MaterialPropertyType_texture:
 			glActiveTexture(GL_TEXTURE0 + curTexture); // Activate proper texture unit before binding
@@ -49,11 +69,11 @@ void Material::apply(const Shader& shader) const
 			} else {
 				glBindTexture(GL_TEXTURE_2D, property.value.texture.id);
 			}
-			glUniform1i(propertyId, curTexture);
+			glUniform1i(shaderUniformId, curTexture);
 			curTexture++;
 			break;
 		case MaterialPropertyType_float:
-			glUniform1f(propertyId, property.value.flt);
+			glUniform1f(shaderUniformId, property.value.flt);
 			break;
 		}
 		glCheckError();

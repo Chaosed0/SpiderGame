@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <unordered_map>
 
 #include <glm/glm.hpp>
 
@@ -41,6 +42,8 @@ struct MaterialProperty
 
 	MaterialPropertyType type;
 	MaterialPropertyValue value;
+	// By convention, the max of this field is 56 bytes
+	uint64_t propertyId;
 };
 
 class Material
@@ -53,4 +56,7 @@ public:
 	void apply(const Shader& shader) const;
 private:
 	std::map<std::string, MaterialProperty> properties;
+
+	static uint64_t nextId;
+	static std::unordered_map<uint64_t, GLuint> shaderUniformCache;
 };
