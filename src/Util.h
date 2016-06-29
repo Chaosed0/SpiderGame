@@ -4,6 +4,13 @@
 
 #include "Transform.h"
 
+enum CollisionGroup {
+	CollisionGroupEnemy = 1,
+	CollisionGroupPlayer = 2,
+	CollisionGroupWall = 4,
+	CollisionGroupAll = CollisionGroupEnemy | CollisionGroupPlayer | CollisionGroupWall
+};
+
 class Util
 {
 public:

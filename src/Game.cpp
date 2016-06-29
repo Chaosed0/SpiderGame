@@ -27,6 +27,7 @@
 #include "Framework/Components/TransformComponent.h"
 #include "Framework/Components/PlayerComponent.h"
 #include "Framework/Components/RigidbodyMotorComponent.h"
+#include "Framework/Components/FollowComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1920;
@@ -197,34 +198,9 @@ int Game::setup()
 	skyboxFaces.push_back("assets/img/skybox/miramar_lf.tga");
 	skyboxModel = std::vector<Mesh> { getSkybox(skyboxFaces) };
 
-	// Load some mushrooms
-	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
-
 	unsigned seed = (unsigned)time(NULL);
 	this->generator.seed(seed);
 	printf("USING SEED: %ud\n", seed);
-
-	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
-	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
-	for (int i = 0; i < 10; i++) {
-		Entity shroom;
-		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
-		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
-		CollisionComponent* collisionComponent = shroom.addComponent<CollisionComponent>();
-
-		transformComponent->transform.setPosition(glm::vec3(positionRand(generator), positionRand(generator) + 5.0f, positionRand(generator)));
-		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
-
-		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
-		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
-		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
-		dynamicsWorld->addRigidBody(collisionComponent->body);
-
-		unsigned int shroomHandle = renderer.getHandle(shroomModel, skinnedShader);
-		renderer.setAnimation(shroomHandle, "AnimStack::Armature|move");
-		modelComponent->rendererHandle = shroomHandle;
-		entities.push_back(shroom);
-	}
 
 	/*Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	unsigned int spiderHandle = renderer.getHandle(spiderModel, skinnedShader);
@@ -260,7 +236,7 @@ int Game::setup()
 		wallCollider->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(side.x0 + scale.x / 2.0f, scale.y / 2.0f, side.y0 + scale.z / 2.0f)));
 		wallCollider->setCollisionShape(wallShape);
 		roomData.collisionObjects.push_back(wallCollider);
-		dynamicsWorld->addCollisionObject(wallCollider);
+		dynamicsWorld->addCollisionObject(wallCollider, CollisionGroupWall, CollisionGroupAll);
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
@@ -277,7 +253,7 @@ int Game::setup()
 		floorCollider->setCollisionShape(floorShape);
 		floorCollider->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(floor.left  + scale.x / 2.0f, scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));
 		roomData.collisionObjects.push_back(floorCollider);
-		dynamicsWorld->addCollisionObject(floorCollider);
+		dynamicsWorld->addCollisionObject(floorCollider, CollisionGroupWall, CollisionGroupAll);
 	}
 
 	// Initialize the player
@@ -294,7 +270,7 @@ int Game::setup()
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
 	playerCollisionComponent->body = playerBody;
-	dynamicsWorld->addRigidBody(playerCollisionComponent->body);
+	dynamicsWorld->addRigidBody(playerCollisionComponent->body, CollisionGroupPlayer, CollisionGroupAll);
 
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
@@ -321,11 +297,42 @@ int Game::setup()
 		renderer.updateTransform(lightHandle, pointLightTransforms[i]);
 	}
 
+	// Load some mushrooms
+	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
+	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
+	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
+	for (int i = 0; i < 10; i++) {
+		Entity shroom;
+		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
+		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
+		CollisionComponent* collisionComponent = shroom.addComponent<CollisionComponent>();
+		FollowComponent* followComponent = shroom.addComponent<FollowComponent>();
+		RigidbodyMotorComponent* rigidbodyMotorComponent = shroom.addComponent<RigidbodyMotorComponent>();
+
+		transformComponent->transform.setPosition(glm::vec3(positionRand(generator), positionRand(generator) + 5.0f, positionRand(generator)));
+		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
+
+		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
+		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
+		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+		collisionComponent->body->setActivationState(DISABLE_DEACTIVATION);
+		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);
+
+		followComponent->target = playerTransform;
+		rigidbodyMotorComponent->moveSpeed = 3.0f;
+
+		unsigned int shroomHandle = renderer.getHandle(shroomModel, skinnedShader);
+		renderer.setAnimation(shroomHandle, "AnimStack::Armature|move");
+		modelComponent->rendererHandle = shroomHandle;
+		entities.push_back(shroom);
+	}
+
 	playerInputSystem = std::make_unique<PlayerInputSystem>();
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>();
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>();
 	cameraSystem = std::make_unique<CameraSystem>(renderer);
+	followSystem = std::make_unique<FollowSystem>(dynamicsWorld);
 
 	return 0;
 }
@@ -393,6 +400,7 @@ void Game::update()
 	cameraTransform.setRotation(glm::angleAxis(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
 
 	playerInputSystem->update(timeDelta, entities);
+	followSystem->update(timeDelta, entities);
 	rigidbodyMotorSystem->update(timeDelta, entities);
 
 	dynamicsWorld->stepSimulation(timeDelta);

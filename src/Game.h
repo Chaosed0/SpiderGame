@@ -24,6 +24,7 @@
 #include "Framework/Systems/CameraSystem.h"
 #include "Framework/Systems/RigidbodyMotorSystem.h"
 #include "Framework/Systems/PlayerInputSystem.h"
+#include "Framework/Systems/FollowSystem.h"
 
 struct GameTerrainData
 {
@@ -93,6 +94,7 @@ private:
 	std::unique_ptr<CameraSystem> cameraSystem;
 	std::unique_ptr<RigidbodyMotorSystem> rigidbodyMotorSystem;
 	std::unique_ptr<PlayerInputSystem> playerInputSystem;
+	std::unique_ptr<FollowSystem> followSystem;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;
