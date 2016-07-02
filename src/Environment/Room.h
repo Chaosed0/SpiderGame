@@ -13,7 +13,7 @@ struct RoomSide
 	glm::ivec2 normal;
 };
 
-struct Box
+struct RoomBox
 {
 	int right;
 	int top;
@@ -24,7 +24,7 @@ struct Box
 struct Room
 {
 	std::vector<RoomSide> sides;
-	std::vector<Box> boxes;
+	std::vector<RoomBox> boxes;
 	int minX, minY;
 	int maxX, maxY;
 	SDL_Surface* saveToSurface();
@@ -33,6 +33,7 @@ struct Room
 class RoomGenerator
 {
 public:
+	RoomGenerator();
 	RoomGenerator(int seed);
 	Room generate();
 private:

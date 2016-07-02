@@ -38,6 +38,7 @@ struct GameTerrainData
 
 struct RoomData
 {
+	Room room;
 	std::vector<btCollisionObject*> collisionObjects;
 };
 
@@ -78,6 +79,7 @@ private:
 	Shader lightShader;
 	Shader skyboxShader;
 
+	RoomGenerator roomGenerator;
 	RoomData roomData;
 	std::vector<GameTerrainData> terrainData;
 	std::vector<Transform> pointLightTransforms;

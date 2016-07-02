@@ -209,7 +209,7 @@ int Game::setup()
 
 	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
-	RoomGenerator roomGenerator(seedRand(generator));
+	roomGenerator = RoomGenerator(seedRand(generator));
 	Room room = roomGenerator.generate();
 	const unsigned height = 6;
 	Texture testTexture(TextureType_diffuse, "assets/img/test.png");
@@ -240,7 +240,7 @@ int Game::setup()
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
-		Box floor = room.boxes[i];
+		RoomBox floor = room.boxes[i];
 		glm::vec3 scale(floor.right - floor.left, 1.0f, floor.top - floor.bottom);
 		Mesh mesh = getBox({ testTexture }, scale);
 		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
@@ -255,6 +255,7 @@ int Game::setup()
 		roomData.collisionObjects.push_back(floorCollider);
 		dynamicsWorld->addCollisionObject(floorCollider, CollisionGroupWall, CollisionGroupAll);
 	}
+	this->roomData.room = room;
 
 	// Initialize the player
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
@@ -299,8 +300,8 @@ int Game::setup()
 
 	// Load some mushrooms
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
-	std::uniform_real_distribution<float> positionRand(-5.0f, 5.0f);
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
+	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
 	for (int i = 0; i < 10; i++) {
 		Entity shroom;
 		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
@@ -309,13 +310,16 @@ int Game::setup()
 		FollowComponent* followComponent = shroom.addComponent<FollowComponent>();
 		RigidbodyMotorComponent* rigidbodyMotorComponent = shroom.addComponent<RigidbodyMotorComponent>();
 
-		transformComponent->transform.setPosition(glm::vec3(positionRand(generator), positionRand(generator) + 5.0f, positionRand(generator)));
+		// Stick it in a random room
+		RoomBox box = roomData.room.boxes[roomRand(generator)];
+		std::uniform_int_distribution<int> xRand(box.left, box.right);
+		std::uniform_int_distribution<int> zRand(box.bottom, box.top);
+		transformComponent->transform.setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
 		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
-		collisionComponent->body->setActivationState(DISABLE_DEACTIVATION);
 		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);
 
 		followComponent->target = playerTransform;

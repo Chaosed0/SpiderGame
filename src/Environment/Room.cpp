@@ -5,7 +5,12 @@
 
 #include <sstream>
 
-static Room boxesToRoom(std::vector<Box> boxes);
+static Room boxesToRoom(std::vector<RoomBox> boxes);
+
+RoomGenerator::RoomGenerator()
+{
+
+}
 
 RoomGenerator::RoomGenerator(int seed)
 {
@@ -28,12 +33,12 @@ Room RoomGenerator::generate()
 	unsigned maxLefti = 0;
 	unsigned maxBoti = 0;
 	unsigned maxTopi = 0;
-	std::vector<Box> boxes;
+	std::vector<RoomBox> boxes;
 
 	// Generate the root box
 	glm::ivec2 size(boxSizeRand(this->generator), boxSizeRand(this->generator));
 	currentArea += size.x * size.y;
-	boxes.push_back(Box());
+	boxes.push_back(RoomBox());
 	boxes[0].right = (int)std::ceil(size.x / 2.0f);
 	boxes[0].top = (int)std::ceil(size.y / 2.0f);
 	boxes[0].left = (int)-std::floor(size.x / 2.0f);
@@ -41,12 +46,12 @@ Room RoomGenerator::generate()
 
 	int i = 0;
 	while (currentArea < minimumArea) {
-		Box newBox;
+		RoomBox newBox;
 		glm::ivec2 size(boxSizeRand(this->generator), boxSizeRand(this->generator));
 		currentArea += size.x * size.y;
 
 		unsigned direction = dirRand(this->generator);
-		Box matchingBox;
+		RoomBox matchingBox;
 		if (direction < 2) {
 			// Match left to right
 			matchingBox = boxes[maxRighti];
@@ -138,14 +143,14 @@ SDL_Surface* Room::saveToSurface()
 	return surface;
 }
 
-static Room boxesToRoom(std::vector<Box> boxes)
+static Room boxesToRoom(std::vector<RoomBox> boxes)
 {
 	Room room;
 	room.boxes = boxes;
 	room.minX = room.minY = INT_MAX;
 	room.maxX = room.maxY = INT_MIN;
 	for (unsigned i = 0; i < boxes.size(); i++) {
-		Box box = boxes[i];
+		RoomBox box = boxes[i];
 		room.minX = std::min(box.left, room.minX);
 		room.maxX = std::max(box.right, room.maxX);
 		room.minY = std::min(box.bottom, room.minY);
