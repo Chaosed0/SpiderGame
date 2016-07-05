@@ -49,14 +49,14 @@ static const GLfloat vertex_data[] = {
 Mesh getBox(const std::vector<Texture>& textures, glm::vec3 scale)
 {
 	std::vector<Vertex> vertices(36);
-	for (unsigned int i = 0; i < vertices.size(); i++) {
+	for (unsigned i = 0; i < vertices.size(); i++) {
 		vertices[i].position = glm::vec3(vertex_data[i*8] * scale.x, vertex_data[i*8+1] * scale.y, vertex_data[i*8+2] * scale.z);
 		vertices[i].normal = glm::vec3(vertex_data[i*8+3], vertex_data[i*8+4], vertex_data[i*8+5]);
 		vertices[i].texCoords = glm::vec2(vertex_data[i*8+6], vertex_data[i*8+7]);
 	}
 
 	std::vector<GLuint> indexes(36);
-	for (unsigned int i = 0; i < indexes.size(); i++) {
+	for (unsigned i = 0; i < indexes.size(); i++) {
 		indexes[i] = i;
 	}
 

@@ -176,18 +176,15 @@ int Game::setup()
 	}
 
 	DirLight dirLight;
-	dirLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
+	dirLight.direction = glm::vec3(0.2f, -1.0f, 0.3f);
 	dirLight.ambient = glm::vec3(0.2f);
-	dirLight.diffuse = glm::vec3(0.9f);
+	dirLight.diffuse = glm::vec3(0.6f);
 	dirLight.specular = glm::vec3(1.0f);
 	renderer.setDirLight(dirLight);
 
 	Mesh pointLightMesh = getBox(std::vector<Texture> {});
-	MaterialProperty pointLightColorProperty;
-	pointLightColorProperty.type = MaterialPropertyType_vec4;
-	pointLightColorProperty.value.vec4 = glm::vec4(1.0f);
-	pointLightMesh.material.setProperty("color", pointLightColorProperty);
-	pointLightModel = std::vector<Mesh> { pointLightMesh };
+	pointLightMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
+	pointLightModel = Model(std::vector<Mesh> { pointLightMesh });
 
 	std::vector<std::string> skyboxFaces;
 	skyboxFaces.push_back("assets/img/skybox/miramar_ft.tga");
@@ -196,16 +193,11 @@ int Game::setup()
 	skyboxFaces.push_back("assets/img/skybox/miramar_dn.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_rt.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_lf.tga");
-	skyboxModel = std::vector<Mesh> { getSkybox(skyboxFaces) };
+	skyboxModel = Model(std::vector<Mesh> { getSkybox(skyboxFaces) });
 
 	unsigned seed = (unsigned)time(NULL);
 	this->generator.seed(seed);
 	printf("USING SEED: %ud\n", seed);
-
-	/*Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
-	unsigned int spiderHandle = renderer.getHandle(spiderModel, skinnedShader);
-	renderer.setAnimation(spiderHandle, "AnimStack::walk");
-	renderer.updateTransform(spiderHandle, Transform(glm::vec3(), glm::quat(), glm::vec3(0.01, 0.01, 0.01)));*/
 
 	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
@@ -219,24 +211,27 @@ int Game::setup()
 		glm::vec3 dimensions(1.0f, height, 1.0f);
 		if (side.normal.x == 0.0f) {
 			dimensions.x = (float)(side.x1 - side.x0);
-			dimensions.z = (float)-side.normal.y;
+			dimensions.z = 1.0f;
 		} else {
-			dimensions.x = (float)-side.normal.x;
+			dimensions.x = 1.0f;
 			dimensions.z = (float)(side.y1 - side.y0);
 		}
 		Mesh box = getBox({ testTexture }, dimensions);
+		box.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 
 		// getBox() centers the mesh
 		unsigned handle = renderer.getHandle(std::vector<Mesh> { box }, shader);
-		renderer.updateTransform(handle, Transform(glm::vec3(side.x0 + dimensions.x / 2.0f, dimensions.y / 2.0f, side.y0 + dimensions.z / 2.0f)));
+		glm::vec3 position(side.x0 + dimensions.x / 2.0f, dimensions.y / 2.0f, side.y0 + dimensions.z / 2.0f);
+		renderer.updateTransform(handle, Transform(position));
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
 		RoomBox floor = room.boxes[i];
-		glm::vec3 dimensions(floor.right - floor.left, -1.0f, floor.top - floor.bottom);
+		glm::vec3 dimensions(floor.right - floor.left, 1.0f, floor.top - floor.bottom);
 		Mesh mesh = getBox({ testTexture }, dimensions);
+		mesh.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
-		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + dimensions.x / 2.0f, dimensions.y / 2.0f, floor.bottom + dimensions.z / 2.0f)));
+		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + dimensions.x / 2.0f, dimensions.y / 2.0f - 1.0f, floor.bottom + dimensions.z / 2.0f)));
 	}
 
 	// Add the room to collision

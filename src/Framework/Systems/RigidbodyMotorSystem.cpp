@@ -6,6 +6,8 @@
 
 #include "Util.h"
 
+#include <btBulletDynamicsCommon.h>
+
 #include <glm/gtx/vector_angle.hpp>
 
 RigidbodyMotorSystem::RigidbodyMotorSystem()
@@ -33,6 +35,7 @@ void RigidbodyMotorSystem::updateEntity(float dt, Entity& entity)
 	body->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), hFacing));
 
 	if (rigidbodyMotorComponent->noclip) {
+		body->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
 		if (glm::length(movement) > glm::epsilon<float>()) {
 			// TODO: There's something wrong with the vertical component of facing
 			velocity = Util::glmToBt(rigidbodyMotorComponent->facing * glm::vec3(movement.y, 0.0f, -movement.x) * 10.0f);
@@ -41,6 +44,7 @@ void RigidbodyMotorSystem::updateEntity(float dt, Entity& entity)
 			velocity = btVector3(0.0f, 0.0f, 0.0f);
 		}
 	} else {
+		body->setCollisionFlags(0);
 		if (glm::length(movement) > glm::epsilon<float>()) {
 			// Negate Z because forward movement is in the negative direction
 			velocity.setX(movement.y);
