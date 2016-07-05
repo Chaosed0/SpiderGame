@@ -132,7 +132,7 @@ int Game::setup()
 	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
 
 	// Initialize renderer debugging output
-	//renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
+	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -216,46 +216,37 @@ int Game::setup()
 
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide side = room.sides[i];
-		glm::vec3 scale(1.0f, height, 1.0f);
+		glm::vec3 dimensions(1.0f, height, 1.0f);
 		if (side.normal.x == 0.0f) {
-			scale.x = (float)(side.x1 - side.x0);
-			scale.z = (float)side.normal.y;
+			dimensions.x = (float)(side.x1 - side.x0);
+			dimensions.z = (float)-side.normal.y;
 		} else {
-			scale.x = (float)side.normal.x;
-			scale.z = (float)(side.y1 - side.y0);
+			dimensions.x = (float)-side.normal.x;
+			dimensions.z = (float)(side.y1 - side.y0);
 		}
-		Mesh box = getBox({ testTexture }, scale);
+		Mesh box = getBox({ testTexture }, dimensions);
 
 		// getBox() centers the mesh
 		unsigned handle = renderer.getHandle(std::vector<Mesh> { box }, shader);
-		renderer.updateTransform(handle, Transform(glm::vec3(side.x0 + scale.x / 2.0f, scale.y / 2.0f, side.y0 + scale.z / 2.0f)));
-
-		// box shape doesn't do well with negative extents
-		btBoxShape* wallShape = new btBoxShape(btVector3(std::abs(scale.x) / 2.0f, std::abs(scale.y) / 2.0f, std::abs(scale.z) / 2.0f));
-		btCollisionObject* wallCollider = new btCollisionObject();
-		wallCollider->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(side.x0 + scale.x / 2.0f, scale.y / 2.0f, side.y0 + scale.z / 2.0f)));
-		wallCollider->setCollisionShape(wallShape);
-		roomData.collisionObjects.push_back(wallCollider);
-		dynamicsWorld->addCollisionObject(wallCollider, CollisionGroupWall, CollisionGroupAll);
+		renderer.updateTransform(handle, Transform(glm::vec3(side.x0 + dimensions.x / 2.0f, dimensions.y / 2.0f, side.y0 + dimensions.z / 2.0f)));
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
 		RoomBox floor = room.boxes[i];
-		glm::vec3 scale(floor.right - floor.left, 1.0f, floor.top - floor.bottom);
-		Mesh mesh = getBox({ testTexture }, scale);
+		glm::vec3 dimensions(floor.right - floor.left, -1.0f, floor.top - floor.bottom);
+		Mesh mesh = getBox({ testTexture }, dimensions);
 		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
-		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + scale.x / 2.0f, scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));
-		/*unsigned ceilingHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
-		renderer.updateTransform(ceilingHandle, Transform(glm::vec3(floor.left + scale.x / 2.0f, height + scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));*/
-
-		btBoxShape* floorShape = new btBoxShape(Util::glmToBt(scale / 2.0f));
-		btCollisionObject* floorCollider = new btCollisionObject();
-		floorCollider->setCollisionShape(floorShape);
-		floorCollider->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3(floor.left  + scale.x / 2.0f, scale.y / 2.0f, floor.bottom + scale.z / 2.0f)));
-		roomData.collisionObjects.push_back(floorCollider);
-		dynamicsWorld->addCollisionObject(floorCollider, CollisionGroupWall, CollisionGroupAll);
+		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + dimensions.x / 2.0f, dimensions.y / 2.0f, floor.bottom + dimensions.z / 2.0f)));
 	}
-	this->roomData.room = room;
+
+	// Add the room to collision
+	roomData.room = room;
+	roomData.collisionBuilder.addRoom(room, (float)height);
+	roomData.collisionBuilder.construct();
+	btCollisionShape* roomShape = roomData.collisionBuilder.getMesh();
+	roomData.collisionObject = new btCollisionObject();
+	roomData.collisionObject->setCollisionShape(roomShape);
+	dynamicsWorld->addCollisionObject(roomData.collisionObject, CollisionGroupWall, CollisionGroupAll);
 
 	// Initialize the player
 	TransformComponent* playerTransform = player.addComponent<TransformComponent>();

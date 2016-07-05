@@ -1,4 +1,4 @@
-libdir=E:/Libraries/
+libdir=D:/Libraries/
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -32,7 +32,7 @@ export BULLET_LIBDIR_D=$libdir/bullet3/lib/Debug/
 export SDL_LIBDIR_D=$libdir/SDL2-2.0.4/lib/x86/
 export SDL_IMAGE_LIBDIR_D=$libdir/SDL2_image-2.0.1/lib/x86/
 export GLEW_LIBDIR_D=$libdir/glew-1.13.0/lib/Release/Win32/
-export NOISE_LIBDIR_D=$libdir/libnoise/win32/Debug/
+export NOISE_LIBDIR_D=$libdir/libnoise/bin/
 
 export FREETYPE_LIBDIR=$libdir/freetype-2.6.3/objs/vc2010/win32/
 export ASSIMP_LIBDIR=$libdir/assimp-3.1.1/build/code/MinSizeRel
@@ -40,6 +40,6 @@ export BULLET_LIBDIR=$libdir/bullet3/lib/Release/
 export SDL_LIBDIR=$libdir/SDL2-2.0.4/lib/x86/
 export SDL_IMAGE_LIBDIR=$libdir/SDL2_image-2.0.1/lib/x86/
 export GLEW_LIBDIR=$libdir/glew-1.13.0/lib/Release/Win32/
-export NOISE_LIBDIR=$libdir/libnoise/win32/Release/
+export NOISE_LIBDIR=$libdir/libnoise/bin/
 
 ./premake5.exe vs2015 -f ./premake5.lua

@@ -18,6 +18,7 @@
 #include "Console/Console.h"
 #include "Environment/Terrain.h"
 #include "Environment/Room.h"
+#include "Environment/CollisionMeshBuilder.h"
 
 #include "Framework/Systems/ModelRenderSystem.h"
 #include "Framework/Systems/CollisionUpdateSystem.h"
@@ -25,6 +26,13 @@
 #include "Framework/Systems/RigidbodyMotorSystem.h"
 #include "Framework/Systems/PlayerInputSystem.h"
 #include "Framework/Systems/FollowSystem.h"
+
+struct RoomData
+{
+	Room room;
+	btCollisionObject* collisionObject;
+	CollisionMeshBuilder collisionBuilder;
+};
 
 struct GameTerrainData
 {
@@ -34,12 +42,6 @@ struct GameTerrainData
 	btTriangleIndexVertexArray* vertArray;
 	btBvhTriangleMeshShape* shape;
 	btCollisionObject* object;
-};
-
-struct RoomData
-{
-	Room room;
-	std::vector<btCollisionObject*> collisionObjects;
 };
 
 class Game
