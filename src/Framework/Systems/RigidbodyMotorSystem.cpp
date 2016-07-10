@@ -10,16 +10,17 @@
 
 #include <glm/gtx/vector_angle.hpp>
 
-RigidbodyMotorSystem::RigidbodyMotorSystem()
+RigidbodyMotorSystem::RigidbodyMotorSystem(World& world)
+	: System(world)
 {
 	require<RigidbodyMotorComponent>();
 	require<CollisionComponent>();
 }
 
-void RigidbodyMotorSystem::updateEntity(float dt, Entity& entity)
+void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 {
-	RigidbodyMotorComponent* rigidbodyMotorComponent = entity.getComponent<RigidbodyMotorComponent>();
-	CollisionComponent* collisionComponent = entity.getComponent<CollisionComponent>();
+	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
+	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
 	btRigidBody* body = collisionComponent->body;
 	btVector3 velocity = body->getLinearVelocity();

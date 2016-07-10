@@ -5,6 +5,6 @@
 class CollisionUpdateSystem : public System
 {
 public:
-	CollisionUpdateSystem();
-	void updateEntity(float dt, Entity& entity);
+	CollisionUpdateSystem(World& world);
+	void updateEntity(float dt, eid_t entity);
 };

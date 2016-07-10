@@ -121,6 +121,15 @@ int Game::setup()
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
+	/* World */
+	world.registerComponent<TransformComponent>();
+	world.registerComponent<CameraComponent>();
+	world.registerComponent<CollisionComponent>();
+	world.registerComponent<FollowComponent>();
+	world.registerComponent<ModelRenderComponent>();
+	world.registerComponent<PlayerComponent>();
+	world.registerComponent<RigidbodyMotorComponent>();
+
 	/* Console */
 	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
@@ -240,10 +249,11 @@ int Game::setup()
 	dynamicsWorld->addCollisionObject(roomData.collisionObject, CollisionGroupWall, CollisionGroupAll);
 
 	// Initialize the player
-	TransformComponent* playerTransform = player.addComponent<TransformComponent>();
-	CollisionComponent* playerCollisionComponent = player.addComponent<CollisionComponent>();
-	PlayerComponent* playerComponent = player.addComponent<PlayerComponent>();
-	RigidbodyMotorComponent* playerRigidbodyMotorComponent = player.addComponent<RigidbodyMotorComponent>();
+	player = world.getNewEntity();
+	TransformComponent* playerTransform = world.addComponent<TransformComponent>(player);
+	CollisionComponent* playerCollisionComponent = world.addComponent<CollisionComponent>(player);
+	PlayerComponent* playerComponent = world.addComponent<PlayerComponent>(player);
+	RigidbodyMotorComponent* playerRigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(player);
 
 	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, 0.0f));
 
@@ -259,14 +269,11 @@ int Game::setup()
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
 	playerRigidbodyMotorComponent->noclip = false;
 
-	entities.push_back(player);
-
-	TransformComponent* cameraTransformComponent = camera.addComponent<TransformComponent>();
-	CameraComponent* cameraComponent = camera.addComponent<CameraComponent>();
+	camera = world.getNewEntity();
+	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
+	CameraComponent* cameraComponent = world.addComponent<CameraComponent>(camera);
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
 	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -0.5f, 0.0f));
-
-	entities.push_back(camera);
 
 	playerTransform->transform.addChild(&cameraTransformComponent->transform);
 
@@ -285,12 +292,12 @@ int Game::setup()
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
 	for (int i = 0; i < 10; i++) {
-		Entity shroom;
-		ModelRenderComponent* modelComponent = shroom.addComponent<ModelRenderComponent>();
-		TransformComponent* transformComponent = shroom.addComponent<TransformComponent>();
-		CollisionComponent* collisionComponent = shroom.addComponent<CollisionComponent>();
-		FollowComponent* followComponent = shroom.addComponent<FollowComponent>();
-		RigidbodyMotorComponent* rigidbodyMotorComponent = shroom.addComponent<RigidbodyMotorComponent>();
+		eid_t shroom = world.getNewEntity();
+		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(shroom);
+		TransformComponent* transformComponent = world.addComponent<TransformComponent>(shroom);
+		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(shroom);
+		FollowComponent* followComponent = world.addComponent<FollowComponent>(shroom);
+		RigidbodyMotorComponent* rigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(shroom);
 
 		// Stick it in a random room
 		RoomBox box = roomData.room.boxes[roomRand(generator)];
@@ -310,15 +317,14 @@ int Game::setup()
 		unsigned int shroomHandle = renderer.getHandle(shroomModel, skinnedShader);
 		renderer.setAnimation(shroomHandle, "AnimStack::Armature|move");
 		modelComponent->rendererHandle = shroomHandle;
-		entities.push_back(shroom);
 	}
 
-	playerInputSystem = std::make_unique<PlayerInputSystem>();
-	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>();
-	modelRenderSystem = std::make_unique<ModelRenderSystem>(renderer);
-	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>();
-	cameraSystem = std::make_unique<CameraSystem>(renderer);
-	followSystem = std::make_unique<FollowSystem>(dynamicsWorld);
+	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
+	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
+	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
+	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
+	cameraSystem = std::make_unique<CameraSystem>(world, renderer);
+	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
 
 	return 0;
 }
@@ -382,11 +388,11 @@ void Game::update()
 {
 	renderer.update(timeDelta);
 
-	Transform& cameraTransform = camera.getComponent<TransformComponent>()->transform;
+	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
 
-	playerInputSystem->update(timeDelta, entities);
-	followSystem->update(timeDelta, entities);
-	rigidbodyMotorSystem->update(timeDelta, entities);
+	playerInputSystem->update(timeDelta);
+	followSystem->update(timeDelta);
+	rigidbodyMotorSystem->update(timeDelta);
 
 	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(-1.0f, 0.0f, 0.0f)));
 
@@ -399,15 +405,15 @@ void Game::update()
 		feh = false;
 	}
 
-	cameraSystem->update(timeDelta, entities);
-	collisionUpdateSystem->update(timeDelta, entities);
-	modelRenderSystem->update(timeDelta, entities);
+	cameraSystem->update(timeDelta);
+	collisionUpdateSystem->update(timeDelta);
+	modelRenderSystem->update(timeDelta);
 }
 
 void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
 	assert(world == this->dynamicsWorld);
 
-	player.getComponent<RigidbodyMotorComponent>()->canJump = false;
+	this->world.getComponent<RigidbodyMotorComponent>(player)->canJump = false;
 	int numManifolds = world->getDispatcher()->getNumManifolds();
 	for (int i = 0; i < numManifolds; i++) {
 		btPersistentManifold* contactManifold = world->getDispatcher()->getManifoldByIndexInternal(i);
@@ -416,7 +422,7 @@ void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
 		int numContacts = contactManifold->getNumContacts();
 
 		if ((obA == playerBody || obB == playerBody) && numContacts > 0) {
-			player.getComponent<RigidbodyMotorComponent>()->canJump = true;
+			this->world.getComponent<RigidbodyMotorComponent>(player)->canJump = true;
 		}
 	}
 }

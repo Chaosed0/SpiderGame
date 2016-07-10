@@ -13,13 +13,13 @@
 #include "Renderer/ModelLoader.h"
 #include "Renderer/Box.h"
 #include "Renderer/Model.h"
-#include "Framework/Entity.h"
 
 #include "Console/Console.h"
 #include "Environment/Terrain.h"
 #include "Environment/Room.h"
 #include "Environment/CollisionMeshBuilder.h"
 
+#include "Framework/World.h"
 #include "Framework/Systems/ModelRenderSystem.h"
 #include "Framework/Systems/CollisionUpdateSystem.h"
 #include "Framework/Systems/CameraSystem.h"
@@ -88,11 +88,11 @@ private:
 	Model pointLightModel;
 	Model skyboxModel;
 
-	Entity player;
-	Entity camera;
+	eid_t player;
+	eid_t camera;
 	btRigidBody* playerBody;
 
-	std::vector<Entity> entities;
+	World world;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
 	std::unique_ptr<CameraSystem> cameraSystem;

@@ -5,6 +5,6 @@
 class RigidbodyMotorSystem : public System
 {
 public:
-	RigidbodyMotorSystem();
-	void updateEntity(float dt, Entity& entity);
+	RigidbodyMotorSystem(World& world);
+	void updateEntity(float dt, eid_t entity);
 };

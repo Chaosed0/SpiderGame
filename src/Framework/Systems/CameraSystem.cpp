@@ -4,17 +4,18 @@
 #include "Framework/Components/TransformComponent.h"
 #include "Framework/Components/CameraComponent.h"
 
-CameraSystem::CameraSystem(Renderer& renderer)
-	: renderer(renderer)
+CameraSystem::CameraSystem(World& world, Renderer& renderer)
+	: System(world),
+	renderer(renderer)
 {
 	require<TransformComponent>();
 	require<CameraComponent>();
 }
 
-void CameraSystem::updateEntity(float dt, Entity& entity)
+void CameraSystem::updateEntity(float dt, eid_t entity)
 {
-	 CameraComponent* cameraComponent = entity.getComponent<CameraComponent>();
-	 TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
+	 CameraComponent* cameraComponent = world.getComponent<CameraComponent>(entity);
+	 TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 
 	 cameraComponent->camera.inverseViewMatrix = transformComponent->transform.matrix();
 }

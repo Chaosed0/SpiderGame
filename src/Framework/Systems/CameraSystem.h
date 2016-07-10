@@ -6,8 +6,8 @@
 class CameraSystem : public System
 {
 public:
-	CameraSystem(Renderer& renderer);
-	void updateEntity(float dt, Entity& entity);
+	CameraSystem(World& world, Renderer& renderer);
+	void updateEntity(float dt, eid_t entity);
 private:
 	Renderer& renderer;
 };

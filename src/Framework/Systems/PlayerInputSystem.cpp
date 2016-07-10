@@ -5,8 +5,9 @@
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/PlayerComponent.h"
 
-PlayerInputSystem::PlayerInputSystem()
-	: forward(false), back(false), left(false), right(false),
+PlayerInputSystem::PlayerInputSystem(World& world)
+	: System(world),
+	forward(false), back(false), left(false), right(false),
 	jump(false), noclip(false),
 	horizontalRad(0.0f), verticalRad(0.0f),
 	rotateHorizontal(0.0f), rotateVertical(0.0f)
@@ -15,9 +16,9 @@ PlayerInputSystem::PlayerInputSystem()
 	require<PlayerComponent>();
 }
 
-void PlayerInputSystem::updateEntity(float dt, Entity& entity)
+void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 {
-	RigidbodyMotorComponent* rigidbodyMotorComponent = entity.getComponent<RigidbodyMotorComponent>();
+	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 
 	glm::vec2 movement(0.0f,0.0f);
 	if (forward) {

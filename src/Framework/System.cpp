@@ -1,21 +1,16 @@
 
 #include "System.h"
 
-bool System::shouldUpdate(const Entity& entity) const
-{
-	for (unsigned int i = 0; i < this->requiredComponents.size(); i++) {
-		if (!entity.hasComponent(this->requiredComponents[i])) {
-			return false;
-		}
-	}
-	return true;
-}
+System::System(World& world)
+	: world(world)
+{ }
 
-void System::update(float dt, std::vector<Entity>& entities)
+void System::update(float dt)
 {
-	for (unsigned int i = 0; i < entities.size(); i++) {
-		if (this->shouldUpdate(entities.at(i))) {
-			updateEntity(dt, entities.at(i));
-		}
+	for (eid_iterator iterator = world.getEidIterator(requiredComponents);
+		!iterator.atEnd();
+		iterator.next())
+	{
+		updateEntity(dt, iterator.val());
 	}
 }

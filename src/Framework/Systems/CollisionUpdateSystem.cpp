@@ -6,16 +6,17 @@
 
 #include "Util.h"
 
-CollisionUpdateSystem::CollisionUpdateSystem()
+CollisionUpdateSystem::CollisionUpdateSystem(World& world)
+	: System(world)
 {
 	this->require<CollisionComponent>();
 	this->require<TransformComponent>();
 }
 
-void CollisionUpdateSystem::updateEntity(float dt, Entity& entity)
+void CollisionUpdateSystem::updateEntity(float dt, eid_t entity)
 {
-	CollisionComponent* collisionComponent(entity.getComponent<CollisionComponent>());
-	TransformComponent* transformComponent(entity.getComponent<TransformComponent>());
+	CollisionComponent* collisionComponent(world.getComponent<CollisionComponent>(entity));
+	TransformComponent* transformComponent(world.getComponent<TransformComponent>(entity));
 
 	btTransform transform = collisionComponent->body->getWorldTransform();
 	transformComponent->transform.setPosition(Util::btToGlm(transform.getOrigin()));

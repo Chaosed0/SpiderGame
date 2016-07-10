@@ -6,8 +6,8 @@
 class ModelRenderSystem : public System
 {
 public:
-	ModelRenderSystem(Renderer& renderer);
-	void updateEntity(float dt, Entity& entity);
+	ModelRenderSystem(World& world, Renderer& renderer);
+	void updateEntity(float dt, eid_t entity);
 private:
 	Renderer& renderer;
 };

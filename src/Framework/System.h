@@ -3,25 +3,49 @@
 #include <unordered_set>
 #include <typeinfo>
 #include <vector>
+#include <cassert>
 
-#include "Entity.h"
+#include "World.h"
 
+/*! Abstract base class for the System in ECS. Matches entities by component
+	and operates upon those components. */
 class System
 {
 public:
-	template <class T>
+	System(World& world);
+
+	/*!
+	 * \brief Updates all corresponding entities in the world (passed in the constructor).
+	 * \param dt The time which passed since the last call to this function.
+	 */
+	void update(float dt);
+
+	/*!
+	 * \brief Updates a single entity. Must be overriden in subclasses.
+	 * \param dt The time which passed since the last call to update.
+	 * \param entity The entity which should be updated.
+	 */
+	virtual void updateEntity(float dt, eid_t entity) = 0;
+protected:
+	/*!
+	 * \brief Called by subclasses in their constructors. updateEntity will only
+		be called with entities which have the components passed in require.
+	 */
+	template<class T>
 	void require();
 
-	void update(float dt, std::vector<Entity>& entities);
-	bool shouldUpdate(const Entity& entity) const;
-
-	virtual void updateEntity(float dt, Entity& entity) = 0;
+	/*! The world which this system operates on. */
+	World& world;
 private:
-	std::vector<size_t> requiredComponents;
+	/*! The bitmask of component IDs which is generated from calls to require. */
+	ComponentBitmask requiredComponents;
 };
 
 template <class T>
 void System::require()
 {
-	requiredComponents.push_back(typeid(T).hash_code());
+	cid_t cid = 0;
+	bool cidFound = world.getComponentId<T>(cid);
+	assert(cidFound);
+	requiredComponents.setBit(cid, true);
 }

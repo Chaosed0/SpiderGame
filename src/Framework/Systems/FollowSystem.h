@@ -8,8 +8,8 @@
 class FollowSystem : public System
 {
 public:
-	FollowSystem(btDynamicsWorld* world);
-	void updateEntity(float dt, Entity& entity);
+	FollowSystem(World& world, btDynamicsWorld* dynamicsWorld);
+	void updateEntity(float dt, eid_t entity);
 private:
-	btDynamicsWorld* world;
+	btDynamicsWorld* dynamicsWorld;
 };

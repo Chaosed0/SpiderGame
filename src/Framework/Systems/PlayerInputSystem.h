@@ -7,8 +7,8 @@
 class PlayerInputSystem : public System
 {
 public:
-	PlayerInputSystem();
-	void updateEntity(float dt, Entity& entity);
+	PlayerInputSystem(World& world);
+	void updateEntity(float dt, eid_t entity);
 
 	void startMoving(glm::vec2 movement);
 	void stopMoving(glm::vec2 movement);

@@ -3,17 +3,18 @@
 #include "Framework/Components/ModelRenderComponent.h"
 #include "Framework/Components/TransformComponent.h"
 
-ModelRenderSystem::ModelRenderSystem(Renderer& renderer)
-	: renderer(renderer)
+ModelRenderSystem::ModelRenderSystem(World& world, Renderer& renderer)
+	: System(world),
+	renderer(renderer)
 {
 	require<ModelRenderComponent>();
 	require<TransformComponent>();
 }
 
-void ModelRenderSystem::updateEntity(float dt, Entity& entity)
+void ModelRenderSystem::updateEntity(float dt, eid_t entity)
 {
-	ModelRenderComponent* modelComponent = entity.getComponent<ModelRenderComponent>();
-	TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
+	ModelRenderComponent* modelComponent = world.getComponent<ModelRenderComponent>(entity);
+	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 
 	renderer.updateTransform(modelComponent->rendererHandle, transformComponent->transform);
 }

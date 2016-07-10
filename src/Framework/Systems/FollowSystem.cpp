@@ -8,8 +8,9 @@
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/CollisionComponent.h"
 
-FollowSystem::FollowSystem(btDynamicsWorld* world)
-	: world(world)
+FollowSystem::FollowSystem(World& world, btDynamicsWorld* dynamicsWorld)
+	: System(world),
+	dynamicsWorld(dynamicsWorld)
 {
 	require<TransformComponent>();
 	require<FollowComponent>();
@@ -17,12 +18,12 @@ FollowSystem::FollowSystem(btDynamicsWorld* world)
 	require<CollisionComponent>();
 }
 
-void FollowSystem::updateEntity(float dt, Entity& entity)
+void FollowSystem::updateEntity(float dt, eid_t entity)
 {
-	TransformComponent* transformComponent = entity.getComponent<TransformComponent>();
-	FollowComponent* followComponent = entity.getComponent<FollowComponent>();
-	RigidbodyMotorComponent* rigidbodyMotorComponent = entity.getComponent<RigidbodyMotorComponent>();
-	CollisionComponent* collisionComponent = entity.getComponent<CollisionComponent>();
+	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
+	FollowComponent* followComponent = world.getComponent<FollowComponent>(entity);
+	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
+	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
 	if (followComponent->target == nullptr) {
 		return;
@@ -37,7 +38,7 @@ void FollowSystem::updateEntity(float dt, Entity& entity)
 	btStart.setY(btStart.getY() + 1.0f);
 	btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
 	rayCallback.m_collisionFilterMask = CollisionGroupWall;
-	this->world->rayTest(btStart, btEnd, rayCallback);
+	this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);
 
 	float closestObject = (rayCallback.m_hitPointWorld - btStart).length();
 	float distanceToTarget = (btEnd - btStart).length();
