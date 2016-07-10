@@ -8,7 +8,8 @@
 PlayerInputSystem::PlayerInputSystem()
 	: forward(false), back(false), left(false), right(false),
 	jump(false), noclip(false),
-	horizontal(0.0f), vertical(0.0f)
+	horizontalRad(0.0f), verticalRad(0.0f),
+	rotateHorizontal(0.0f), rotateVertical(0.0f)
 {
 	require<RigidbodyMotorComponent>();
 	require<PlayerComponent>();
@@ -32,11 +33,22 @@ void PlayerInputSystem::updateEntity(float dt, Entity& entity)
 		movement.y -= 1.0f;
 	}
 
-	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontal, -vertical, glm::vec3(0.0f, 1.0f, 0.0f));
+	if (std::fabs(rotateHorizontal) > 0) {
+		horizontalRad += rotateHorizontal * dt * 0.2f;
+	}
+	if (std::fabs(rotateVertical) > 0.0f) {
+		verticalRad += rotateVertical * dt * 0.2f;
+		verticalRad = glm::clamp(verticalRad, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
+	}
+
+	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad, glm::vec3(0.0f, 1.0f, 0.0f));
 	rigidbodyMotorComponent->movement = movement;
 	rigidbodyMotorComponent->jump = jump;
 	rigidbodyMotorComponent->noclip = noclip;
 	jump = false;
+
+	// NOTE: Assumption that this system only controls a single player
+	rotateHorizontal = rotateVertical = 0.0f;
 }
 
 void PlayerInputSystem::startMoving(glm::vec2 movement)
@@ -74,8 +86,13 @@ void PlayerInputSystem::setNoclip(bool noclip)
 	this->noclip = noclip;
 }
 
-void PlayerInputSystem::setHorizontalVerticalRotation(float horizontal, float vertical)
+void PlayerInputSystem::rotateCamera(float horizontal, float vertical)
 {
-	this->horizontal = horizontal;
-	this->vertical = vertical;
+	this->rotateHorizontal += horizontal;
+	this->rotateVertical += vertical;
+}
+
+float PlayerInputSystem::getCameraVertical()
+{
+	return this->verticalRad;
 }

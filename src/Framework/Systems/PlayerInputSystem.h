@@ -13,13 +13,18 @@ public:
 	void startMoving(glm::vec2 movement);
 	void stopMoving(glm::vec2 movement);
 	void startJump();
-	void setHorizontalVerticalRotation(float horizontal, float vertical);
 	void setNoclip(bool noclip);
+
+	void rotateCamera(float horizontal, float vertical);
+	float getCameraVertical();
 private:
 	bool forward, back, left, right;
 	bool jump;
 	bool noclip;
 
-	float horizontal;
-	float vertical;
+	float rotateHorizontal;
+	float rotateVertical;
+
+	float horizontalRad;
+	float verticalRad;
 };

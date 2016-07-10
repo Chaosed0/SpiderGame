@@ -30,12 +30,8 @@
 #include "Framework/Components/FollowComponent.h"
 
 const static int updatesPerSecond = 60;
-const static int windowWidth = 1920;
-const static int windowHeight = 1080;
-
-// Temp stuff for player movement, will be refactored later
-static float cameraHorizontal = 0.0f;
-static float cameraVertical = 0.0f;
+const static int windowWidth = 1080;
+const static int windowHeight = 720;
 
 static void bulletTickCallback(btDynamicsWorld *world, btScalar timeStep)
 {
@@ -387,11 +383,12 @@ void Game::update()
 	renderer.update(timeDelta);
 
 	Transform& cameraTransform = camera.getComponent<TransformComponent>()->transform;
-	cameraTransform.setRotation(glm::angleAxis(cameraVertical, glm::vec3(-1.0f, 0.0f, 0.0f)));
 
 	playerInputSystem->update(timeDelta, entities);
 	followSystem->update(timeDelta, entities);
 	rigidbodyMotorSystem->update(timeDelta, entities);
+
+	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(-1.0f, 0.0f, 0.0f)));
 
 	dynamicsWorld->stepSimulation(timeDelta);
 
@@ -431,10 +428,7 @@ void Game::handleEvent(SDL_Event& event)
 		running = false;
 		break;
 	case SDL_MOUSEMOTION:
-		cameraHorizontal += event.motion.xrel * timeDelta * 0.2f;
-		cameraVertical += event.motion.yrel * timeDelta * 0.2f;
-		cameraVertical = glm::clamp(cameraVertical, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
-		playerInputSystem->setHorizontalVerticalRotation(cameraHorizontal, cameraVertical);
+		playerInputSystem->rotateCamera(event.motion.xrel, event.motion.yrel);
 		break;
 	case SDL_TEXTINPUT:
 		if (consoleIsVisible) {
@@ -452,8 +446,10 @@ void Game::handleEvent(SDL_Event& event)
 			consoleIsVisible = !consoleIsVisible;
 			if (consoleIsVisible) {
 				SDL_StartTextInput();
+				SDL_SetRelativeMouseMode(SDL_FALSE);
 			} else {
 				SDL_StopTextInput();
+				SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
 		}
 
