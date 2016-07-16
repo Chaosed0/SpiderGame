@@ -219,13 +219,19 @@ int Game::setup()
 			dimensions.y = (float)(side.x1 - side.x0);
 			planeNormal.z = side.normal.y;
 		} else {
-			dimensions.x = (float)(side.y1 - side.y0);
+			dimensions.y = (float)(side.y1 - side.y0);
 			planeNormal.x = side.normal.x;
 		}
 
+		float angle = atan2f(planeNormal.x, planeNormal.z);
+		glm::quat orientation = glm::angleAxis(angle, glm::vec3(0.0f, 0.0f, -1.0f));
+
 		glm::vec3 position(side.x0 + (side.x1 - side.x0) / 2.0f, height / 2.0f, side.y0 + (side.y1 - side.y0) / 2.0f);
-		glm::vec3 planeu = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), planeNormal);
-		Mesh plane = getPlane({ testTexture }, glm::angleAxis(glm::half_pi<float>(), planeu), dimensions, glm::vec2(position.x, position.z), glm::vec2(1.0f));
+		Mesh plane = getPlane({ testTexture },
+			glm::angleAxis(glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)) * orientation,
+			dimensions,
+			glm::vec2(side.x0, side.y0),
+			glm::vec2(1.0f));
 		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 
 		// getPlane() centers the mesh
@@ -237,7 +243,7 @@ int Game::setup()
 		RoomBox floor = room.boxes[i];
 		glm::vec2 dimensions(floor.top - floor.bottom, floor.right - floor.left);
 		glm::vec3 position = glm::vec3(floor.left + dimensions.y / 2.0f, 0.0f, floor.bottom + dimensions.x / 2.0f);
-		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions, glm::vec2(position.x, position.z), glm::vec2(1.0f));
+		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions, glm::vec2(floor.left, floor.bottom), glm::vec2(1.0f));
 		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
 		renderer.updateTransform(floorHandle, Transform(position));
