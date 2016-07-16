@@ -223,23 +223,24 @@ int Game::setup()
 			planeNormal.x = side.normal.x;
 		}
 
+		glm::vec3 position(side.x0 + (side.x1 - side.x0) / 2.0f, height / 2.0f, side.y0 + (side.y1 - side.y0) / 2.0f);
 		glm::vec3 planeu = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), planeNormal);
-		Mesh plane = getPlane({ testTexture }, glm::angleAxis(glm::half_pi<float>(), planeu), dimensions);
+		Mesh plane = getPlane({ testTexture }, glm::angleAxis(glm::half_pi<float>(), planeu), dimensions, glm::vec2(position.x, position.z), glm::vec2(1.0f));
 		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 
 		// getPlane() centers the mesh
 		unsigned handle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
-		glm::vec3 position(side.x0 + (side.x1 - side.x0) / 2.0f, height / 2.0f, side.y0 + (side.y1 - side.y0) / 2.0f);
 		renderer.updateTransform(handle, Transform(position));
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
 		RoomBox floor = room.boxes[i];
 		glm::vec2 dimensions(floor.top - floor.bottom, floor.right - floor.left);
-		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions);
+		glm::vec3 position = glm::vec3(floor.left + dimensions.y / 2.0f, 0.0f, floor.bottom + dimensions.x / 2.0f);
+		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions, glm::vec2(position.x, position.z), glm::vec2(1.0f));
 		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
-		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + dimensions.y / 2.0f, 0.0f, floor.bottom + dimensions.x / 2.0f)));
+		renderer.updateTransform(floorHandle, Transform(position));
 	}
 
 	// Add the room to collision

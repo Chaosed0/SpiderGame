@@ -134,20 +134,20 @@ Mesh getSkybox(const std::vector<std::string>& skyboxTextures)
 	return Mesh(vertices, indexes, textures);
 }
 
-Mesh getPlane(const std::vector<Texture>& textures, glm::quat basis, glm::vec2 dimensions)
+Mesh getPlane(const std::vector<Texture>& textures, glm::quat basis, glm::vec2 dimensions, glm::vec2 textureOffset, glm::vec2 textureScale)
 {
 	glm::vec3 ubasis = basis * glm::vec3(0.0f, 0.0f, 1.0f);
 	glm::vec3 vbasis = basis * glm::vec3(1.0f, 0.0f, 0.0f);
 
 	std::vector<Vertex> vertices(4);
 	vertices[0].position = (-ubasis * dimensions.x - vbasis * dimensions.y) * 0.5f;
-	vertices[0].texCoords = glm::vec2(0.0f, 0.0f);
+	vertices[0].texCoords = glm::vec2(textureOffset.x, textureOffset.y);
 	vertices[1].position = (ubasis * dimensions.x - vbasis * dimensions.y) * 0.5f;
-	vertices[1].texCoords = glm::vec2(1.0f, 0.0f);
+	vertices[1].texCoords = glm::vec2(textureOffset.x + dimensions.x * textureScale.x, textureOffset.y);
 	vertices[2].position = (-ubasis * dimensions.x + vbasis * dimensions.y) * 0.5f;
-	vertices[2].texCoords = glm::vec2(0.0f, 1.0f);
+	vertices[2].texCoords = glm::vec2(textureOffset.x, textureOffset.y + dimensions.y * textureScale.y);
 	vertices[3].position = (ubasis * dimensions.x + vbasis * dimensions.y) * 0.5f;
-	vertices[3].texCoords = glm::vec2(1.0f, 1.0f);
+	vertices[3].texCoords = glm::vec2(textureOffset.x + dimensions.x * textureScale.x, textureOffset.y + dimensions.y * textureScale.y);
 	vertices[0].normal = vertices[1].normal = vertices[2].normal = vertices[3].normal = glm::cross(ubasis, vbasis);
 
 	std::vector<unsigned> indices;
