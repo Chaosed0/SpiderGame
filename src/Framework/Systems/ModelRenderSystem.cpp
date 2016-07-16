@@ -9,6 +9,7 @@ ModelRenderSystem::ModelRenderSystem(World& world, Renderer& renderer)
 {
 	require<ModelRenderComponent>();
 	require<TransformComponent>();
+	requireFinished();
 }
 
 void ModelRenderSystem::updateEntity(float dt, eid_t entity)

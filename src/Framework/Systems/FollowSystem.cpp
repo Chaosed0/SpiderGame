@@ -16,6 +16,7 @@ FollowSystem::FollowSystem(World& world, btDynamicsWorld* dynamicsWorld)
 	require<FollowComponent>();
 	require<RigidbodyMotorComponent>();
 	require<CollisionComponent>();
+	requireFinished();
 }
 
 void FollowSystem::updateEntity(float dt, eid_t entity)
@@ -43,7 +44,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	float closestObject = (rayCallback.m_hitPointWorld - btStart).length();
 	float distanceToTarget = (btEnd - btStart).length();
 
-	// Bullet reports the hit point as a very large point if no contact is found
+	// Bullet reports the hit point as very far away if no contact is found
 	if (closestObject >= distanceToTarget) {
 		glm::vec3 dir = to - from;
 		float angle = std::atan2f(dir.x, dir.z);

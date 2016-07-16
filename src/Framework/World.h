@@ -10,23 +10,6 @@
 typedef uint32_t eid_t;
 typedef uint32_t cid_t;
 
-class eid_iterator
-{
-public:
-	eid_iterator(std::map<eid_t, ComponentBitmask>::iterator entityIterBegin,
-				 std::map<eid_t, ComponentBitmask>::iterator entityIterEnd,
-				 ComponentBitmask match);
-	eid_t val();
-	void next();
-	bool atEnd();
-	void reset();
-private:
-	std::map<eid_t, ComponentBitmask>::iterator entityIter;
-	std::map<eid_t, ComponentBitmask>::iterator entityIterBegin;
-	std::map<eid_t, ComponentBitmask>::iterator entityIterEnd;
-	ComponentBitmask match;
-};
-
 class World
 {
 public:
@@ -45,6 +28,24 @@ public:
 
 	template <class T>
 	bool getComponentId(cid_t& cid);
+
+	class eid_iterator
+	{
+	public:
+		eid_iterator();
+		eid_iterator(std::map<eid_t, ComponentBitmask>::iterator entityIterBegin,
+			std::map<eid_t, ComponentBitmask>::iterator entityIterEnd,
+			ComponentBitmask match);
+		eid_t value();
+		void reset();
+		void next();
+		bool atEnd();
+	private:
+		std::map<eid_t, ComponentBitmask>::iterator entityIterBegin;
+		std::map<eid_t, ComponentBitmask>::iterator entityIter;
+		std::map<eid_t, ComponentBitmask>::iterator entityIterEnd;
+		ComponentBitmask match;
+	};
 
 	eid_iterator getEidIterator(ComponentBitmask match);
 private:

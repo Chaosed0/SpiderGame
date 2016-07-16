@@ -5,12 +5,17 @@ System::System(World& world)
 	: world(world)
 { }
 
+void System::requireFinished()
+{
+	entityIterator = world.getEidIterator(requiredComponents);
+}
+
 void System::update(float dt)
 {
-	for (eid_iterator iterator = world.getEidIterator(requiredComponents);
-		!iterator.atEnd();
-		iterator.next())
+	entityIterator.reset();
+	while(!entityIterator.atEnd())
 	{
-		updateEntity(dt, iterator.val());
+		updateEntity(dt, entityIterator.value());
+		entityIterator.next();
 	}
 }

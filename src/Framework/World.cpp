@@ -1,37 +1,43 @@
 
 #include "World.h"
 
-eid_iterator::eid_iterator(std::map<eid_t, ComponentBitmask>::iterator entityIter,
-			std::map<eid_t, ComponentBitmask>::iterator entityIterEnd,
-			ComponentBitmask match)
-	: entityIterBegin(entityIter), entityIter(entityIter), entityIterEnd(entityIterEnd), match(match)
+World::eid_iterator::eid_iterator()
+{ }
+
+World::eid_iterator::eid_iterator(std::map<eid_t, ComponentBitmask>::iterator entityIterBegin,
+	std::map<eid_t, ComponentBitmask>::iterator entityIterEnd,
+	ComponentBitmask match)
 {
+	this->entityIter = entityIterBegin;
+	this->entityIterEnd = entityIterEnd;
+	this->match = match;
+
 	while (this->entityIter != this->entityIterEnd && !this->entityIter->second.hasComponents(match)) {
 		this->entityIter++;
 	}
+	this->entityIterBegin = this->entityIter;
 }
 
-eid_t eid_iterator::val()
+eid_t World::eid_iterator::value()
 {
 	return entityIter->first;
 }
 
-void eid_iterator::next()
+void World::eid_iterator::next()
 {
 	do {
 		entityIter++;
 	} while (entityIter != entityIterEnd && !entityIter->second.hasComponents(match));
 }
 
-bool eid_iterator::atEnd()
+bool World::eid_iterator::atEnd()
 {
-	return entityIter == entityIterEnd;
+	return this->entityIter == this->entityIterEnd;
 }
 
-void eid_iterator::reset()
+void World::eid_iterator::reset()
 {
-	entityIter = entityIterBegin;
-	this->next();
+	this->entityIter = this->entityIterBegin;
 }
 
 eid_t World::getNewEntity()
@@ -41,7 +47,7 @@ eid_t World::getNewEntity()
 	return id;
 }
 
-eid_iterator World::getEidIterator(ComponentBitmask match)
+World::eid_iterator World::getEidIterator(ComponentBitmask match)
 {
 	return eid_iterator(entityComponents.begin(), entityComponents.end(), match);
 }

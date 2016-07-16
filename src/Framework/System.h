@@ -34,11 +34,20 @@ protected:
 	template<class T>
 	void require();
 
+	/*!
+	 * \brief Should be called by subclasses in their constructors when they are
+	 * done calling require() with all their required components.
+	 */
+	void requireFinished();
+
 	/*! The world which this system operates on. */
 	World& world;
 private:
 	/*! The bitmask of component IDs which is generated from calls to require. */
 	ComponentBitmask requiredComponents;
+
+	/*! Iterator we use to get entities to update. */
+	World::eid_iterator entityIterator;
 };
 
 template <class T>

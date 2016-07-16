@@ -14,6 +14,7 @@ PlayerInputSystem::PlayerInputSystem(World& world)
 {
 	require<RigidbodyMotorComponent>();
 	require<PlayerComponent>();
+	requireFinished();
 }
 
 void PlayerInputSystem::updateEntity(float dt, eid_t entity)

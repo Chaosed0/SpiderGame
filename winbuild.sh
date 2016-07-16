@@ -1,4 +1,4 @@
-libdir=D:/Libraries/
+libdir=E:/Libraries/
 
 while [ "$1" != "" ]; do
     case $1 in
