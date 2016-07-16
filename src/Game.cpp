@@ -213,30 +213,33 @@ int Game::setup()
 
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide side = room.sides[i];
-		glm::vec3 dimensions(1.0f, height, 1.0f);
+		glm::vec2 dimensions(height, height);
+		glm::vec3 planeNormal(0.0f);
 		if (side.normal.x == 0.0f) {
-			dimensions.x = (float)(side.x1 - side.x0);
-			dimensions.z = 1.0f;
+			dimensions.y = (float)(side.x1 - side.x0);
+			planeNormal.z = side.normal.y;
 		} else {
-			dimensions.x = 1.0f;
-			dimensions.z = (float)(side.y1 - side.y0);
+			dimensions.x = (float)(side.y1 - side.y0);
+			planeNormal.x = side.normal.x;
 		}
-		Mesh box = getBox({ testTexture }, dimensions);
-		box.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 
-		// getBox() centers the mesh
-		unsigned handle = renderer.getHandle(std::vector<Mesh> { box }, shader);
-		glm::vec3 position(side.x0 + dimensions.x / 2.0f, dimensions.y / 2.0f, side.y0 + dimensions.z / 2.0f);
+		glm::vec3 planeu = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), planeNormal);
+		Mesh plane = getPlane({ testTexture }, glm::angleAxis(glm::half_pi<float>(), planeu), dimensions);
+		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
+
+		// getPlane() centers the mesh
+		unsigned handle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
+		glm::vec3 position(side.x0 + (side.x1 - side.x0) / 2.0f, height / 2.0f, side.y0 + (side.y1 - side.y0) / 2.0f);
 		renderer.updateTransform(handle, Transform(position));
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
 		RoomBox floor = room.boxes[i];
-		glm::vec3 dimensions(floor.right - floor.left, 1.0f, floor.top - floor.bottom);
-		Mesh mesh = getBox({ testTexture }, dimensions);
-		mesh.material.setProperty("shininess", MaterialProperty(FLT_MAX));
-		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { mesh }, shader);
-		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + dimensions.x / 2.0f, dimensions.y / 2.0f - 1.0f, floor.bottom + dimensions.z / 2.0f)));
+		glm::vec2 dimensions(floor.top - floor.bottom, floor.right - floor.left);
+		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions);
+		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
+		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
+		renderer.updateTransform(floorHandle, Transform(glm::vec3(floor.left + dimensions.y / 2.0f, 0.0f, floor.bottom + dimensions.x / 2.0f)));
 	}
 
 	// Add the room to collision
@@ -291,7 +294,7 @@ int Game::setup()
 	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 0; i++) {
 		eid_t shroom = world.getNewEntity();
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(shroom);
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(shroom);

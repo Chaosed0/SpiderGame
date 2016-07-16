@@ -231,7 +231,49 @@ static Room boxesToRoom(std::vector<RoomBox> boxes)
 		}
 	}
 
-	// Postprocessing - remove empty sides
+	// remove empty sides
+	room.sides.erase(std::remove_if(room.sides.begin(), room.sides.end(), [] (const RoomSide& side) {
+		return side.x0 == side.x1 && side.y0 == side.y1;
+	}), room.sides.end());
+
+	// Combine sides that are aligned
+	for (unsigned i = 0; i < room.sides.size(); i++)
+	{
+		RoomSide& side = room.sides[i];
+		for (unsigned j = 0; j < room.sides.size(); j++) {
+			RoomSide& otherSide = room.sides[j];
+			if (i == j) {
+				continue;
+			}
+
+			if (side.normal == otherSide.normal) {
+				if ((side.x0 == otherSide.x0 || side.x0 == otherSide.x1 ||
+					 side.x1 == otherSide.x0 || side.x1 == otherSide.x0) &&
+					side.y0 == side.y1 && side.y1 == otherSide.y0 && otherSide.y0 == otherSide.y1)
+				{
+					float min = std::min(std::min(std::min(side.x0, side.x1), otherSide.x0), otherSide.x1);
+					float max = std::max(std::max(std::max(side.x0, side.x1), otherSide.x0), otherSide.x1);
+					side.x0 = min;
+					side.x1 = max;
+					otherSide.x0 = FLT_MAX;
+					otherSide.x1 = FLT_MAX;
+				}
+				else if ((side.y0 == otherSide.y0 || side.y0 == otherSide.y1 ||
+					 side.y1 == otherSide.y0 || side.y1 == otherSide.y0) &&
+					side.x0 == side.x1 && side.x1 == otherSide.x0 && otherSide.x0 == otherSide.x1)
+				{
+					float min = std::min(std::min(std::min(side.y0, side.y1), otherSide.y0), otherSide.y1);
+					float max = std::max(std::max(std::max(side.y0, side.y1), otherSide.y0), otherSide.y1);
+					side.y0 = min;
+					side.y1 = max;
+					otherSide.y0 = FLT_MAX;
+					otherSide.y1 = FLT_MAX;
+				}
+			}
+		}
+	}
+
+	// remove empty sides
 	room.sides.erase(std::remove_if(room.sides.begin(), room.sides.end(), [] (const RoomSide& side) {
 		return side.x0 == side.x1 && side.y0 == side.y1;
 	}), room.sides.end());

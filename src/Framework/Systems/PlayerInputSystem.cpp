@@ -43,7 +43,7 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 		verticalRad = glm::clamp(verticalRad, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
 	}
 
-	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad, glm::vec3(0.0f, 1.0f, 0.0f));
+	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, -verticalRad, glm::vec3(0.0f, 1.0f, 0.0f));
 	rigidbodyMotorComponent->movement = movement;
 	rigidbodyMotorComponent->jump = jump;
 	rigidbodyMotorComponent->noclip = noclip;
