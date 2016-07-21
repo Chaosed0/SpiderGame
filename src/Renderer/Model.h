@@ -183,6 +183,27 @@ struct AnimationData
 	std::vector<ModelNode> nodes;
 };
 
+/*! Data specific to a channel for a specific model. */
+struct ChannelContext
+{
+	/*! The last position key we used. */
+	unsigned positionKey;
+
+	/*! The last rotation key we used. */
+	unsigned rotationKey;
+
+	/*! The last scale key we used. */
+	unsigned scaleKey;
+};
+
+/*! Data specific to the animation being played.
+	Necessary since the same Model object can be shared across multiple entities. */
+struct AnimationContext
+{
+	/*! Key caches. */
+	std::unordered_map<unsigned, ChannelContext> channelContexts;
+};
+
 /*! A model, containing multiple meshes and animation data. */
 struct Model
 {
@@ -201,5 +222,5 @@ struct Model
 	 * \return Vector of matrices which transform from model space to each node's new space.
 	 *		The matrices correspond directly to the nodes in animationData.nodes. 
 	 */
-	std::vector<glm::mat4> getNodeTransforms(const std::string& animation, float time) const;
+	std::vector<glm::mat4> getNodeTransforms(const std::string& animation, float time, AnimationContext& context) const;
 };

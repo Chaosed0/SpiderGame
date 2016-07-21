@@ -235,8 +235,9 @@ int Game::setup()
 		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 
 		// getPlane() centers the mesh
-		unsigned handle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
-		renderer.updateTransform(handle, Transform(position));
+		unsigned modelHandle = renderer.getModelHandle(std::vector<Mesh> { plane });
+		unsigned handle = renderer.getRenderableHandle(modelHandle, shader);
+		renderer.setRenderableTransform(handle, Transform(position));
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
@@ -245,8 +246,9 @@ int Game::setup()
 		glm::vec3 position = glm::vec3(floor.left + dimensions.y / 2.0f, 0.0f, floor.bottom + dimensions.x / 2.0f);
 		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions, glm::vec2(floor.left, floor.bottom), glm::vec2(1.0f));
 		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
-		unsigned floorHandle = renderer.getHandle(std::vector<Mesh> { plane }, shader);
-		renderer.updateTransform(floorHandle, Transform(position));
+		unsigned modelHandle = renderer.getModelHandle(std::vector<Mesh> { plane });
+		unsigned floorHandle = renderer.getRenderableHandle(modelHandle, shader);
+		renderer.setRenderableTransform(floorHandle, Transform(position));
 	}
 
 	// Add the room to collision
@@ -290,18 +292,20 @@ int Game::setup()
 	renderer.setCamera(&cameraComponent->camera);
 	debugDrawer.setCamera(&cameraComponent->camera);
 
-	unsigned int skyboxHandle = renderer.getHandle(skyboxModel, skyboxShader);
-	renderer.updateTransform(skyboxHandle, Transform::identity);
-	for (unsigned int i = 0; i < pointLightTransforms.size(); i++) {
-		unsigned int lightHandle = renderer.getHandle(pointLightModel, lightShader);
-		renderer.updateTransform(lightHandle, pointLightTransforms[i]);
+	unsigned skyboxModelHandle = renderer.getModelHandle(skyboxModel);
+	unsigned skyboxHandle = renderer.getRenderableHandle(skyboxModelHandle, skyboxShader);
+	renderer.setRenderableTransform(skyboxHandle, Transform::identity);
+	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
+		unsigned lightModelHandle = renderer.getModelHandle(pointLightModel);
+		unsigned lightHandle = renderer.getRenderableHandle(lightModelHandle, lightShader);
+		renderer.setRenderableTransform(lightHandle, pointLightTransforms[i]);
 	}
 
 	// Load some mushrooms
-	Model shroomModel = modelLoader.loadModelFromPath("assets/models/shroom/shroom.fbx");
-	std::uniform_real_distribution<float> scaleRand(0.5f, 2.0f);
+	Model shroomModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
+	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 0; i++) {
+	for (int i = 0; i < 10; i++) {
 		eid_t shroom = world.getNewEntity();
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(shroom);
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(shroom);
@@ -324,8 +328,9 @@ int Game::setup()
 		followComponent->target = playerTransform;
 		rigidbodyMotorComponent->moveSpeed = 3.0f;
 
-		unsigned int shroomHandle = renderer.getHandle(shroomModel, skinnedShader);
-		renderer.setAnimation(shroomHandle, "AnimStack::Armature|move");
+		unsigned int shroomModelHandle = renderer.getModelHandle(shroomModel);
+		unsigned int shroomHandle = renderer.getRenderableHandle(shroomModelHandle, skinnedShader);
+		renderer.setRenderableAnimation(shroomHandle, "AnimStack::walk");
 		modelComponent->rendererHandle = shroomHandle;
 	}
 
@@ -552,8 +557,9 @@ void Game::generateTestTerrain()
 		patchData.model = patchData.patch.toModel(glm::ivec2(), scale);
 		patchData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
 
-		unsigned int terrainHandle = renderer.getHandle(patchData.model, shader);
-		renderer.updateTransform(terrainHandle, Transform(position));
+		unsigned terrainModelHandle = renderer.getModelHandle(patchData.model);
+		unsigned terrainHandle = renderer.getRenderableHandle(terrainModelHandle, shader);
+		renderer.setRenderableTransform(terrainHandle, Transform(position));
 
 		patchData.collision = patchData.patch.getCollisionData(glm::ivec2(), scale);
 		patchData.vertArray = new btTriangleIndexVertexArray(patchData.collision.indices.size() / 3, patchData.collision.indices.data(), 3 * sizeof(unsigned), patchData.collision.vertices.size(), patchData.collision.vertices.data(), 3 * sizeof(float));

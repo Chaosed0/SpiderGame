@@ -88,91 +88,43 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 	: Mesh(vertices, indices, textures, std::vector<VertexBoneData>(), std::vector<BoneData>())
 { }
 
-glm::vec3 interpolatePosition(const Channel& channel, float time)
+glm::vec3 interpolate(glm::vec3 a, glm::vec3 b, float lerp)
 {
-	unsigned int posKey = channel.positionKeys.size()-1;
-	time = max(time, channel.positionKeys[0].first);
-
-	for (unsigned int i = 0; i < channel.positionKeys.size()-1; i++) {
-		if (channel.positionKeys[i].first <= time && time <= channel.positionKeys[i+1].first) {
-			posKey = i;
-			break;
-		}
-	}
-
-	float t1 = channel.positionKeys[posKey].first;
-	float t2 = t1;
-	glm::vec3 p1 = channel.positionKeys[posKey].second;
-	glm::vec3 p2 = p1;
-	if (posKey + 1 < channel.positionKeys.size()) {
-		t2 = channel.positionKeys[posKey+1].first;
-		p2 = channel.positionKeys[posKey+1].second;
-	}
-
-	float lerp = (time - t1) / (t2 - t1);
-	if (t2 == t1) {
-		lerp = 1.0f;
-	}
-
-	return glm::mix(p1, p2, lerp);
+	return glm::mix(a, b, lerp);
 }
 
-glm::quat interpolateRotation(const Channel& channel, float time)
+glm::quat interpolate(glm::quat a, glm::quat b, float lerp)
 {
-	unsigned int rotKey = channel.rotationKeys.size()-1;
-	time = max(time, channel.rotationKeys[0].first);
-
-	for (unsigned int i = 0; i < channel.rotationKeys.size()-1; i++) {
-		if (channel.rotationKeys[i].first <= time && time <= channel.rotationKeys[i+1].first) {
-			rotKey = i;
-			break;
-		}
-	}
-
-	float t1 = channel.rotationKeys[rotKey].first;
-	float t2 = t1;
-	glm::quat p1 = channel.rotationKeys[rotKey].second;
-	glm::quat p2 = p1;
-	if (rotKey + 1 < channel.rotationKeys.size()) {
-		t2 = channel.rotationKeys[rotKey+1].first;
-		p2 = channel.rotationKeys[rotKey+1].second;
-	}
-
-	float lerp = (time - t1) / (t2 - t1);
-	if (t2 == t1) {
-		lerp = 1.0f;
-	}
-
-	return glm::slerp(p1, p2, lerp);
+	return glm::slerp(a, b, lerp);
 }
 
-glm::vec3 interpolateScale(const Channel& channel, float time)
+template <class T>
+T interpolateKeyframes(const std::vector<std::pair<float, T>>& keys, float time, unsigned& keyCache)
 {
-	unsigned int scaleKey = channel.scaleKeys.size()-1;
-	time = max(time, channel.scaleKeys[0].first);
+	unsigned keyIndex = keys.size()-1;
+	time = min(max(time, keys[0].first), keys.back().first);
 
-	for (unsigned int i = 0; i < channel.scaleKeys.size()-1; i++) {
-		if (channel.scaleKeys[i].first <= time && time <= channel.scaleKeys[i+1].first) {
-			scaleKey = i;
+	for (unsigned int i = keyCache; i < keyCache + keys.size()-1; i++) {
+		const auto& ka = keys[i%keys.size()];
+		const auto& kb = (i+1 != keys.size() ? keys[(i+1)%keys.size()] : ka);
+		if (ka.first <= time && time <= kb.first) {
+			keyIndex = i%keys.size();
 			break;
 		}
 	}
 
-	float t1 = channel.scaleKeys[scaleKey].first;
-	float t2 = t1;
-	glm::vec3 p1 = channel.scaleKeys[scaleKey].second;
-	glm::vec3 p2 = p1;
-	if (scaleKey + 1 < channel.scaleKeys.size()) {
-		t2 = channel.scaleKeys[scaleKey+1].first;
-		p2 = channel.scaleKeys[scaleKey+1].second;
-	}
+	keyCache = keyIndex;
+	float t1 = keys[keyIndex].first;
+	float t2 = (keyIndex + 1 < keys.size() ? keys[keyIndex+1].first : t1);
+	const T& p1 = keys[keyIndex].second;
+	const T& p2 = (keyIndex + 1 < keys.size() ? keys[keyIndex+1].second : p1);
 
 	float lerp = (time - t1) / (t2 - t1);
 	if (t2 == t1) {
 		lerp = 1.0f;
 	}
 
-	return glm::mix(p1, p2, lerp);
+	return interpolate(p1, p2, lerp);
 }
 
 std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nodeTransforms) const
@@ -195,7 +147,7 @@ std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nod
 	return boneTransforms;
 }
 
-std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, float time) const
+std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, float time, AnimationContext& context) const
 {
 	std::vector<glm::mat4> nodeTransforms;
 
@@ -225,10 +177,13 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 			// Not an animated node
 			nodeTransform = node.transform;
 		} else {
-			const Channel& channel = animation.channels[channelIdIter->second];
-			glm::vec3 pos = interpolatePosition(channel, time);
-			glm::quat rot = interpolateRotation(channel, time);
-			glm::vec3 scale = interpolateScale(channel, time);
+			unsigned channelId = channelIdIter->second;
+			const Channel& channel = animation.channels[channelId];
+			ChannelContext& channelContext = context.channelContexts[channelId];
+
+			glm::vec3 pos = interpolateKeyframes(channel.positionKeys, time, channelContext.positionKey);
+			glm::quat rot = interpolateKeyframes(channel.rotationKeys, time, channelContext.rotationKey);
+			glm::vec3 scale = interpolateKeyframes(channel.scaleKeys, time, channelContext.scaleKey);
 
 			// Usually, transformations go the other way - scale, then rotate, then
 			// transform. However, it seems that assimp (our model loader) does it

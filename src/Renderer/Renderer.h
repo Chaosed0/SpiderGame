@@ -77,12 +77,13 @@ struct ShaderCache
 	their own transforms. */
 struct Renderable
 {
-	Renderable(const ShaderCache& shaderCache, const Model& model, Transform transform)
-		: shaderCache(shaderCache), model(model), transform(transform) { }
+	Renderable(const ShaderCache& shaderCache, unsigned modelHandle, Transform transform)
+		: shaderCache(shaderCache), modelHandle(modelHandle), transform(transform) { }
 
+	unsigned modelHandle;
 	ShaderCache shaderCache;
-	Model model;
 	Transform transform;
+	AnimationContext context;
 
 	/*! Current animation playing. */
 	std::string animName;
@@ -125,35 +126,35 @@ public:
 	/*!
 	 * \ brief Gets the maximum point lights allowed by the renderer.
 	 */
-	unsigned int getMaxPointLights();
+	unsigned getMaxPointLights();
+
+	/*!
+	 * \brief Gets a handle to a model object, which can be passed to the getRenderableHandle method.
+	 * The model is copied and stored internally, so you can release the reference to it.
+	 */
+	unsigned getModelHandle(const Model& model);
 
 	/*!
 	 * \brief Gets a handle to a renderable object.
-	 *
-	 * If type is RenderableTypeDynamic, then model must have a unique ID assigned to the
-	 * id field.
-	 * If type is RenderableTypeStatic, then the model id is ignored (one is assigned
-	 * internally).
 	 */
-	unsigned int getHandle(const Model& model, const Shader& shader);
+	unsigned getRenderableHandle(unsigned modelHandle, const Shader& shader);
 
 	/*!
-	 * \brief Updates the transform of a renderable object. The handle must have been
-	 *		specified as RenderableTypeDynamic.
+	 * \brief Updates the transform of a renderable object.
 	 */
-	void updateTransform(unsigned int handle, const Transform& transform);
+	void setRenderableTransform(unsigned handle, const Transform& transform);
 
 	/*!
 	 * \brief Updates the animation of a renderable object.
 	 *		The animation will loop.
 	 */
-	void setAnimation(unsigned int handle, const std::string& animation);
+	void setRenderableAnimation(unsigned handle, const std::string& animation);
 
 	/*! 
 	 * \brief Sets the time at which to start the currently playing
 	 *		animation for the given object.
 	 */
-	void setAnimationTime(unsigned int handle, float time);
+	void setRenderableAnimationTime(unsigned handle, float time);
 
 	/*!
 	 * \brief Draws all renderable objects requested using getHandle.
@@ -174,6 +175,9 @@ private:
 
 	/*! Point lights. */
 	std::vector<PointLight> pointLights;
+	
+	/*! Map of model IDs to Model objects. */
+	std::unordered_map<unsigned, Model> modelMap;
 
 	/*! Map of shader ids to shaders. */
 	std::map<unsigned, ShaderCache> shaderMap;
@@ -184,6 +188,9 @@ private:
 	/*! The callback to call when an OpenGL debug message is emitted. */
 	DebugLogCallback debugLogCallback;
 
-	/*! ID to assign to the next renderable requested through getHandle(). */
-	unsigned nextHandle;
+	/*! ID to assign to the next model requested through getModelHandle(). */
+	unsigned nextModelHandle;
+
+	/*! ID to assign to the next renderable requested through getRenderableHandle(). */
+	unsigned nextRenderableHandle;
 };

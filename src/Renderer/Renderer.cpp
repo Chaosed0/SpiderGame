@@ -39,7 +39,15 @@ bool Renderer::initialize()
 	return true;
 }
 
-unsigned int Renderer::getHandle(const Model& model, const Shader& shader)
+unsigned Renderer::getModelHandle(const Model& model)
+{
+	unsigned handle = this->nextModelHandle;
+	modelMap.emplace(handle, model);
+	this->nextModelHandle++;
+	return handle;
+}
+
+unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shader)
 {
 	auto shaderIter = shaderMap.find(shader.getID());
 	if (shaderIter == shaderMap.end()) {
@@ -47,14 +55,14 @@ unsigned int Renderer::getHandle(const Model& model, const Shader& shader)
 		shaderIter = iterPair.first;
 	}
 
-	unsigned int handle = this->nextHandle;
+	unsigned int handle = this->nextRenderableHandle;
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	renderableMap.emplace(std::make_pair(nextHandle, Renderable(shader, model, Transform::identity)));
-	this->nextHandle++;
+	renderableMap.emplace(std::make_pair(handle, Renderable(shader, modelHandle, Transform::identity)));
+	this->nextRenderableHandle++;
 	return handle;
 }
 
-void Renderer::updateTransform(unsigned int handle, const Transform& transform)
+void Renderer::setRenderableTransform(unsigned handle, const Transform& transform)
 {
 	auto iter = renderableMap.find(handle);
 	if (iter != renderableMap.end()) {
@@ -62,7 +70,7 @@ void Renderer::updateTransform(unsigned int handle, const Transform& transform)
 	}
 }
 
-void Renderer::setAnimation(unsigned int handle, const std::string& animName)
+void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName)
 {
 	auto iter = renderableMap.find(handle);
 	if (iter == renderableMap.end()) {
@@ -73,7 +81,7 @@ void Renderer::setAnimation(unsigned int handle, const std::string& animName)
 	iter->second.time = 0.0f;
 }
 
-void Renderer::setAnimationTime(unsigned int handle, float time)
+void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 {
 	auto iter = renderableMap.find(handle);
 	if (iter == renderableMap.end()) {
@@ -94,8 +102,13 @@ void Renderer::update(float dt)
 		}
 		iter->second.time += dt;
 
-		auto& animationMap = iter->second.model.animationData.animations;
+		Model& model = modelMap[iter->second.modelHandle];
+		auto& animationMap = model.animationData.animations;
 		auto animIter = animationMap.find(animName);
+
+		if (animIter == animationMap.end()) {
+			continue;
+		}
 
 		// Loop if we're past the end
 		float duration = animIter->second.endTime - animIter->second.startTime;
@@ -135,15 +148,15 @@ void Renderer::draw()
 
 	// Render each renderable we have loaded through getHandle
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
-		const Renderable& renderable = iter->second;
-		const Model& model = renderable.model;
+		Renderable& renderable = iter->second;
+		const Model& model = modelMap[renderable.modelHandle];
 		const ShaderCache& shaderCache = renderable.shaderCache;
 		Transform transform = renderable.transform;
 
 		shaderCache.shader.use();
 		shaderCache.shader.setModelMatrix(&transform.matrix()[0][0]);
 
-		std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time);
+		std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
 		for (unsigned int i = 0; i < model.meshes.size(); i++) {
 			Mesh mesh = model.meshes[i];
 			mesh.material.apply(shaderCache.shader);
