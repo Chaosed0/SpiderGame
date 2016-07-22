@@ -320,7 +320,7 @@ int Game::setup()
 		transformComponent->transform.setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
-		btSphereShape* shape = new btSphereShape(0.5f * transformComponent->transform.getScale().x);
+		btSphereShape* shape = new btSphereShape(50.0f * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);

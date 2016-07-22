@@ -1,10 +1,15 @@
 libdir=E:/Libraries/
+TARGET=vs2015
 
 while [ "$1" != "" ]; do
     case $1 in
         -d | --libdir )
             shift
             LIBDIR=$1
+            ;;
+        -t | --target )
+            shift
+            TARGET=$1
             ;;
         -h | --help )           usage
             exit
@@ -42,4 +47,4 @@ export SDL_IMAGE_LIBDIR=$libdir/SDL2_image-2.0.1/lib/x86/
 export GLEW_LIBDIR=$libdir/glew-1.13.0/lib/Release/Win32/
 export NOISE_LIBDIR=$libdir/libnoise/bin/
 
-./premake5.exe vs2015 -f ./premake5.lua
+./premake5.exe $TARGET -f ./premake5.lua

@@ -1,6 +1,9 @@
 
 #include "Font.h"
 
+#include <Windows.h>
+#include <GL/glew.h>
+
 #include <algorithm>
 #include <sstream>
 
@@ -88,7 +91,7 @@ void Font::saveAtlasToFile(const std::string& file)
 	SDL_FreeSurface(surface);
 }
 
-GLuint Font::getTextureId()
+unsigned Font::getTextureId()
 {
 	return textureID;
 }

@@ -38,8 +38,8 @@ TerrainPatch Terrain::generatePatch(int x, int y)
 		for (unsigned x = 0; x < patchSize; x++) {
 			float value = (float)noise.GetValue(start.x + x * stepSize, start.y + y * stepSize, 0.0f);
 			patch.terrain[y * patchSize + x] = value;
-			patch.min = min(value, patch.min);
-			patch.max = max(value, patch.max);
+			patch.min = std::fmin(value, patch.min);
+			patch.max = std::fmax(value, patch.max);
 		}
 	}
 

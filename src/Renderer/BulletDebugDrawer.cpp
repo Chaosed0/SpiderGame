@@ -8,7 +8,8 @@
 
 BulletDebugDrawer::BulletDebugDrawer()
 	: currentBufferSize(0),
-	i(0)
+	i(0),
+	debugMode(btIDebugDraw::DBG_NoDebug)
 { }
 
 BulletDebugDrawer::~BulletDebugDrawer()

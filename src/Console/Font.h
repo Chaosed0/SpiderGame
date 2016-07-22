@@ -1,10 +1,5 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Windows.h>
-#include <GL/GL.h>
-#include <GL/GLU.h>
-
 #include <glm/glm.hpp>
 
 #include <ft2build.h>
@@ -40,11 +35,11 @@ class Font
 public:
 	Font();
 	void loadCharacters(const std::string& fontPath, int height);
-	GLuint getTextureId();
+	unsigned getTextureId();
 	Character getCharacter(unsigned int i);
 	glm::ivec2 getTextureSize();
 private:
-	GLuint textureID;
+	unsigned textureID;
 	std::vector<Character> characters;
 	std::unique_ptr<Node> rootNode;
 	std::vector<unsigned char> buffer;

@@ -7,8 +7,14 @@
 
 #include <functional>
 
+#ifdef WIN32
+#define GLDEBUGOUTPUT_PREFIX APIENTRY
+#else
+#define GLDEBUGOUTPUT_PREFIX
+#endif
+
 typedef std::function<void(const std::string&)> DebugLogCallback;
 
-void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
+void GLDEBUGOUTPUT_PREFIX glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
 GLenum glCheckError_(const char *file, int line);
 #define glCheckError() glCheckError_(__FILE__, __LINE__) 

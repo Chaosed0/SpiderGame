@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <ctime>
 
 static const unsigned int maxPointLights = 4;
 static const unsigned int maxBones = 100;
@@ -55,9 +56,15 @@ unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shade
 		shaderIter = iterPair.first;
 	}
 
+	auto modelIter = modelMap.find(modelHandle);
+	if (modelIter == modelMap.end()) {
+		return 0;
+	}
+	bool animatable = (modelIter->second.animationData.animations.size() > 0);
+
 	unsigned int handle = this->nextRenderableHandle;
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	renderableMap.emplace(std::make_pair(handle, Renderable(shader, modelHandle, Transform::identity)));
+	renderableMap.emplace(std::make_pair(handle, Renderable(shader, modelHandle, animatable)));
 	this->nextRenderableHandle++;
 	return handle;
 }
@@ -120,6 +127,12 @@ void Renderer::update(float dt)
 
 void Renderer::draw()
 {
+	if (!fstream.is_open()) {
+		fstream.open("drawlog.txt");
+	}
+
+	fstream << "--------" << '\n';
+
 	for (auto iter = shaderMap.begin(); iter != shaderMap.end(); iter++) {
 		const ShaderCache& shaderCache = iter->second;
 
@@ -156,15 +169,24 @@ void Renderer::draw()
 		shaderCache.shader.use();
 		shaderCache.shader.setModelMatrix(&transform.matrix()[0][0]);
 
-		std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
-		for (unsigned int i = 0; i < model.meshes.size(); i++) {
-			Mesh mesh = model.meshes[i];
-			mesh.material.apply(shaderCache.shader);
+		if (renderable.animatable) {
+			clock_t t1 = clock();
+			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
+			clock_t t2 = clock();
+			fstream << (t2 - t1)/((float)CLOCKS_PER_SEC) << '\n';
 
-			std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
-			for (unsigned int j = 0; j < boneTransforms.size(); j++) {
-				glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
+			for (unsigned i = 0; i < model.meshes.size(); i++) {
+				const Mesh& mesh = model.meshes[i];
+				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
+				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
+					glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
+				}
 			}
+		}
+
+		for (unsigned i = 0; i < model.meshes.size(); i++) {
+			const Mesh& mesh = model.meshes[i];
+			mesh.material.apply(shaderCache.shader);
 			
 			glBindVertexArray(mesh.VAO);
 			glDrawElements(GL_TRIANGLES, mesh.nIndices, GL_UNSIGNED_INT, 0);
@@ -172,6 +194,7 @@ void Renderer::draw()
 			glCheckError();
 		}
 	}
+	fstream.flush();
 }
 
 void Renderer::setCamera(Camera* camera)

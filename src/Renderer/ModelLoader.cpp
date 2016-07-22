@@ -4,6 +4,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
+#include <cmath>
+
 ModelLoader::ModelLoader()
 {
 	modelIdCache["error"] = Model(std::vector<Mesh>());
@@ -113,8 +115,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 				channel.positionKeys[k].second = aiToGlm(ai_posKey.mValue);
 				if (ai_channel->mNumPositionKeys > 1) {
 					// If there's only one keyframe, ignore it for time calculation purposes
-					minTime = min(minTime, (float)ai_channel->mPositionKeys[k].mTime);
-					maxTime = max(maxTime, (float)ai_channel->mPositionKeys[k].mTime);
+					minTime = std::fmin(minTime, (float)ai_channel->mPositionKeys[k].mTime);
+					maxTime = std::fmax(maxTime, (float)ai_channel->mPositionKeys[k].mTime);
 				}
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumRotationKeys; k++) {
@@ -123,8 +125,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 				channel.rotationKeys[k].second = aiToGlm(ai_rotKey.mValue);
 				if (ai_channel->mNumRotationKeys > 1) {
 					// If there's only one keyframe, ignore it for time calculation purposes
-					minTime = min(minTime, (float)ai_channel->mRotationKeys[k].mTime);
-					maxTime = max(maxTime, (float)ai_channel->mRotationKeys[k].mTime);
+					minTime = std::fmin(minTime, (float)ai_channel->mRotationKeys[k].mTime);
+					maxTime = std::fmax(maxTime, (float)ai_channel->mRotationKeys[k].mTime);
 				}
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumScalingKeys; k++) {
@@ -133,8 +135,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 				channel.scaleKeys[k].second = aiToGlm(ai_scaleKey.mValue);
 				if (ai_channel->mNumScalingKeys > 1) {
 					// If there's only one keyframe, ignore it for time calculation purposes
-					minTime = min(minTime, (float)ai_channel->mScalingKeys[k].mTime);
-					maxTime = max(maxTime, (float)ai_channel->mScalingKeys[k].mTime);
+					minTime = std::fmin(minTime, (float)ai_channel->mScalingKeys[k].mTime);
+					maxTime = std::fmax(maxTime, (float)ai_channel->mScalingKeys[k].mTime);
 				}
 			}
 

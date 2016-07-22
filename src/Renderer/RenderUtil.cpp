@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <sstream>
 
-void APIENTRY glDebugOutput(GLenum source,
+void GLDEBUGOUTPUT_PREFIX glDebugOutput(GLenum source,
 	GLenum type,
 	GLuint id,
 	GLenum severity,

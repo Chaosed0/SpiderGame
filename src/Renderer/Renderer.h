@@ -9,6 +9,7 @@
 
 #include <unordered_map>
 #include <map>
+#include <fstream>
 
 #include "Model.h"
 #include "Material.h"
@@ -77,13 +78,16 @@ struct ShaderCache
 	their own transforms. */
 struct Renderable
 {
-	Renderable(const ShaderCache& shaderCache, unsigned modelHandle, Transform transform)
-		: shaderCache(shaderCache), modelHandle(modelHandle), transform(transform) { }
+	Renderable(const ShaderCache& shaderCache, unsigned modelHandle, bool animatable)
+		: shaderCache(shaderCache), modelHandle(modelHandle), animatable(animatable) { }
 
 	unsigned modelHandle;
 	ShaderCache shaderCache;
 	Transform transform;
 	AnimationContext context;
+
+	/*! Whether or not this renderable can be animated. */
+	bool animatable;
 
 	/*! Current animation playing. */
 	std::string animName;
@@ -193,4 +197,6 @@ private:
 
 	/*! ID to assign to the next renderable requested through getRenderableHandle(). */
 	unsigned nextRenderableHandle;
+
+	std::ofstream fstream;
 };

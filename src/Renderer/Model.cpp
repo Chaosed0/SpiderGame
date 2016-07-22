@@ -5,6 +5,9 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <cmath>
+
+#include <glm/gtx/quaternion.hpp>
 
 Mesh::Mesh()
 {}
@@ -102,7 +105,7 @@ template <class T>
 T interpolateKeyframes(const std::vector<std::pair<float, T>>& keys, float time, unsigned& keyCache)
 {
 	unsigned keyIndex = keys.size()-1;
-	time = min(max(time, keys[0].first), keys.back().first);
+	time = std::fmin(std::fmax(time, keys[0].first), keys.back().first);
 
 	for (unsigned int i = keyCache; i < keyCache + keys.size()-1; i++) {
 		const auto& ka = keys[i%keys.size()];
@@ -158,21 +161,18 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 
 	nodeTransforms.resize(animationData.nodes.size());
 	const Animation& animation = iter->second;
-	std::vector<std::pair<unsigned int, glm::mat4>> processQueue;
-	processQueue.push_back(std::make_pair(0, glm::mat4()));
 	time += animation.startTime;
 
-	while (processQueue.size() > 0) {
-		auto pair = processQueue.back();
-		processQueue.pop_back();
+	for (unsigned i = 0; i < animationData.nodes.size(); i++) {
+		const ModelNode& node = animationData.nodes[i];
 
-		unsigned int nodeId = pair.first;
-		const ModelNode& node = animationData.nodes[nodeId];
-
-		glm::mat4 parentTransform = pair.second;
+		glm::mat4 parentTransform = glm::mat4();
+		if (node.parent < animationData.nodes.size()) {
+			 parentTransform = nodeTransforms[node.parent];
+		}
 		glm::mat4 nodeTransform;
 
-		auto channelIdIter = animation.channelIdMap.find(nodeId);
+		auto channelIdIter = animation.channelIdMap.find(i);
 		if (channelIdIter == animation.channelIdMap.end()) {
 			// Not an animated node
 			nodeTransform = node.transform;
@@ -185,19 +185,23 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 			glm::quat rot = interpolateKeyframes(channel.rotationKeys, time, channelContext.rotationKey);
 			glm::vec3 scale = interpolateKeyframes(channel.scaleKeys, time, channelContext.scaleKey);
 
-			// Usually, transformations go the other way - scale, then rotate, then
-			// transform. However, it seems that assimp (our model loader) does it
-			// the other way.
-			nodeTransform = glm::translate(nodeTransform, pos);
-			nodeTransform = glm::rotate(nodeTransform, glm::angle(rot), glm::axis(rot));
-			nodeTransform = glm::scale(nodeTransform, scale);
+			glm::mat4 posMatrix = glm::mat4(
+				1.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 1.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 1.0f, 0.0f,
+				pos.x, pos.y, pos.z, 1.0f
+				);
+			glm::mat4 rotMatrix(glm::toMat4(rot));
+			glm::mat4 scaleMatrix = glm::mat4(
+				scale.x, 0.0f, 0.0f, 0.0f,
+				0.0f, scale.y, 0.0f, 0.0f,
+				0.0f, 0.0f, scale.z, 0.0f,
+				0.0f, 0.0f, 0.0f, 1.0f
+				);
+			nodeTransform = posMatrix * rotMatrix * scaleMatrix;
 		}
 		glm::mat4 globalTransform = parentTransform * nodeTransform;
-		nodeTransforms[nodeId] = globalTransform;
-
-		for (unsigned int i = 0; i < node.children.size(); i++) {
-			processQueue.push_back(std::make_pair(node.children[i], globalTransform));
-		}
+		nodeTransforms[i] = globalTransform;
 	}
 
 	return nodeTransforms;

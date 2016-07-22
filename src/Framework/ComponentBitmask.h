@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <cinttypes>
 
 /*! "mask size type" - type used when specifying the index of a bit in the mask.
 	Implicitly defines the maximum number of bits that the mask can contain. */

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <map>
 #include <memory>
+#include <cassert>
 
 typedef uint32_t eid_t;
 typedef uint32_t cid_t;

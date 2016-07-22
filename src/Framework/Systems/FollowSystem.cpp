@@ -8,6 +8,8 @@
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/CollisionComponent.h"
 
+#include <cmath>
+
 FollowSystem::FollowSystem(World& world, btDynamicsWorld* dynamicsWorld)
 	: System(world),
 	dynamicsWorld(dynamicsWorld)
@@ -47,7 +49,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	// Bullet reports the hit point as very far away if no contact is found
 	if (closestObject >= distanceToTarget) {
 		glm::vec3 dir = to - from;
-		float angle = std::atan2f(dir.x, dir.z);
+		float angle = atan2f(dir.x, dir.z);
 		btQuaternion quat(btVector3(0.0f, 1.0f, 0.0f), angle);
 		rigidbodyMotorComponent->facing = Util::btToGlm(quat);
 		rigidbodyMotorComponent->movement = glm::vec2(-1.0f, 0.0f);

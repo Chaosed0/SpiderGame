@@ -9,11 +9,11 @@ project "OpenGLTest"
 	location "build"
     language "C++"
 	includedirs "src"
-    buildoptions "-std=c++11"
+    buildoptions "-std=c++14"
     targetdir "bin/%{cfg.buildcfg}"
 
     files { "src/**.h", "src/**.cpp" }
-    links { "BulletDynamics", "BulletCollision", "LinearMath", "SDL2", "SDL2main", "SDL2_image", "glew32", "OpenGL32", "libnoise" }
+    links { "BulletDynamics", "BulletCollision", "LinearMath", "SDL2", "SDL2_image", "glew32", "OpenGL32", "libnoise" }
     includedirs {
                     os.getenv("FREETYPE_INCLUDEDIR"),
                     os.getenv("ASSIMP_INCLUDEDIR"),
