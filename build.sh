@@ -45,6 +45,6 @@ export BULLET_LIBDIR=$libdir/bullet3/lib/Release/
 export SDL_LIBDIR=$libdir/SDL2-2.0.4/lib/x86/
 export SDL_IMAGE_LIBDIR=$libdir/SDL2_image-2.0.1/lib/x86/
 export GLEW_LIBDIR=$libdir/glew-1.13.0/lib/Release/Win32/
-export NOISE_LIBDIR=$libdir/libnoise/bin/
+export NOISE_LIBDIR=$libdir/libnoise/win32/Release/
 
 ./premake5.exe $TARGET -f ./premake5.lua

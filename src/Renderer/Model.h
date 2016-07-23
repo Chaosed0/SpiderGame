@@ -86,6 +86,9 @@ struct Mesh
 	/*! Bone data of the mesh. */
 	std::vector<BoneData> boneData;
 
+	/*! Cached transforms returned from internal method. */
+	std::vector<glm::mat4> boneTransforms;
+
 	/*! Default constructor */
 	Mesh();
 
@@ -110,7 +113,25 @@ struct Mesh
 	 *		The values in the returned vector directly correspond to the bones in this mesh's
 	 *		boneData vector.
 	 */
-	std::vector<glm::mat4> getBoneTransforms(const std::vector<glm::mat4>& nodeTransforms) const;
+	std::vector<glm::mat4> getBoneTransforms(const std::vector<glm::mat4>& nodeTransforms);
+};
+
+struct PositionKey
+{
+	float time;
+	glm::vec3 value;
+};
+
+struct RotationKey
+{
+	float time;
+	glm::quat value;
+};
+
+struct ScaleKey
+{
+	float time;
+	glm::vec3 value;
 };
 
 /*! Animation channel corresponding to one node in the model.
@@ -121,16 +142,14 @@ struct Channel
 	/*! The node which this channel corresponds to. */
 	unsigned int nodeId;
 
-	/*! Position keyframes.
-		The first element contains the keyframe time in seconds, and the second element
-		contains the position at that time. */
-	std::vector<std::pair<float, glm::vec3>> positionKeys;
+	/*! Position keyframes. */
+	std::vector<PositionKey> positionKeys;
 
 	/*! Rotation keyframes. */
-	std::vector<std::pair<float, glm::quat>> rotationKeys;
+	std::vector<RotationKey> rotationKeys;
 
 	/*! Scale keyframes. */
-	std::vector<std::pair<float, glm::vec3>> scaleKeys;
+	std::vector<ScaleKey> scaleKeys;
 };
 
 /*! Data for a model's single animation. */
@@ -213,14 +232,17 @@ struct Model
 	/*! All the animations. */
 	AnimationData animationData;
 
+	/*! Cached transforms returned from getNodeTransforms. */
+	std::vector<glm::mat4> nodeTransforms;
+
 	Model() {}
 	Model(std::vector<Mesh> meshes) : meshes(meshes) {}
-	Model(std::vector<Mesh> meshes, AnimationData animationData) : meshes(meshes), animationData(animationData) {}
+	Model(std::vector<Mesh> meshes, AnimationData animationData) : meshes(meshes), animationData(animationData), nodeTransforms(animationData.nodes.size()) {}
 
 	/*!
 	 * \brief Gets the transforms of each node at a certain time in an animation.
 	 * \return Vector of matrices which transform from model space to each node's new space.
 	 *		The matrices correspond directly to the nodes in animationData.nodes. 
 	 */
-	std::vector<glm::mat4> getNodeTransforms(const std::string& animation, float time, AnimationContext& context) const;
+	std::vector<glm::mat4> getNodeTransforms(const std::string& animation, float time, AnimationContext& context);
 };

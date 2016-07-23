@@ -162,21 +162,18 @@ void Renderer::draw()
 	// Render each renderable we have loaded through getHandle
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
 		Renderable& renderable = iter->second;
-		const Model& model = modelMap[renderable.modelHandle];
-		const ShaderCache& shaderCache = renderable.shaderCache;
+		Model& model = modelMap[renderable.modelHandle];
+		ShaderCache& shaderCache = renderable.shaderCache;
 		Transform transform = renderable.transform;
 
 		shaderCache.shader.use();
 		shaderCache.shader.setModelMatrix(&transform.matrix()[0][0]);
 
 		if (renderable.animatable) {
-			clock_t t1 = clock();
 			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
-			clock_t t2 = clock();
-			fstream << (t2 - t1)/((float)CLOCKS_PER_SEC) << '\n';
 
 			for (unsigned i = 0; i < model.meshes.size(); i++) {
-				const Mesh& mesh = model.meshes[i];
+				Mesh& mesh = model.meshes[i];
 				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
 				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
 					glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);

@@ -331,6 +331,7 @@ int Game::setup()
 		unsigned int shroomModelHandle = renderer.getModelHandle(shroomModel);
 		unsigned int shroomHandle = renderer.getRenderableHandle(shroomModelHandle, skinnedShader);
 		renderer.setRenderableAnimation(shroomHandle, "AnimStack::walk");
+		renderer.setRenderableAnimationTime(shroomHandle, i / 10.0f);
 		modelComponent->rendererHandle = shroomHandle;
 	}
 

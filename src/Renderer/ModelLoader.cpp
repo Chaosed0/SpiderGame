@@ -111,8 +111,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 
 			for (unsigned int k = 0; k < ai_channel->mNumPositionKeys; k++) {
 				aiVectorKey ai_posKey = ai_channel->mPositionKeys[k];
-				channel.positionKeys[k].first = (float)(ai_posKey.mTime / ai_animation->mTicksPerSecond);
-				channel.positionKeys[k].second = aiToGlm(ai_posKey.mValue);
+				channel.positionKeys[k].time = (float)(ai_posKey.mTime / ai_animation->mTicksPerSecond);
+				channel.positionKeys[k].value = aiToGlm(ai_posKey.mValue);
 				if (ai_channel->mNumPositionKeys > 1) {
 					// If there's only one keyframe, ignore it for time calculation purposes
 					minTime = std::fmin(minTime, (float)ai_channel->mPositionKeys[k].mTime);
@@ -121,8 +121,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumRotationKeys; k++) {
 				aiQuatKey ai_rotKey = ai_channel->mRotationKeys[k];
-				channel.rotationKeys[k].first = (float)(ai_rotKey.mTime / ai_animation->mTicksPerSecond);
-				channel.rotationKeys[k].second = aiToGlm(ai_rotKey.mValue);
+				channel.rotationKeys[k].time = (float)(ai_rotKey.mTime / ai_animation->mTicksPerSecond);
+				channel.rotationKeys[k].value = aiToGlm(ai_rotKey.mValue);
 				if (ai_channel->mNumRotationKeys > 1) {
 					// If there's only one keyframe, ignore it for time calculation purposes
 					minTime = std::fmin(minTime, (float)ai_channel->mRotationKeys[k].mTime);
@@ -131,8 +131,8 @@ Model ModelLoader::processRootNode(aiNode* rootNode, const aiScene* scene)
 			}
 			for (unsigned int k = 0; k < ai_channel->mNumScalingKeys; k++) {
 				aiVectorKey ai_scaleKey = ai_channel->mScalingKeys[k];
-				channel.scaleKeys[k].first = (float)(ai_scaleKey.mTime / ai_animation->mTicksPerSecond);
-				channel.scaleKeys[k].second = aiToGlm(ai_scaleKey.mValue);
+				channel.scaleKeys[k].time = (float)(ai_scaleKey.mTime / ai_animation->mTicksPerSecond);
+				channel.scaleKeys[k].value = aiToGlm(ai_scaleKey.mValue);
 				if (ai_channel->mNumScalingKeys > 1) {
 					// If there's only one keyframe, ignore it for time calculation purposes
 					minTime = std::fmin(minTime, (float)ai_channel->mScalingKeys[k].mTime);
