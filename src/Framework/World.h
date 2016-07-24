@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <cassert>
+#include <string>
 
 typedef uint32_t eid_t;
 typedef uint32_t cid_t;
@@ -19,7 +20,8 @@ public:
 	template <class T>
 	void registerComponent();
 	
-	eid_t getNewEntity();
+	eid_t getNewEntity(const std::string& name = "");
+	std::string getEntityName(eid_t t);
 
 	template <class T>
 	T* addComponent(eid_t entity);
@@ -28,23 +30,30 @@ public:
 	T* getComponent(eid_t entity, bool insert=false);
 
 	template <class T>
-	bool getComponentId(cid_t& cid);
+	cid_t getComponentId();
+
+	struct Entity {
+		Entity(const std::string& name, ComponentBitmask components)
+			: name(name), components(components) { }
+		std::string name;
+		ComponentBitmask components;
+	};
 
 	class eid_iterator
 	{
 	public:
 		eid_iterator();
-		eid_iterator(std::map<eid_t, ComponentBitmask>::iterator entityIterBegin,
-			std::map<eid_t, ComponentBitmask>::iterator entityIterEnd,
+		eid_iterator(std::map<eid_t, Entity>::iterator entityIterBegin,
+			std::map<eid_t, Entity>::iterator entityIterEnd,
 			ComponentBitmask match);
 		eid_t value();
 		void reset();
 		void next();
 		bool atEnd();
 	private:
-		std::map<eid_t, ComponentBitmask>::iterator entityIterBegin;
-		std::map<eid_t, ComponentBitmask>::iterator entityIter;
-		std::map<eid_t, ComponentBitmask>::iterator entityIterEnd;
+		std::map<eid_t, Entity>::iterator entityIterBegin;
+		std::map<eid_t, Entity>::iterator entityIter;
+		std::map<eid_t, Entity>::iterator entityIterEnd;
 		ComponentBitmask match;
 	};
 
@@ -52,7 +61,7 @@ public:
 private:
 	std::unordered_map<size_t, cid_t> componentIdMap;
 	std::vector<std::unordered_map<eid_t, std::shared_ptr<Component>>> entityComponentMaps;
-	std::map<eid_t, ComponentBitmask> entityComponents;
+	std::map<eid_t, Entity> entities;
 
 	cid_t nextComponentId;
 	eid_t nextEntityId;
@@ -68,16 +77,14 @@ void World::registerComponent()
 }
 
 template <class T>
-bool World::getComponentId(cid_t& cid)
+cid_t World::getComponentId()
 {
 	size_t hash = typeid(T).hash_code();
 	auto iter = componentIdMap.find(hash);
 	if (iter == componentIdMap.end()) {
-		// Tried to add un-registered component
-		return false;
+		throw "Tried to add unregistered component";
 	}
-	cid = iter->second;
-	return true;
+	return iter->second;
 }
 	
 template <class T>
@@ -89,11 +96,7 @@ T* World::addComponent(eid_t entity)
 template <class T>
 T* World::getComponent(eid_t entity, bool insert)
 {
-	cid_t cid = 0;
-	if (this->getComponentId<T>(cid) == false) {
-		return nullptr;
-	}
-
+	cid_t cid = getComponentId<T>();
 	std::unordered_map<eid_t, std::shared_ptr<Component>>& componentPool = this->entityComponentMaps[cid];
 
 	auto iter = componentPool.find(entity);
@@ -104,7 +107,13 @@ T* World::getComponent(eid_t entity, bool insert)
 			std::unique_ptr<Component> newComponent(static_cast<Component*>(new T()));
 			auto emplaceIter = componentPool.emplace(entity, std::move(newComponent));
 			iter = emplaceIter.first;
-			entityComponents[entity].setBit(cid, true);
+
+			auto entityIter = entities.find(entity);
+			if (entityIter == entities.end()) {
+				throw "Tried to add component to nonexistent entity";
+			}
+
+			entityIter->second.components.setBit(cid, true);
 		}
 	}
 

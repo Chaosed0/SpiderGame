@@ -12,6 +12,7 @@
 #include "Framework/Components/PlayerComponent.h"
 #include "Framework/Components/TransformComponent.h"
 #include "Framework/Components/RigidbodyMotorComponent.h"
+#include "Framework/Components/CollisionComponent.h"
 
 #include "Framework/Components/ModelRenderComponent.h"
 
@@ -62,8 +63,27 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
 		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(lineHandle, lineShader);
 
-		if (rayCallback.hasHit()) {
-			printf("%p\n", rayCallback.m_collisionObject);
+		if (!rayCallback.hasHit()) {
+			return;
 		}
+
+		ComponentBitmask bitmask;
+		bitmask.setBit(world.getComponentId<CollisionComponent>(), true);
+		World::eid_iterator iter = world.getEidIterator(bitmask);
+		eid_t hitEntity = entity;
+		while (!iter.atEnd()) {
+			CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(iter.value());
+			if (collisionComponent->body == (btRigidBody*)rayCallback.m_collisionObject) {
+				hitEntity = iter.value();
+				break;
+			}
+			iter.next();
+		}
+
+		if (hitEntity == entity) {
+			return;
+		}
+
+		printf("%s\n", world.getEntityName(hitEntity).c_str());
 	}
 }

@@ -127,12 +127,6 @@ void Renderer::update(float dt)
 
 void Renderer::draw()
 {
-	if (!fstream.is_open()) {
-		fstream.open("drawlog.txt");
-	}
-
-	fstream << "--------" << '\n';
-
 	for (auto iter = shaderMap.begin(); iter != shaderMap.end(); iter++) {
 		const ShaderCache& shaderCache = iter->second;
 
@@ -191,7 +185,6 @@ void Renderer::draw()
 			glCheckError();
 		}
 	}
-	fstream.flush();
 }
 
 void Renderer::setCamera(Camera* camera)

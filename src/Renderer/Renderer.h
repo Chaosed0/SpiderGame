@@ -197,6 +197,4 @@ private:
 
 	/*! ID to assign to the next renderable requested through getRenderableHandle(). */
 	unsigned nextRenderableHandle;
-
-	std::ofstream fstream;
 };

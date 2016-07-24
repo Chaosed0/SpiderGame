@@ -261,7 +261,7 @@ int Game::setup()
 	dynamicsWorld->addCollisionObject(roomData.collisionObject, CollisionGroupWall, CollisionGroupAll);
 
 	// Initialize the player
-	player = world.getNewEntity();
+	player = world.getNewEntity("Player");
 	TransformComponent* playerTransform = world.addComponent<TransformComponent>(player);
 	CollisionComponent* playerCollisionComponent = world.addComponent<CollisionComponent>(player);
 	PlayerComponent* playerComponent = world.addComponent<PlayerComponent>(player);
@@ -281,7 +281,7 @@ int Game::setup()
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
 	playerRigidbodyMotorComponent->noclip = false;
 
-	camera = world.getNewEntity();
+	camera = world.getNewEntity("Camera");
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
 	CameraComponent* cameraComponent = world.addComponent<CameraComponent>(camera);
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
@@ -306,7 +306,10 @@ int Game::setup()
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
 	for (int i = 0; i < 10; i++) {
-		eid_t shroom = world.getNewEntity();
+		std::stringstream namestream;
+		namestream << "Spider " << i;
+
+		eid_t shroom = world.getNewEntity(namestream.str());
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(shroom);
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(shroom);
 		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(shroom);
@@ -452,7 +455,7 @@ void Game::handleEvent(SDL_Event& event)
 		running = false;
 		break;
 	case SDL_MOUSEMOTION:
-		playerInputSystem->rotateCamera(event.motion.xrel, event.motion.yrel);
+		playerInputSystem->rotateCamera((float)event.motion.xrel, (float)event.motion.yrel);
 		break;
 	case SDL_TEXTINPUT:
 		if (consoleIsVisible) {

@@ -53,8 +53,6 @@ private:
 template <class T>
 void System::require()
 {
-	cid_t cid = 0;
-	bool cidFound = world.getComponentId<T>(cid);
-	assert(cidFound);
+	cid_t cid = world.getComponentId<T>();
 	requiredComponents.setBit(cid, true);
 }
