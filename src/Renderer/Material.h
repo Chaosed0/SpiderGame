@@ -50,10 +50,12 @@ class Material
 {
 public:
 	Material();
-	int drawOrder;
 	MaterialProperty getProperty(const std::string& key);
 	void setProperty(const std::string& key, MaterialProperty property);
 	void apply(const Shader& shader) const;
+
+	unsigned drawOrder;
+	unsigned drawType;
 private:
 	std::map<std::string, MaterialProperty> properties;
 

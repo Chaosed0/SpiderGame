@@ -36,9 +36,8 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 
 	glm::vec3 from = transformComponent->transform.getPosition();
 	glm::vec3 to = finalTarget.getPosition();
-	btVector3 btStart(Util::glmToBt(transformComponent->transform.getPosition()));
-	btVector3 btEnd(Util::glmToBt(finalTarget.getPosition()));
-	btStart.setY(btStart.getY() + 1.0f);
+	btVector3 btStart(Util::glmToBt(from));
+	btVector3 btEnd(Util::glmToBt(to));
 	btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
 	rayCallback.m_collisionFilterMask = CollisionGroupWall;
 	this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);

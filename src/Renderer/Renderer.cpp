@@ -186,7 +186,7 @@ void Renderer::draw()
 			mesh.material.apply(shaderCache.shader);
 			
 			glBindVertexArray(mesh.VAO);
-			glDrawElements(GL_TRIANGLES, mesh.nIndices, GL_UNSIGNED_INT, 0);
+			glDrawElements(mesh.material.drawType, mesh.nIndices, GL_UNSIGNED_INT, 0);
 			glBindVertexArray(0);
 			glCheckError();
 		}

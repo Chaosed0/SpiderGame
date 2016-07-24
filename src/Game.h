@@ -20,6 +20,7 @@
 #include "Environment/CollisionMeshBuilder.h"
 
 #include "Framework/World.h"
+#include "Framework/Systems/ShootingSystem.h"
 #include "Framework/Systems/ModelRenderSystem.h"
 #include "Framework/Systems/CollisionUpdateSystem.h"
 #include "Framework/Systems/CameraSystem.h"
@@ -93,6 +94,7 @@ private:
 	btRigidBody* playerBody;
 
 	World world;
+	std::unique_ptr<ShootingSystem> shootingSystem;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
 	std::unique_ptr<CameraSystem> cameraSystem;

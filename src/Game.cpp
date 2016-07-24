@@ -320,7 +320,7 @@ int Game::setup()
 		transformComponent->transform.setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
-		btSphereShape* shape = new btSphereShape(50.0f * transformComponent->transform.getScale().x);
+		btBoxShape* shape = new btBoxShape(btVector3(200.0f, 50.0f, 120.0f) * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);
@@ -335,6 +335,7 @@ int Game::setup()
 		modelComponent->rendererHandle = shroomHandle;
 	}
 
+	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
@@ -409,6 +410,7 @@ void Game::update()
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);
 	rigidbodyMotorSystem->update(timeDelta);
+	shootingSystem->update(timeDelta);
 
 	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(-1.0f, 0.0f, 0.0f)));
 
@@ -531,11 +533,16 @@ void Game::handleEvent(SDL_Event& event)
 		}
 		break;
 	case SDL_MOUSEBUTTONDOWN:
-		switch(event.button.button) {
-		case SDL_BUTTON_LEFT:
+		if (event.button.button == SDL_BUTTON_LEFT) {
 			SDL_SetRelativeMouseMode(SDL_TRUE);
-			break;
+			playerInputSystem->setShooting(true);
 		}
+		break;
+	case SDL_MOUSEBUTTONUP:
+		if (event.button.button == SDL_BUTTON_LEFT) {
+			playerInputSystem->setShooting(false);
+		}
+		break;
 	}
 }
 

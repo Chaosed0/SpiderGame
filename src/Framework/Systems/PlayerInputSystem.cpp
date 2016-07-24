@@ -8,7 +8,7 @@
 PlayerInputSystem::PlayerInputSystem(World& world)
 	: System(world),
 	forward(false), back(false), left(false), right(false),
-	jump(false), noclip(false),
+	jump(false), noclip(false), shooting(false),
 	horizontalRad(0.0f), verticalRad(0.0f),
 	rotateHorizontal(0.0f), rotateVertical(0.0f)
 {
@@ -20,6 +20,7 @@ PlayerInputSystem::PlayerInputSystem(World& world)
 void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 {
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
+	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 
 	glm::vec2 movement(0.0f,0.0f);
 	if (forward) {
@@ -43,13 +44,13 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 		verticalRad = glm::clamp(verticalRad, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
 	}
 
-	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, -verticalRad, glm::vec3(0.0f, 1.0f, 0.0f));
+	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad, glm::vec3(0.0f, 1.0f, 0.0f));
 	rigidbodyMotorComponent->movement = movement;
 	rigidbodyMotorComponent->jump = jump;
 	rigidbodyMotorComponent->noclip = noclip;
 	jump = false;
 
-	// NOTE: Assumption that this system only controls a single player
+	playerComponent->shooting = shooting;
 	rotateHorizontal = rotateVertical = 0.0f;
 }
 
@@ -81,6 +82,11 @@ void PlayerInputSystem::stopMoving(glm::vec2 movement)
 void PlayerInputSystem::startJump()
 {
 	jump = true;
+}
+
+void PlayerInputSystem::setShooting(bool shooting)
+{
+	this->shooting = shooting;
 }
 
 void PlayerInputSystem::setNoclip(bool noclip)

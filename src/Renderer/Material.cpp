@@ -6,9 +6,9 @@ uint64_t Material::nextId = 0;
 std::unordered_map<uint64_t, GLuint> Material::shaderUniformCache;
 
 Material::Material()
-{
-	drawOrder = GL_LESS;
-}
+	: drawOrder(GL_LESS),
+	drawType(GL_TRIANGLES)
+{ }
 
 MaterialProperty Material::getProperty(const std::string& key)
 {

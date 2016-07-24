@@ -12,6 +12,7 @@ public:
 
 	void startMoving(glm::vec2 movement);
 	void stopMoving(glm::vec2 movement);
+	void setShooting(bool shooting);
 	void startJump();
 	void setNoclip(bool noclip);
 
@@ -21,6 +22,7 @@ private:
 	bool forward, back, left, right;
 	bool jump;
 	bool noclip;
+	bool shooting;
 
 	float rotateHorizontal;
 	float rotateVertical;
