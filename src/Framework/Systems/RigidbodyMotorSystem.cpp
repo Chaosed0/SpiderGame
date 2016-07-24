@@ -31,10 +31,10 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 		movement = glm::normalize(rigidbodyMotorComponent->movement) * rigidbodyMotorComponent->moveSpeed;
 	}
 
-	glm::vec3 facingVec = rigidbodyMotorComponent->facing * glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 facingVec = rigidbodyMotorComponent->facing * Util::forward;
 	facingVec.y = 0.0f;
-	float hFacing = glm::orientedAngle(glm::vec3(0.0f, 0.0f, -1.0f), glm::normalize(facingVec), glm::vec3(0.0f, 1.0f, 0.0f));
-	body->getWorldTransform().setRotation(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), hFacing));
+	float hFacing = glm::orientedAngle(Util::forward, glm::normalize(facingVec), Util::up);
+	body->getWorldTransform().setRotation(btQuaternion(Util::glmToBt(Util::up), hFacing));
 
 	if (rigidbodyMotorComponent->noclip) {
 		body->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);

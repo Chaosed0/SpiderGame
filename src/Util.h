@@ -62,22 +62,13 @@ public:
 		return rotation;
 	}
 
-	static glm::quat rotateHorizontalVertical(float horizontal, float vertical, glm::vec3 up)
+	static glm::quat rotateHorizontalVertical(float horizontal, float vertical)
 	{
-		glm::vec3 direction(
-			cos(vertical) * sin(horizontal),
-			sin(vertical),
-			-cos(vertical) * cos(horizontal)
-		);
-
-		glm::vec3 right = glm::normalize(glm::cross(direction, up));
-		glm::vec3 lookAtUp = glm::cross(right, direction);
-		glm::mat4 rotationMatrix = glm::mat4(
-			right.x, right.y, right.z, 0.0f,
-			lookAtUp.x, lookAtUp.y, lookAtUp.z, 0.0f,
-			-direction.x, -direction.y, -direction.z, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f);
-		return glm::quat(rotationMatrix);
+		return glm::quat(glm::vec3(vertical, horizontal, 0.0f));
 	}
+
+	static const glm::vec3 up;
+	static const glm::vec3 right;
+	static const glm::vec3 forward;
 };
 

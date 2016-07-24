@@ -44,7 +44,7 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 		verticalRad = glm::clamp(verticalRad, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
 	}
 
-	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad, glm::vec3(0.0f, 1.0f, 0.0f));
+	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad);
 	rigidbodyMotorComponent->movement = movement;
 	rigidbodyMotorComponent->jump = jump;
 	rigidbodyMotorComponent->noclip = noclip;
@@ -96,8 +96,11 @@ void PlayerInputSystem::setNoclip(bool noclip)
 
 void PlayerInputSystem::rotateCamera(float horizontal, float vertical)
 {
-	this->rotateHorizontal += horizontal;
-	this->rotateVertical += vertical;
+	// mouse right is positive, but clockwise rotation is negative
+	this->rotateHorizontal -= horizontal;
+
+	// mouse down is positive, but clockwise rotation is negative
+	this->rotateVertical -= vertical;
 }
 
 float PlayerInputSystem::getCameraVertical()

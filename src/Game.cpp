@@ -412,7 +412,7 @@ void Game::update()
 	rigidbodyMotorSystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
 
-	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(-1.0f, 0.0f, 0.0f)));
+	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(1.0f, 0.0f, 0.0f)));
 
 	dynamicsWorld->stepSimulation(timeDelta);
 

@@ -42,7 +42,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		playerComponent->shotTimer = 0.0f;
 
 		glm::vec3 from = transform.getPosition();
-		glm::vec3 to = from - playerComponent->maxShotDistance * glm::vec3(0.0f,0.0f,1.0f) * rigidbodyMotorComponent->facing;
+		glm::vec3 to = from + rigidbodyMotorComponent->facing * (Util::forward * playerComponent->maxShotDistance);
 		btVector3 btStart(Util::glmToBt(from));
 		btVector3 btEnd(Util::glmToBt(to));
 		btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
