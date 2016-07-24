@@ -1,10 +1,18 @@
 #pragma once
 
 #include "Framework/Component.h"
-#include "Renderer/Model.h"
-#include "Renderer/Shader.h"
+#include "Renderer/Renderer.h"
 
 struct ModelRenderComponent : public Component
 {
-	unsigned int rendererHandle;
+	ModelRenderComponent() : rendererHandle(0), renderer(nullptr) { }
+	~ModelRenderComponent()
+	{
+		if (renderer != nullptr) {
+			renderer->freeRenderableHandle(rendererHandle);
+		}
+	}
+
+	unsigned rendererHandle;
+	Renderer* renderer;
 };

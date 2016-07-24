@@ -21,6 +21,7 @@ public:
 	void registerComponent();
 	
 	eid_t getNewEntity(const std::string& name = "");
+	void removeEntity(eid_t entity);
 	std::string getEntityName(eid_t t);
 
 	template <class T>
@@ -59,8 +60,10 @@ public:
 
 	eid_iterator getEidIterator(ComponentBitmask match);
 private:
+	typedef std::unordered_map<eid_t, std::unique_ptr<Component>> ComponentPool;
+
 	std::unordered_map<size_t, cid_t> componentIdMap;
-	std::vector<std::unordered_map<eid_t, std::shared_ptr<Component>>> entityComponentMaps;
+	std::vector<ComponentPool> entityComponentMaps;
 	std::map<eid_t, Entity> entities;
 
 	cid_t nextComponentId;
@@ -72,7 +75,7 @@ void World::registerComponent()
 {
 	cid_t id = nextComponentId++;
 	componentIdMap.emplace(typeid(T).hash_code(), id);
-	entityComponentMaps.push_back(std::unordered_map<cid_t, std::shared_ptr<Component>>());
+	entityComponentMaps.push_back(ComponentPool());
 	assert(componentIdMap.size() == entityComponentMaps.size());
 }
 
@@ -97,7 +100,7 @@ template <class T>
 T* World::getComponent(eid_t entity, bool insert)
 {
 	cid_t cid = getComponentId<T>();
-	std::unordered_map<eid_t, std::shared_ptr<Component>>& componentPool = this->entityComponentMaps[cid];
+	ComponentPool& componentPool = this->entityComponentMaps[cid];
 
 	auto iter = componentPool.find(entity);
 	if (iter == componentPool.end()) {

@@ -275,6 +275,7 @@ int Game::setup()
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
 	playerCollisionComponent->body = playerBody;
+	playerCollisionComponent->world = dynamicsWorld;
 	dynamicsWorld->addRigidBody(playerCollisionComponent->body, CollisionGroupPlayer, CollisionGroupAll);
 
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
@@ -323,9 +324,10 @@ int Game::setup()
 		transformComponent->transform.setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
-		btBoxShape* shape = new btBoxShape(btVector3(200.0f, 50.0f, 120.0f) * transformComponent->transform.getScale().x);
+		btBoxShape* shape = new btBoxShape(btVector3(200.0f, 75.0f, 120.0f) * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+		collisionComponent->world = dynamicsWorld;
 		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);
 
 		followComponent->target = playerTransform;
@@ -335,6 +337,7 @@ int Game::setup()
 		unsigned int shroomHandle = renderer.getRenderableHandle(shroomModelHandle, skinnedShader);
 		renderer.setRenderableAnimation(shroomHandle, "AnimStack::walk");
 		renderer.setRenderableAnimationTime(shroomHandle, i / 10.0f);
+		modelComponent->renderer = &renderer;
 		modelComponent->rendererHandle = shroomHandle;
 	}
 

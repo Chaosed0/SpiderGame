@@ -8,6 +8,14 @@
 
 struct CollisionComponent : public Component
 {
-	CollisionComponent() : body(nullptr) {}
+	CollisionComponent() : world(nullptr), body(nullptr) { }
+	~CollisionComponent()
+	{
+		if (world != nullptr) {
+			world->removeRigidBody(body);
+		}
+	}
+
+	btDynamicsWorld* world;
 	btRigidBody* body;
 };

@@ -11,7 +11,6 @@ CollisionUpdateSystem::CollisionUpdateSystem(World& world)
 {
 	this->require<CollisionComponent>();
 	this->require<TransformComponent>();
-	this->requireFinished();
 }
 
 void CollisionUpdateSystem::updateEntity(float dt, eid_t entity)

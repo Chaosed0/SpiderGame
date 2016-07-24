@@ -52,6 +52,24 @@ eid_t World::getNewEntity(const std::string& name)
 	return id;
 }
 
+void World::removeEntity(eid_t entity)
+{
+	auto entityIter = entities.find(entity);
+	if (entityIter == entities.end()) {
+		return;
+	}
+
+	for (unsigned i = 0; i < entityComponentMaps.size(); i++) {
+		ComponentPool& componentPool = entityComponentMaps[i];
+		auto componentIter = componentPool.find(entity);
+		if (componentIter != componentPool.end()) {
+			componentPool.erase(componentIter);
+		}
+	}
+
+	entities.erase(entityIter);
+}
+
 std::string World::getEntityName(eid_t eid)
 {
 	auto iter = entities.find(eid);

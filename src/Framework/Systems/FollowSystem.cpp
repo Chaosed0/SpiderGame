@@ -18,7 +18,6 @@ FollowSystem::FollowSystem(World& world, btDynamicsWorld* dynamicsWorld)
 	require<FollowComponent>();
 	require<RigidbodyMotorComponent>();
 	require<CollisionComponent>();
-	requireFinished();
 }
 
 void FollowSystem::updateEntity(float dt, eid_t entity)

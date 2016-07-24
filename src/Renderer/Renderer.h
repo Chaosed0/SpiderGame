@@ -144,6 +144,12 @@ public:
 	unsigned getRenderableHandle(unsigned modelHandle, const Shader& shader);
 
 	/*!
+	 * \brief Frees a renderable handle. The renderable will stop rendering and
+	 *		the handle will become unusable.
+	 */
+	void freeRenderableHandle(unsigned renderableHandle);
+
+	/*!
 	 * \brief Updates the transform of a renderable object.
 	 */
 	void setRenderableTransform(unsigned handle, const Transform& transform);

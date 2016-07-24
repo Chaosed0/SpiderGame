@@ -69,6 +69,11 @@ unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shade
 	return handle;
 }
 
+void Renderer::freeRenderableHandle(unsigned renderableHandle)
+{
+	renderableMap.erase(renderableHandle);
+}
+
 void Renderer::setRenderableTransform(unsigned handle, const Transform& transform)
 {
 	auto iter = renderableMap.find(handle);

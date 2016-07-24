@@ -15,7 +15,6 @@ RigidbodyMotorSystem::RigidbodyMotorSystem(World& world)
 {
 	require<RigidbodyMotorComponent>();
 	require<CollisionComponent>();
-	requireFinished();
 }
 
 void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)

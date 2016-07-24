@@ -5,14 +5,9 @@ System::System(World& world)
 	: world(world)
 { }
 
-void System::requireFinished()
-{
-	entityIterator = world.getEidIterator(requiredComponents);
-}
-
 void System::update(float dt)
 {
-	entityIterator.reset();
+	entityIterator = world.getEidIterator(requiredComponents);
 	while(!entityIterator.atEnd())
 	{
 		updateEntity(dt, entityIterator.value());

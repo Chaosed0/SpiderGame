@@ -25,7 +25,6 @@ ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Ren
 	require<PlayerComponent>();
 	require<TransformComponent>();
 	require<RigidbodyMotorComponent>();
-	requireFinished();
 }
 
 void ShootingSystem::updateEntity(float dt, eid_t entity)
@@ -80,10 +79,9 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			iter.next();
 		}
 
-		if (hitEntity == entity) {
-			return;
+		if (hitEntity != entity) {
+			printf("%s\n", world.getEntityName(hitEntity).c_str());
+			world.removeEntity(hitEntity);
 		}
-
-		printf("%s\n", world.getEntityName(hitEntity).c_str());
 	}
 }

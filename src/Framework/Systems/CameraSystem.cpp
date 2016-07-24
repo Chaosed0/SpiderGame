@@ -10,7 +10,6 @@ CameraSystem::CameraSystem(World& world, Renderer& renderer)
 {
 	require<TransformComponent>();
 	require<CameraComponent>();
-	requireFinished();
 }
 
 void CameraSystem::updateEntity(float dt, eid_t entity)
