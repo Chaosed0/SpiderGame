@@ -15,6 +15,7 @@
 #include "Framework/Components/CollisionComponent.h"
 #include "Framework/Components/HealthComponent.h"
 
+#include "Framework/Components/ExpiresComponent.h"
 #include "Framework/Components/ModelRenderComponent.h"
 
 ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer)
@@ -61,10 +62,17 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		eid_t line = world.getNewEntity();
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(line);
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
+		ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(line);
 		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(lineHandle, lineShader);
+		modelRenderComponent->renderer = &renderer;
+		expiresComponent->expiryTime = 1.0f;
+
+		if (!rayCallback.hasHit()) {
+			return;
+		}
 
 		void* userPtr = rayCallback.m_collisionObject->getUserPointer();
-		if (!rayCallback.hasHit() || userPtr == nullptr) {
+		if (userPtr == nullptr) {
 			return;
 		}
 

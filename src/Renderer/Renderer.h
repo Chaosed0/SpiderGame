@@ -94,6 +94,9 @@ struct Renderable
 	
 	/*! Current time within the animation. */
 	float time;
+
+	/*! Whether or not to loop the current animation. */
+	bool loopAnimation;
 };
 
 class Renderer
@@ -158,7 +161,7 @@ public:
 	 * \brief Updates the animation of a renderable object.
 	 *		The animation will loop.
 	 */
-	void setRenderableAnimation(unsigned handle, const std::string& animation);
+	void setRenderableAnimation(unsigned handle, const std::string& animation, bool loop = true);
 
 	/*! 
 	 * \brief Sets the time at which to start the currently playing

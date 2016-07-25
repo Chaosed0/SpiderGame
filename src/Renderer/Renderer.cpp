@@ -83,7 +83,7 @@ void Renderer::setRenderableTransform(unsigned handle, const Transform& transfor
 	}
 }
 
-void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName)
+void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName, bool loop)
 {
 	auto iter = renderableMap.find(handle);
 	if (iter == renderableMap.end()) {
@@ -92,6 +92,7 @@ void Renderer::setRenderableAnimation(unsigned handle, const std::string& animNa
 
 	iter->second.animName = animName;
 	iter->second.time = 0.0f;
+	iter->second.loopAnimation = loop;
 }
 
 void Renderer::setRenderableAnimationTime(unsigned handle, float time)
@@ -107,13 +108,14 @@ void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 void Renderer::update(float dt)
 {
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
+		Renderable& renderable = iter->second;
 		std::string animName = iter->second.animName;
 
 		if (animName.size() == 0) {
 			// Not being animated
 			continue;
 		}
-		iter->second.time += dt;
+		renderable.time += dt;
 
 		Model& model = modelMap[iter->second.modelHandle];
 		auto& animationMap = model.animationData.animations;
@@ -122,11 +124,16 @@ void Renderer::update(float dt)
 		if (animIter == animationMap.end()) {
 			continue;
 		}
+		Animation& animation = animIter->second;
 
-		// Loop if we're past the end
-		float duration = animIter->second.endTime - animIter->second.startTime;
-		if (iter->second.time > duration) {
-			iter->second.time -= duration;
+		float duration = animation.endTime - animation.startTime;
+		if (renderable.time > duration) {
+			// Loop or clamp
+			if (renderable.loopAnimation) {
+				renderable.time -= duration;
+			} else {
+				renderable.time = duration;
+			}
 		}
 	}
 }

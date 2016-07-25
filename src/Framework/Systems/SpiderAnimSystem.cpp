@@ -59,6 +59,7 @@ void SpiderAnimSystem::updateEntity(float dt, eid_t entity)
 		expiresComponent->expiryTime = 2.0f;
 	}
 
-	renderer.setRenderableAnimation(modelRenderComponent->rendererHandle, anim);
+	bool loop = newAnimState != SPIDERANIM_DEAD;
+	renderer.setRenderableAnimation(modelRenderComponent->rendererHandle, anim, loop);
 	spiderComponent->animState = newAnimState;
 }
