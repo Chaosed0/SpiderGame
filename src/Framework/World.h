@@ -23,6 +23,7 @@ public:
 	eid_t getNewEntity(const std::string& name = "");
 	void removeEntity(eid_t entity);
 	std::string getEntityName(eid_t t);
+	void cleanupEntities();
 
 	template <class T>
 	T* addComponent(eid_t entity);
@@ -35,7 +36,8 @@ public:
 
 	struct Entity {
 		Entity(const std::string& name, ComponentBitmask components)
-			: name(name), components(components) { }
+			: name(name), components(components), markedForDeletion(false) { }
+		bool markedForDeletion;
 		std::string name;
 		ComponentBitmask components;
 	};

@@ -3,6 +3,7 @@
 
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/CollisionComponent.h"
+#include "Framework/Components/HealthComponent.h"
 
 #include "Util.h"
 
@@ -21,6 +22,12 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 {
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
+	HealthComponent* healthComponent = world.getComponent<HealthComponent>(entity);
+
+	if (healthComponent != nullptr && healthComponent->health <= 0) {
+		// Optional component - if we're dead, don't update
+		return;
+	}
 
 	btRigidBody* body = collisionComponent->body;
 	btVector3 velocity = body->getLinearVelocity();

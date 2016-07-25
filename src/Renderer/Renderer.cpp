@@ -10,7 +10,8 @@ static const unsigned int maxPointLights = 4;
 static const unsigned int maxBones = 100;
 
 Renderer::Renderer()
-	: pointLights(maxPointLights)
+	: pointLights(maxPointLights), camera(nullptr),
+	nextRenderableHandle(0), nextModelHandle(0)
 { }
 
 void Renderer::setDebugLogCallback(const DebugLogCallback& callback)

@@ -59,15 +59,29 @@ void World::removeEntity(eid_t entity)
 		return;
 	}
 
-	for (unsigned i = 0; i < entityComponentMaps.size(); i++) {
-		ComponentPool& componentPool = entityComponentMaps[i];
-		auto componentIter = componentPool.find(entity);
-		if (componentIter != componentPool.end()) {
-			componentPool.erase(componentIter);
+	entityIter->second.markedForDeletion = true;
+}
+
+void World::cleanupEntities()
+{
+	auto iter = entities.begin();
+	while (iter != entities.end())
+	{
+		if (iter->second.markedForDeletion) {
+			eid_t eid = iter->first;
+			for (unsigned i = 0; i < entityComponentMaps.size(); i++) {
+				ComponentPool& componentPool = entityComponentMaps[i];
+				auto componentIter = componentPool.find(eid);
+				if (componentIter != componentPool.end()) {
+					componentPool.erase(componentIter);
+				}
+			}
+
+			iter = entities.erase(iter);
+		} else {
+			++iter;
 		}
 	}
-
-	entities.erase(entityIter);
 }
 
 std::string World::getEntityName(eid_t eid)

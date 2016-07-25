@@ -13,6 +13,7 @@
 #include "Framework/Components/TransformComponent.h"
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/CollisionComponent.h"
+#include "Framework/Components/HealthComponent.h"
 
 #include "Framework/Components/ModelRenderComponent.h"
 
@@ -68,7 +69,12 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		}
 
 		eid_t hitEntity = *((eid_t*)userPtr);
-		printf("%s\n", world.getEntityName(hitEntity).c_str());
-		world.removeEntity(hitEntity);
+		HealthComponent* enemyHealthComponent = world.getComponent<HealthComponent>(hitEntity);
+		if (enemyHealthComponent == nullptr) {
+			return;
+		}
+
+		enemyHealthComponent->health -= playerComponent->shotDamage;
+		printf("%s %d\n", world.getEntityName(hitEntity).c_str(), enemyHealthComponent->health);
 	}
 }

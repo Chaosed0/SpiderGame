@@ -28,6 +28,9 @@
 #include "Framework/Components/PlayerComponent.h"
 #include "Framework/Components/RigidbodyMotorComponent.h"
 #include "Framework/Components/FollowComponent.h"
+#include "Framework/Components/HealthComponent.h"
+#include "Framework/Components/SpiderComponent.h"
+#include "Framework/Components/ExpiresComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
@@ -129,6 +132,9 @@ int Game::setup()
 	world.registerComponent<ModelRenderComponent>();
 	world.registerComponent<PlayerComponent>();
 	world.registerComponent<RigidbodyMotorComponent>();
+	world.registerComponent<HealthComponent>();
+	world.registerComponent<SpiderComponent>();
+	world.registerComponent<ExpiresComponent>();
 
 	/* Console */
 	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
@@ -318,6 +324,8 @@ int Game::setup()
 		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(spider);
 		FollowComponent* followComponent = world.addComponent<FollowComponent>(spider);
 		RigidbodyMotorComponent* rigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(spider);
+		HealthComponent* healthComponent = world.addComponent<HealthComponent>(spider);
+		SpiderComponent* spiderComponent = world.addComponent<SpiderComponent>(spider);
 
 		// Stick it in a random room
 		RoomBox box = roomData.room.boxes[roomRand(generator)];
@@ -339,10 +347,13 @@ int Game::setup()
 
 		unsigned int spiderModelHandle = renderer.getModelHandle(spiderModel);
 		unsigned int spiderHandle = renderer.getRenderableHandle(spiderModelHandle, skinnedShader);
-		renderer.setRenderableAnimation(spiderHandle, "AnimStack::walk");
+		renderer.setRenderableAnimation(spiderHandle, "AnimStack::idle");
 		renderer.setRenderableAnimationTime(spiderHandle, i / 10.0f);
 		modelComponent->renderer = &renderer;
 		modelComponent->rendererHandle = spiderHandle;
+
+		healthComponent->health = healthComponent->maxHealth = 100;
+		spiderComponent->animState = SPIDERANIM_IDLE;
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
@@ -352,6 +363,8 @@ int Game::setup()
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
 	cameraSystem = std::make_unique<CameraSystem>(world, renderer);
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
+	spiderAnimSystem = std::make_unique<SpiderAnimSystem>(world, renderer);
+	expiresSystem = std::make_unique<ExpiresSystem>(world);
 
 	return 0;
 }
@@ -433,9 +446,15 @@ void Game::update()
 		feh = false;
 	}
 
+	spiderAnimSystem->update(timeDelta);
+
 	cameraSystem->update(timeDelta);
 	collisionUpdateSystem->update(timeDelta);
 	modelRenderSystem->update(timeDelta);
+
+	expiresSystem->update(timeDelta);
+
+	world.cleanupEntities();
 }
 
 void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
