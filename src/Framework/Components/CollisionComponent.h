@@ -14,6 +14,11 @@ struct CollisionComponent : public Component
 		if (world != nullptr) {
 			world->removeRigidBody(body);
 		}
+
+		eid_t* eid = (eid_t*)body->getUserPointer();
+		if (eid != nullptr) {
+			delete eid;
+		}
 	}
 
 	btDynamicsWorld* world;

@@ -274,6 +274,8 @@ int Game::setup()
 	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
+	// This pointer is freed by the CollisionComponent destructor
+	playerBody->setUserPointer(new eid_t(player));
 	playerCollisionComponent->body = playerBody;
 	playerCollisionComponent->world = dynamicsWorld;
 	dynamicsWorld->addRigidBody(playerCollisionComponent->body, CollisionGroupPlayer, CollisionGroupAll);
@@ -303,19 +305,19 @@ int Game::setup()
 	}
 
 	// Load some mushrooms
-	Model shroomModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
+	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
 	for (int i = 0; i < 10; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
-		eid_t shroom = world.getNewEntity(namestream.str());
-		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(shroom);
-		TransformComponent* transformComponent = world.addComponent<TransformComponent>(shroom);
-		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(shroom);
-		FollowComponent* followComponent = world.addComponent<FollowComponent>(shroom);
-		RigidbodyMotorComponent* rigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(shroom);
+		eid_t spider = world.getNewEntity(namestream.str());
+		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(spider);
+		TransformComponent* transformComponent = world.addComponent<TransformComponent>(spider);
+		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(spider);
+		FollowComponent* followComponent = world.addComponent<FollowComponent>(spider);
+		RigidbodyMotorComponent* rigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(spider);
 
 		// Stick it in a random room
 		RoomBox box = roomData.room.boxes[roomRand(generator)];
@@ -327,18 +329,20 @@ int Game::setup()
 		btBoxShape* shape = new btBoxShape(btVector3(200.0f, 75.0f, 120.0f) * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
 		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+		// This pointer is freed by the CollisionComponent destructor
+		collisionComponent->body->setUserPointer(new eid_t(spider));
 		collisionComponent->world = dynamicsWorld;
 		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);
 
 		followComponent->target = playerTransform;
 		rigidbodyMotorComponent->moveSpeed = 3.0f;
 
-		unsigned int shroomModelHandle = renderer.getModelHandle(shroomModel);
-		unsigned int shroomHandle = renderer.getRenderableHandle(shroomModelHandle, skinnedShader);
-		renderer.setRenderableAnimation(shroomHandle, "AnimStack::walk");
-		renderer.setRenderableAnimationTime(shroomHandle, i / 10.0f);
+		unsigned int spiderModelHandle = renderer.getModelHandle(spiderModel);
+		unsigned int spiderHandle = renderer.getRenderableHandle(spiderModelHandle, skinnedShader);
+		renderer.setRenderableAnimation(spiderHandle, "AnimStack::walk");
+		renderer.setRenderableAnimationTime(spiderHandle, i / 10.0f);
 		modelComponent->renderer = &renderer;
-		modelComponent->rendererHandle = shroomHandle;
+		modelComponent->rendererHandle = spiderHandle;
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);

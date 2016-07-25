@@ -62,26 +62,13 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
 		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(lineHandle, lineShader);
 
-		if (!rayCallback.hasHit()) {
+		void* userPtr = rayCallback.m_collisionObject->getUserPointer();
+		if (!rayCallback.hasHit() || userPtr == nullptr) {
 			return;
 		}
 
-		ComponentBitmask bitmask;
-		bitmask.setBit(world.getComponentId<CollisionComponent>(), true);
-		World::eid_iterator iter = world.getEidIterator(bitmask);
-		eid_t hitEntity = entity;
-		while (!iter.atEnd()) {
-			CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(iter.value());
-			if (collisionComponent->body == (btRigidBody*)rayCallback.m_collisionObject) {
-				hitEntity = iter.value();
-				break;
-			}
-			iter.next();
-		}
-
-		if (hitEntity != entity) {
-			printf("%s\n", world.getEntityName(hitEntity).c_str());
-			world.removeEntity(hitEntity);
-		}
+		eid_t hitEntity = *((eid_t*)userPtr);
+		printf("%s\n", world.getEntityName(hitEntity).c_str());
+		world.removeEntity(hitEntity);
 	}
 }
