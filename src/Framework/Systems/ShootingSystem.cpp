@@ -35,7 +35,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	TransformComponent* transformComponent(world.getComponent<TransformComponent>(entity));
 	PlayerComponent* playerComponent(world.getComponent<PlayerComponent>(entity));
 
-	playerComponent->shotTimer = std::max(playerComponent->shotTimer + dt, playerComponent->shotCooldown);
+	playerComponent->shotTimer = std::min(playerComponent->shotTimer + dt, playerComponent->shotCooldown);
 
 	if (playerComponent->shooting &&
 		playerComponent->shotTimer >= playerComponent->shotCooldown)

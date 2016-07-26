@@ -37,29 +37,27 @@ void SpiderAnimSystem::updateEntity(float dt, eid_t entity)
 		newAnimState = SPIDERANIM_DEAD;
 	}
 
-	if (newAnimState == spiderComponent->animState) {
-		return;
-	}
+	if (newAnimState != spiderComponent->animState) {
+		std::string anim;
+		switch(newAnimState) {
+		case SPIDERANIM_IDLE:
+			anim = "AnimStack::idle";
+			break;
+		case SPIDERANIM_MOVING:
+			anim = "AnimStack::walk";
+			break;
+		case SPIDERANIM_DEAD:
+			anim = "AnimStack::die";
+			break;
+		}
 
-	std::string anim;
-	switch(newAnimState) {
-	case SPIDERANIM_IDLE:
-		anim = "AnimStack::idle";
-		break;
-	case SPIDERANIM_MOVING:
-		anim = "AnimStack::walk";
-		break;
-	case SPIDERANIM_DEAD:
-		anim = "AnimStack::die";
-		break;
-	}
+		if (newAnimState == SPIDERANIM_DEAD) {
+			ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(entity);
+			expiresComponent->expiryTime = 2.0f;
+		}
 
-	if (newAnimState == SPIDERANIM_DEAD) {
-		ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(entity);
-		expiresComponent->expiryTime = 2.0f;
+		bool loop = newAnimState != SPIDERANIM_DEAD;
+		renderer.setRenderableAnimation(modelRenderComponent->rendererHandle, anim, loop);
+		spiderComponent->animState = newAnimState;
 	}
-
-	bool loop = newAnimState != SPIDERANIM_DEAD;
-	renderer.setRenderableAnimation(modelRenderComponent->rendererHandle, anim, loop);
-	spiderComponent->animState = newAnimState;
 }

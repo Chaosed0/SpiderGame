@@ -51,7 +51,6 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 		btQuaternion quat(btVector3(0.0f, 1.0f, 0.0f), angle);
 		rigidbodyMotorComponent->facing = Util::btToGlm(quat);
 		rigidbodyMotorComponent->movement = glm::vec2(-1.0f, 0.0f);
-		collisionComponent->body->getWorldTransform().setRotation(quat);
 	} else {
 		rigidbodyMotorComponent->movement = glm::vec2(0.0f, 0.0f);
 	}
