@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Room.h"
+#include "Renderer/Model.h"
 
 class CollisionMeshBuilder
 {
@@ -13,14 +14,15 @@ public:
 	~CollisionMeshBuilder();
 
 	void addRoom(const Room& room, float height);
-	void addBox(const btVector3& v1, const btVector3& v2);
-	void addPlane(const btVector3& tlv, const btVector3& trv, const btVector3& blv, const btVector3& brv);
+	void addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm::vec3& blv, const glm::vec3& brv);
 	void construct();
-	btBvhTriangleMeshShape* getMesh();
+	btBvhTriangleMeshShape* getCollisionMesh();
+	Model getModel(std::vector<Texture>& textures);
 private:
-	unsigned addVert(const btVector3& vec3);
+	unsigned addVert(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& texCoord);
 
-	std::vector<btScalar> verts;
+	std::vector<Vertex> verts;
+	std::vector<btScalar> collisionVerts;
 	std::vector<int> indices;
 	btBvhTriangleMeshShape* meshShape;
 	btTriangleIndexVertexArray* ivArray;

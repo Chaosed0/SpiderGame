@@ -52,9 +52,6 @@ class Game
 public:
 	Game();
 	int run();
-
-	// Shouldn't be called outside of the physics timestep
-	void fixedUpdate(btDynamicsWorld* world, float dt);
 private:
 	int setup();
 	int loop();

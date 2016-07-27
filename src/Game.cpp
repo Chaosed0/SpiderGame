@@ -36,12 +36,6 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
-static void bulletTickCallback(btDynamicsWorld *world, btScalar timeStep)
-{
-	Game *g = static_cast<Game*>(world->getWorldUserInfo());
-	g->fixedUpdate(world, timeStep);
-}
-
 Game::Game()
 {
 	running = false;
@@ -152,7 +146,7 @@ int Game::setup()
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
-	dynamicsWorld->setInternalTickCallback(bulletTickCallback, static_cast<void *>(this));
+	//dynamicsWorld->setInternalTickCallback(bulletTickCallback, static_cast<void *>(this));
 
 	debugDrawer.initialize();
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
@@ -217,54 +211,19 @@ int Game::setup()
 	const unsigned height = 6;
 	Texture testTexture(TextureType_diffuse, "assets/img/test.png");
 
-	for (unsigned i = 0; i < room.sides.size(); i++) {
-		RoomSide side = room.sides[i];
-		glm::vec2 dimensions(height, height);
-		glm::vec3 planeNormal(0.0f);
-		if (side.normal.x == 0.0f) {
-			dimensions.y = (float)(side.x1 - side.x0);
-			planeNormal.z = side.normal.y;
-		} else {
-			dimensions.y = (float)(side.y1 - side.y0);
-			planeNormal.x = side.normal.x;
-		}
-
-		float angle = atan2f(planeNormal.x, planeNormal.z);
-		glm::quat orientation = glm::angleAxis(angle, glm::vec3(0.0f, 0.0f, -1.0f));
-
-		glm::vec3 position(side.x0 + (side.x1 - side.x0) / 2.0f, height / 2.0f, side.y0 + (side.y1 - side.y0) / 2.0f);
-		Mesh plane = getPlane({ testTexture },
-			glm::angleAxis(glm::half_pi<float>(), glm::vec3(1.0f, 0.0f, 0.0f)) * orientation,
-			dimensions,
-			glm::vec2(side.x0, side.y0),
-			glm::vec2(1.0f));
-		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
-
-		// getPlane() centers the mesh
-		unsigned modelHandle = renderer.getModelHandle(std::vector<Mesh> { plane });
-		unsigned handle = renderer.getRenderableHandle(modelHandle, shader);
-		renderer.setRenderableTransform(handle, Transform(position));
-	}
-
-	for (unsigned i = 0; i < room.boxes.size(); i++) {
-		RoomBox floor = room.boxes[i];
-		glm::vec2 dimensions(floor.top - floor.bottom, floor.right - floor.left);
-		glm::vec3 position = glm::vec3(floor.left + dimensions.y / 2.0f, 0.0f, floor.bottom + dimensions.x / 2.0f);
-		Mesh plane = getPlane({ testTexture }, glm::angleAxis(0.0f, glm::vec3(0.0f, 1.0f, 0.0f)), dimensions, glm::vec2(floor.left, floor.bottom), glm::vec2(1.0f));
-		plane.material.setProperty("shininess", MaterialProperty(FLT_MAX));
-		unsigned modelHandle = renderer.getModelHandle(std::vector<Mesh> { plane });
-		unsigned floorHandle = renderer.getRenderableHandle(modelHandle, shader);
-		renderer.setRenderableTransform(floorHandle, Transform(position));
-	}
-
 	// Add the room to collision
 	roomData.room = room;
 	roomData.collisionBuilder.addRoom(room, (float)height);
 	roomData.collisionBuilder.construct();
-	btCollisionShape* roomShape = roomData.collisionBuilder.getMesh();
+	btCollisionShape* roomShape = roomData.collisionBuilder.getCollisionMesh();
 	roomData.collisionObject = new btCollisionObject();
 	roomData.collisionObject->setCollisionShape(roomShape);
 	dynamicsWorld->addCollisionObject(roomData.collisionObject, CollisionGroupWall, CollisionGroupAll);
+
+	Model roomModel = roomData.collisionBuilder.getModel(std::vector<Texture>{ testTexture });
+	roomModel.meshes[0].material.setProperty("shininess", MaterialProperty(FLT_MAX));
+	unsigned roomModelHandle = renderer.getModelHandle(roomModel);
+	unsigned roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
 
 	// Initialize the player
 	player = world.getNewEntity("Player");
@@ -455,23 +414,6 @@ void Game::update()
 	expiresSystem->update(timeDelta);
 
 	world.cleanupEntities();
-}
-
-void Game::fixedUpdate(btDynamicsWorld* world, float dt) {
-	assert(world == this->dynamicsWorld);
-
-	this->world.getComponent<RigidbodyMotorComponent>(player)->canJump = false;
-	int numManifolds = world->getDispatcher()->getNumManifolds();
-	for (int i = 0; i < numManifolds; i++) {
-		btPersistentManifold* contactManifold = world->getDispatcher()->getManifoldByIndexInternal(i);
-		const btCollisionObject* obA = contactManifold->getBody0();
-		const btCollisionObject* obB = contactManifold->getBody1();
-		int numContacts = contactManifold->getNumContacts();
-
-		if ((obA == playerBody || obB == playerBody) && numContacts > 0) {
-			this->world.getComponent<RigidbodyMotorComponent>(player)->canJump = true;
-		}
-	}
 }
 
 void Game::handleEvent(SDL_Event& event)
