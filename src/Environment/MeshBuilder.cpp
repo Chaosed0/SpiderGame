@@ -1,13 +1,13 @@
 
-#include "CollisionMeshBuilder.h"
+#include "MeshBuilder.h"
 
-CollisionMeshBuilder::CollisionMeshBuilder()
+MeshBuilder::MeshBuilder()
 {
 	ivArray = nullptr;
 	meshShape = nullptr;
 }
 
-void CollisionMeshBuilder::addRoom(const Room& room, float height)
+void MeshBuilder::addRoom(const Room& room, float height)
 {
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide side = room.sides[i];
@@ -26,7 +26,7 @@ void CollisionMeshBuilder::addRoom(const Room& room, float height)
 	}
 }
 
-void CollisionMeshBuilder::addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm::vec3& blv, const glm::vec3& brv)
+void MeshBuilder::addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm::vec3& blv, const glm::vec3& brv)
 {
 	glm::vec3 uvec = brv - blv;
 	glm::vec3 vvec = tlv - blv;
@@ -46,7 +46,7 @@ void CollisionMeshBuilder::addPlane(const glm::vec3& tlv, const glm::vec3& trv, 
 	this->indices.push_back(bli);
 }
 
-unsigned CollisionMeshBuilder::addVert(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& texCoord)
+unsigned MeshBuilder::addVert(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& texCoord)
 {
 	unsigned i = this->verts.size();
 	Vertex v;
@@ -57,7 +57,7 @@ unsigned CollisionMeshBuilder::addVert(const glm::vec3& position, const glm::vec
 	return i;
 }
 
-void CollisionMeshBuilder::construct()
+void MeshBuilder::construct()
 {
 	if (ivArray != nullptr) {
 		delete(ivArray);
@@ -74,7 +74,7 @@ void CollisionMeshBuilder::construct()
 	meshShape = new btBvhTriangleMeshShape(ivArray, true);
 }
 
-Model CollisionMeshBuilder::getModel(std::vector<Texture>& textures) {
+Model MeshBuilder::getModel(std::vector<Texture>& textures) {
 	std::vector<unsigned> modelIndices(indices.size());
 	for (unsigned i = 0; i < indices.size(); i++) {
 		modelIndices[i] = indices[i];
@@ -82,12 +82,12 @@ Model CollisionMeshBuilder::getModel(std::vector<Texture>& textures) {
 	return Model(std::vector<Mesh>{ Mesh(verts, modelIndices, textures) });
 }
 
-btBvhTriangleMeshShape* CollisionMeshBuilder::getCollisionMesh()
+btBvhTriangleMeshShape* MeshBuilder::getCollisionMesh()
 {
 	return meshShape;
 }
 
-CollisionMeshBuilder::~CollisionMeshBuilder()
+MeshBuilder::~MeshBuilder()
 {
 	delete(ivArray);
 	delete(meshShape);

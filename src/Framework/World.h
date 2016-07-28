@@ -22,7 +22,8 @@ public:
 	
 	eid_t getNewEntity(const std::string& name = "");
 	void removeEntity(eid_t entity);
-	std::string getEntityName(eid_t t);
+	ComponentBitmask getEntityBitmask(eid_t eid);
+	std::string getEntityName(eid_t eid);
 	void cleanupEntities();
 
 	template <class T>

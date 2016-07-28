@@ -146,11 +146,15 @@ int Game::setup()
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
-	//dynamicsWorld->setInternalTickCallback(bulletTickCallback, static_cast<void *>(this));
 
 	debugDrawer.initialize();
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
 	//debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+
+	physics = std::make_unique<Physics>(dynamicsWorld);
+	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world);
+
+	physics->registerCollisionResponder(playerJumpResponder);
 
 	/* Scene */
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
@@ -211,19 +215,27 @@ int Game::setup()
 	const unsigned height = 6;
 	Texture testTexture(TextureType_diffuse, "assets/img/test.png");
 
-	// Add the room to collision
 	roomData.room = room;
-	roomData.collisionBuilder.addRoom(room, (float)height);
-	roomData.collisionBuilder.construct();
-	btCollisionShape* roomShape = roomData.collisionBuilder.getCollisionMesh();
-	roomData.collisionObject = new btCollisionObject();
-	roomData.collisionObject->setCollisionShape(roomShape);
-	dynamicsWorld->addCollisionObject(roomData.collisionObject, CollisionGroupWall, CollisionGroupAll);
+	roomData.meshBuilder.addRoom(room, (float)height);
+	roomData.meshBuilder.construct();
 
-	Model roomModel = roomData.collisionBuilder.getModel(std::vector<Texture>{ testTexture });
+	// Add the room to collision
+	btCollisionShape* roomShape = roomData.meshBuilder.getCollisionMesh();
+	roomData.rigidBody = new btRigidBody(0.0f, new btDefaultMotionState(), roomShape);
+	dynamicsWorld->addRigidBody(roomData.rigidBody, CollisionGroupWall, CollisionGroupAll);
+
+	// Render the room
+	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ testTexture });
 	roomModel.meshes[0].material.setProperty("shininess", MaterialProperty(FLT_MAX));
 	unsigned roomModelHandle = renderer.getModelHandle(roomModel);
 	unsigned roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
+
+	// Make the room an entity so it registers in our Physics system
+	eid_t roomEntity = world.getNewEntity();
+	CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(roomEntity);
+	collisionComponent->body = roomData.rigidBody;
+	collisionComponent->world = dynamicsWorld;
+	roomData.rigidBody->setUserPointer(new eid_t(roomEntity));
 
 	// Initialize the player
 	player = world.getNewEntity("Player");

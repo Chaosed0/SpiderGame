@@ -45,7 +45,7 @@ bool ComponentBitmask::hasComponents(const ComponentBitmask& other)
 	}
 
 	// Otherwise, do a unit-by-unit comparison
-	for(unsigned i = 0; i < this->mask.size(); i++) {
+	for(unsigned i = 0; i < other.mask.size(); i++) {
 		munit_t and_unit = this->mask[i] & other.mask[i];
 		if (and_unit != other.mask[i]) {
 			return false;

@@ -17,7 +17,7 @@
 #include "Console/Console.h"
 #include "Environment/Terrain.h"
 #include "Environment/Room.h"
-#include "Environment/CollisionMeshBuilder.h"
+#include "Environment/MeshBuilder.h"
 
 #include "Framework/World.h"
 #include "Framework/Systems/ShootingSystem.h"
@@ -30,11 +30,14 @@
 #include "Framework/Systems/SpiderAnimSystem.h"
 #include "Framework/Systems/ExpiresSystem.h"
 
+#include "Framework/Physics/Physics.h"
+#include "Framework/Physics/Responders/PlayerJumpResponder.h"
+
 struct RoomData
 {
 	Room room;
-	btCollisionObject* collisionObject;
-	CollisionMeshBuilder collisionBuilder;
+	btRigidBody* rigidBody;
+	MeshBuilder meshBuilder;
 };
 
 struct GameTerrainData
@@ -102,6 +105,9 @@ private:
 	std::unique_ptr<FollowSystem> followSystem;
 	std::unique_ptr<SpiderAnimSystem> spiderAnimSystem;
 	std::unique_ptr<ExpiresSystem> expiresSystem;
+
+	std::unique_ptr<Physics> physics;
+	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;

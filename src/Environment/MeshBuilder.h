@@ -7,11 +7,11 @@
 #include "Room.h"
 #include "Renderer/Model.h"
 
-class CollisionMeshBuilder
+class MeshBuilder
 {
 public:
-	CollisionMeshBuilder();
-	~CollisionMeshBuilder();
+	MeshBuilder();
+	~MeshBuilder();
 
 	void addRoom(const Room& room, float height);
 	void addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm::vec3& blv, const glm::vec3& brv);

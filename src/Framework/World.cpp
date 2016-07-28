@@ -93,6 +93,15 @@ std::string World::getEntityName(eid_t eid)
 	return "";
 }
 
+ComponentBitmask World::getEntityBitmask(eid_t eid)
+{
+	auto iter = entities.find(eid);
+	if (iter != entities.end()) {
+		return iter->second.components;
+	}
+	return ComponentBitmask();
+}
+
 World::eid_iterator World::getEidIterator(ComponentBitmask match)
 {
 	return eid_iterator(entities.begin(), entities.end(), match);
