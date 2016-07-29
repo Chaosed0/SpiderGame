@@ -27,11 +27,12 @@
 #include "Framework/Systems/RigidbodyMotorSystem.h"
 #include "Framework/Systems/PlayerInputSystem.h"
 #include "Framework/Systems/FollowSystem.h"
-#include "Framework/Systems/SpiderAnimSystem.h"
+#include "Framework/Systems/SpiderSystem.h"
 #include "Framework/Systems/ExpiresSystem.h"
 
 #include "Framework/Physics/Physics.h"
 #include "Framework/Physics/Responders/PlayerJumpResponder.h"
+#include "Framework/Physics/Responders/HurtboxPlayerResponder.h"
 
 struct RoomData
 {
@@ -103,11 +104,12 @@ private:
 	std::unique_ptr<RigidbodyMotorSystem> rigidbodyMotorSystem;
 	std::unique_ptr<PlayerInputSystem> playerInputSystem;
 	std::unique_ptr<FollowSystem> followSystem;
-	std::unique_ptr<SpiderAnimSystem> spiderAnimSystem;
+	std::unique_ptr<SpiderSystem> spiderSystem;
 	std::unique_ptr<ExpiresSystem> expiresSystem;
 
 	std::unique_ptr<Physics> physics;
 	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
+	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;

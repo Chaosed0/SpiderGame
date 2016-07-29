@@ -2,16 +2,19 @@
 
 #include "Framework/Component.h"
 
-enum SpiderAnimState
+enum SpiderState
 {
-	SPIDERANIM_IDLE,
-	SPIDERANIM_MOVING,
-	SPIDERANIM_DEAD
+	SPIDER_IDLE,
+	SPIDER_MOVING,
+	SPIDER_ATTACKING,
+	SPIDER_DEAD
 };
 
 class SpiderComponent : public Component
 {
 public:
-	SpiderComponent() : animState(SPIDERANIM_IDLE) { }
-	SpiderAnimState animState;
+	SpiderComponent() : animState(SPIDER_IDLE), attackTimer(1.0f), attackTime(1.0f) { }
+	SpiderState animState;
+	float attackTimer;
+	float attackTime;
 };

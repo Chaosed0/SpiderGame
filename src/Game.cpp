@@ -31,6 +31,7 @@
 #include "Framework/Components/HealthComponent.h"
 #include "Framework/Components/SpiderComponent.h"
 #include "Framework/Components/ExpiresComponent.h"
+#include "Framework/Components/HurtboxComponent.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
@@ -129,6 +130,7 @@ int Game::setup()
 	world.registerComponent<HealthComponent>();
 	world.registerComponent<SpiderComponent>();
 	world.registerComponent<ExpiresComponent>();
+	world.registerComponent<HurtboxComponent>();
 
 	/* Console */
 	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
@@ -153,8 +155,10 @@ int Game::setup()
 
 	physics = std::make_unique<Physics>(dynamicsWorld);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world);
+	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world);
 
 	physics->registerCollisionResponder(playerJumpResponder);
+	physics->registerCollisionResponder(hurtboxPlayerResponder);
 
 	/* Scene */
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
@@ -285,7 +289,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 1; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -324,7 +328,7 @@ int Game::setup()
 		modelComponent->rendererHandle = spiderHandle;
 
 		healthComponent->health = healthComponent->maxHealth = 100;
-		spiderComponent->animState = SPIDERANIM_IDLE;
+		spiderComponent->animState = SPIDER_IDLE;
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
@@ -334,7 +338,7 @@ int Game::setup()
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
 	cameraSystem = std::make_unique<CameraSystem>(world, renderer);
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
-	spiderAnimSystem = std::make_unique<SpiderAnimSystem>(world, renderer);
+	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 
 	return 0;
@@ -417,7 +421,7 @@ void Game::update()
 		feh = false;
 	}
 
-	spiderAnimSystem->update(timeDelta);
+	spiderSystem->update(timeDelta);
 
 	cameraSystem->update(timeDelta);
 	collisionUpdateSystem->update(timeDelta);
