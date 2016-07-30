@@ -8,19 +8,19 @@
 
 struct CollisionComponent : public Component
 {
-	CollisionComponent() : world(nullptr), body(nullptr) { }
+	CollisionComponent() : world(nullptr), collisionObject(nullptr) { }
 	~CollisionComponent()
 	{
 		if (world != nullptr) {
-			world->removeRigidBody(body);
+			world->removeCollisionObject(this->collisionObject);
 		}
 
-		eid_t* eid = (eid_t*)body->getUserPointer();
+		eid_t* eid = (eid_t*)collisionObject->getUserPointer();
 		if (eid != nullptr) {
 			delete eid;
 		}
 	}
 
 	btDynamicsWorld* world;
-	btRigidBody* body;
+	btCollisionObject* collisionObject;
 };

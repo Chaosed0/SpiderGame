@@ -22,14 +22,13 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 {
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
-	HealthComponent* healthComponent = world.getComponent<HealthComponent>(entity);
 
-	if (healthComponent != nullptr && healthComponent->health <= 0) {
-		// Optional component - if we're dead, don't update
+	if (!rigidbodyMotorComponent->canMove ||
+		collisionComponent->collisionObject->getInternalType() != btCollisionObject::CO_RIGID_BODY) {
 		return;
 	}
 
-	btRigidBody* body = collisionComponent->body;
+	btRigidBody* body = (btRigidBody*)collisionComponent->collisionObject;
 	btVector3 velocity = body->getLinearVelocity();
 
 	glm::vec2 movement;

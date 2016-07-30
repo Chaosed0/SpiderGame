@@ -13,8 +13,9 @@ enum SpiderState
 class SpiderComponent : public Component
 {
 public:
-	SpiderComponent() : animState(SPIDER_IDLE), attackTimer(1.0f), attackTime(1.0f) { }
+	SpiderComponent() : animState(SPIDER_IDLE), attackTimer(0.0f), attackTime(1.0f) { }
 	SpiderState animState;
 	float attackTimer;
 	float attackTime;
+	bool madeHurtbox;
 };

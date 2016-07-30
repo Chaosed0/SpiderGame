@@ -8,7 +8,7 @@
 class HurtboxComponent : public Component
 {
 public:
-	HurtboxComponent() : damage(damage) { }
+	HurtboxComponent() : damage(10.0f) { }
 	std::vector<eid_t> collidedEntities;
 	float damage;
 };

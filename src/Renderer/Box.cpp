@@ -165,3 +165,59 @@ Mesh getPlane(const std::vector<Texture>& textures, glm::quat basis, glm::vec2 d
 
 	return Mesh(vertices, indices, textures);
 }
+
+Mesh getDebugBoxMesh(const glm::vec3& halfExtents)
+{
+	static unsigned topRightFronti = 0;
+	static unsigned topLeftFronti = 1;
+	static unsigned topRightBacki = 2;
+	static unsigned topLeftBacki = 3;
+	static unsigned botRightFronti = 4;
+	static unsigned botLeftFronti = 5;
+	static unsigned botRightBacki = 6;
+	static unsigned botLeftBacki = 7;
+
+	// We're not expecting this to be lit nor textured, so ignore normal and texCoord
+	std::vector<Vertex> vertices(8);
+	vertices[topRightFronti].position = glm::vec3(halfExtents.x, halfExtents.y, halfExtents.z);
+	vertices[topLeftFronti].position = glm::vec3(-halfExtents.x, halfExtents.y, halfExtents.z);
+	vertices[topRightBacki].position = glm::vec3(halfExtents.x, halfExtents.y, -halfExtents.z);
+	vertices[topLeftBacki].position = glm::vec3(-halfExtents.x, halfExtents.y, -halfExtents.z);
+	vertices[botRightFronti].position = glm::vec3(halfExtents.x, -halfExtents.y, halfExtents.z);
+	vertices[botLeftFronti].position = glm::vec3(-halfExtents.x, -halfExtents.y, halfExtents.z);
+	vertices[botRightBacki].position = glm::vec3(halfExtents.x, -halfExtents.y, -halfExtents.z);
+	vertices[botLeftBacki].position = glm::vec3(-halfExtents.x, -halfExtents.y, -halfExtents.z);
+
+	std::vector<unsigned> indices;
+	// Top face
+	indices.push_back(topLeftFronti);
+	indices.push_back(topRightFronti);
+	indices.push_back(topRightFronti);
+	indices.push_back(topRightBacki);
+	indices.push_back(topRightBacki);
+	indices.push_back(topLeftBacki);
+	indices.push_back(topLeftBacki);
+	indices.push_back(topLeftFronti);
+	// Bottom face
+	indices.push_back(botLeftFronti);
+	indices.push_back(botRightFronti);
+	indices.push_back(botRightFronti);
+	indices.push_back(botRightBacki);
+	indices.push_back(botRightBacki);
+	indices.push_back(botLeftBacki);
+	indices.push_back(botLeftBacki);
+	indices.push_back(botLeftFronti);
+	// Connecting bars
+	indices.push_back(topLeftFronti);
+	indices.push_back(botLeftFronti);
+	indices.push_back(topRightFronti);
+	indices.push_back(botRightFronti);
+	indices.push_back(topLeftBacki);
+	indices.push_back(botLeftBacki);
+	indices.push_back(topRightBacki);
+	indices.push_back(botRightBacki);
+
+	Mesh mesh(vertices, indices, std::vector<Texture> { });
+	mesh.material.drawType = GL_LINES;
+	return mesh;
+}

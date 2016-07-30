@@ -237,7 +237,7 @@ int Game::setup()
 	// Make the room an entity so it registers in our Physics system
 	eid_t roomEntity = world.getNewEntity();
 	CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(roomEntity);
-	collisionComponent->body = roomData.rigidBody;
+	collisionComponent->collisionObject = roomData.rigidBody;
 	collisionComponent->world = dynamicsWorld;
 	roomData.rigidBody->setUserPointer(new eid_t(roomEntity));
 
@@ -246,6 +246,7 @@ int Game::setup()
 	TransformComponent* playerTransform = world.addComponent<TransformComponent>(player);
 	CollisionComponent* playerCollisionComponent = world.addComponent<CollisionComponent>(player);
 	PlayerComponent* playerComponent = world.addComponent<PlayerComponent>(player);
+	HealthComponent* playerHealthComponent = world.addComponent<HealthComponent>(player);
 	RigidbodyMotorComponent* playerRigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(player);
 
 	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, 0.0f));
@@ -257,9 +258,9 @@ int Game::setup()
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
 	// This pointer is freed by the CollisionComponent destructor
 	playerBody->setUserPointer(new eid_t(player));
-	playerCollisionComponent->body = playerBody;
+	playerCollisionComponent->collisionObject = playerBody;
 	playerCollisionComponent->world = dynamicsWorld;
-	dynamicsWorld->addRigidBody(playerCollisionComponent->body, CollisionGroupPlayer, CollisionGroupAll);
+	dynamicsWorld->addRigidBody(playerBody, CollisionGroupPlayer, CollisionGroupAll);
 
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
@@ -289,7 +290,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 10; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -311,11 +312,13 @@ int Game::setup()
 
 		btBoxShape* shape = new btBoxShape(btVector3(200.0f, 75.0f, 120.0f) * transformComponent->transform.getScale().x);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
-		collisionComponent->body = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+		btRigidBody* spiderRigidBody = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 		// This pointer is freed by the CollisionComponent destructor
-		collisionComponent->body->setUserPointer(new eid_t(spider));
+		spiderRigidBody->setUserPointer(new eid_t(spider));
+		dynamicsWorld->addRigidBody(spiderRigidBody, CollisionGroupEnemy, CollisionGroupAll);
+
+		collisionComponent->collisionObject = spiderRigidBody;
 		collisionComponent->world = dynamicsWorld;
-		dynamicsWorld->addRigidBody(collisionComponent->body, CollisionGroupEnemy, CollisionGroupAll);
 
 		followComponent->target = playerTransform;
 		rigidbodyMotorComponent->moveSpeed = 3.0f;
@@ -329,6 +332,7 @@ int Game::setup()
 
 		healthComponent->health = healthComponent->maxHealth = 100;
 		spiderComponent->animState = SPIDER_IDLE;
+		spiderComponent->attackTime = 1.0f;
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
@@ -340,6 +344,8 @@ int Game::setup()
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
 	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
+
+	spiderSystem->debugShader = &lightShader;
 
 	return 0;
 }

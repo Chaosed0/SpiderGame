@@ -18,7 +18,7 @@ void CollisionUpdateSystem::updateEntity(float dt, eid_t entity)
 	CollisionComponent* collisionComponent(world.getComponent<CollisionComponent>(entity));
 	TransformComponent* transformComponent(world.getComponent<TransformComponent>(entity));
 
-	btTransform transform = collisionComponent->body->getWorldTransform();
+	btTransform transform = collisionComponent->collisionObject->getWorldTransform();
 	transformComponent->transform.setPosition(Util::btToGlm(transform.getOrigin()));
 	transformComponent->transform.setRotation(Util::btToGlm(transform.getRotation()));
 }
