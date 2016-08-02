@@ -22,6 +22,7 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	: width(width), height(height), bottom(windowHeight - height), buffer(maxBufferLines)
 {
 	font.loadCharacters("assets/font/Inconsolata.otf", 12);
+	font.saveAtlasToFile("font.bmp");
 
 	lineHeight = 15.0f;
 	bufferEnd = 0;
