@@ -13,8 +13,8 @@ public:
 
 	glm::ivec2 packTexture(unsigned char* textureBuffer, const glm::ivec2& bufferSize);
 
-	glm::ivec2 getTextureSize();
-	const unsigned char* getBuffer();
+	glm::ivec2 getTextureSize() const;
+	const unsigned char* getBuffer() const;
 private:
 	struct TextureNode
 	{

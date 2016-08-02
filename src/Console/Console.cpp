@@ -22,7 +22,6 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	: width(width), height(height), bottom(windowHeight - height), buffer(maxBufferLines)
 {
 	font.loadCharacters("assets/font/Inconsolata.otf", 12);
-	font.saveAtlasToFile("font.bmp");
 
 	lineHeight = 15.0f;
 	bufferEnd = 0;
@@ -127,9 +126,6 @@ void Console::print(const std::string& message)
 
 void Console::draw()
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	backShader.use();
 	glBindVertexArray(backVao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

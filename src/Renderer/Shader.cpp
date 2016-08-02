@@ -105,6 +105,10 @@ void Shader::compileAndLink(const std::string& vertexShaderPath, const std::stri
 
 	glDeleteShader(VertexShaderID);
 	glDeleteShader(FragmentShaderID);
+
+	this->projectionUniform = this->getUniformLocation("projection");
+	this->viewUniform = this->getUniformLocation("view");
+	this->modelUniform = this->getUniformLocation("model");
 }
 
 void Shader::use() const
@@ -130,18 +134,18 @@ GLuint Shader::getUniformLocation(const std::string& uniformIdentifier) const
 
 void Shader::setViewMatrix(const GLfloat* matrix) const
 {
-	glUniformMatrix4fv(this->getUniformLocation("view"), 1, GL_FALSE, matrix);
+	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, matrix);
 	glCheckError();
 }
 
 void Shader::setProjectionMatrix(const GLfloat* matrix) const
 {
-	glUniformMatrix4fv(this->getUniformLocation("projection"), 1, GL_FALSE, matrix);
+	glUniformMatrix4fv(projectionUniform, 1, GL_FALSE, matrix);
 	glCheckError();
 }
 
 void Shader::setModelMatrix(const GLfloat* matrix) const
 {
-	glUniformMatrix4fv(this->getUniformLocation("model"), 1, GL_FALSE, matrix);
+	glUniformMatrix4fv(modelUniform, 1, GL_FALSE, matrix);
 	glCheckError();
 }

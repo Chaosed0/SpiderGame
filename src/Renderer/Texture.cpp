@@ -10,6 +10,11 @@
 Texture::Texture()
 {}
 
+Texture::Texture(TextureType type, GLuint id)
+	: type(type), id(id)
+{ }
+
+
 Texture::Texture(TextureType type, const std::string& imageLocation)
 {
 	this->type = type;

@@ -14,7 +14,8 @@ Camera::Camera(float fieldOfView, unsigned int width, unsigned int height, float
 	height(height),
 	nearClip(nearClip),
 	farClip(farClip)
-{ }
+{
+}
 
 glm::mat4 Camera::getViewMatrix()
 {
@@ -24,4 +25,9 @@ glm::mat4 Camera::getViewMatrix()
 glm::mat4 Camera::getProjectionMatrix()
 {
 	return glm::perspective(fieldOfView, (float)width / (float)height, nearClip, farClip);
+}
+
+glm::mat4 Camera::getProjectionMatrixOrtho()
+{
+	return glm::ortho(0, (int)width, 0, (int)height);
 }

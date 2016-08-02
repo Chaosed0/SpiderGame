@@ -105,6 +105,16 @@ void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 	iter->second.time = time;
 }
 
+void Renderer::setRenderableRenderSpace(unsigned handle, RenderSpace space)
+{
+	auto iter = this->renderableMap.find(handle);
+	if (iter == this->renderableMap.end()) {
+		return;
+	}
+
+	iter->second.space = space;
+}
+
 void Renderer::update(float dt)
 {
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
@@ -144,8 +154,6 @@ void Renderer::draw()
 		const ShaderCache& shaderCache = iter->second;
 
 		shaderCache.shader.use();
-		shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
-		shaderCache.shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
 
 		for (unsigned int i = 0; i < pointLights.size(); i++) {
 			PointLight light = pointLights[i];
@@ -175,6 +183,13 @@ void Renderer::draw()
 
 		shaderCache.shader.use();
 		shaderCache.shader.setModelMatrix(&transform.matrix()[0][0]);
+		if (renderable.space == RenderSpace_World) {
+			shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
+			shaderCache.shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
+		} else {
+			shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrixOrtho()[0][0]);
+			shaderCache.shader.setViewMatrix(&glm::mat4()[0][0]);
+		}
 
 		if (renderable.animatable) {
 			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);

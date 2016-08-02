@@ -84,6 +84,7 @@ private:
 	Shader skinnedShader;
 	Shader lightShader;
 	Shader skyboxShader;
+	Shader textShader;
 
 	RoomGenerator roomGenerator;
 	RoomData roomData;

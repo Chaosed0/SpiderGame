@@ -112,12 +112,12 @@ glm::ivec2 TexturePacker::packTexture(unsigned char* textureBuffer, const glm::i
 	return node->origin;
 }
 
-glm::ivec2 TexturePacker::getTextureSize()
+glm::ivec2 TexturePacker::getTextureSize() const
 {
 	return textureSize;
 }
 
-const unsigned char* TexturePacker::getBuffer()
+const unsigned char* TexturePacker::getBuffer() const
 {
 	return buffer.data();
 }

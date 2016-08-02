@@ -138,7 +138,7 @@ int Game::setup()
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
 	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
 
-	// Initialize renderer debugging output
+	/* Renderer */
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
 
 	/* Physics */
@@ -165,6 +165,7 @@ int Game::setup()
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
+	textShader.compileAndLink("Shaders/basic.vert", "Shaders/textured.frag");
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(0.7f,  0.2f,  2.0f),
@@ -290,7 +291,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 0; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -334,6 +335,17 @@ int Game::setup()
 		spiderComponent->animState = SPIDER_IDLE;
 		spiderComponent->attackTime = 1.0f;
 	}
+
+	// Put some text up on the screen
+	Font font("assets/font/Inconsolata.otf", 24);
+	Mesh textMesh = font.generateMesh("This is some text.");
+	textMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
+	//textMesh.material.drawOrder = GL_ALWAYS;
+	Model textModel(std::vector<Mesh> { textMesh });
+	unsigned textModelHandle = renderer.getModelHandle(textModel);
+	unsigned textHandle = renderer.getRenderableHandle(textModelHandle, textShader);
+	//renderer.setRenderableRenderSpace(textHandle, RenderSpace_UI);
+	renderer.setRenderableTransform(textHandle, Transform(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(), glm::vec3(1/24.0f)));
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
@@ -392,6 +404,9 @@ void Game::draw()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, this->wireframe ? GL_LINE : GL_FILL);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	renderer.draw();
 	debugDrawer.draw();

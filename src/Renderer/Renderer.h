@@ -73,18 +73,31 @@ struct ShaderCache
 	std::vector<GLuint> bones;
 };
 
+/*! Different render spaces. */
+enum RenderSpace
+{
+	/*! Render in worldspace. */
+	RenderSpace_World,
+
+	/*! Render in UI space. */
+	RenderSpace_UI
+};
+
 /*! A renderable, stored internally in the renderer.
 	Renderables can be equated to entities. They reference a model and a shader, but have
 	their own transforms. */
 struct Renderable
 {
 	Renderable(const ShaderCache& shaderCache, unsigned modelHandle, bool animatable)
-		: shaderCache(shaderCache), modelHandle(modelHandle), animatable(animatable) { }
+		: shaderCache(shaderCache), modelHandle(modelHandle), animatable(animatable), space(RenderSpace_World) { }
 
 	unsigned modelHandle;
 	ShaderCache shaderCache;
 	Transform transform;
 	AnimationContext context;
+
+	/*! Which space to render the renderable in. Defaults to RenderSpace_World. */
+	RenderSpace space;
 
 	/*! Whether or not this renderable can be animated. */
 	bool animatable;
@@ -169,8 +182,14 @@ public:
 	 */
 	void setRenderableAnimationTime(unsigned handle, float time);
 
+	/*! 
+	 * \brief Sets the space in which the renderable will be rendered.
+	 */
+	void setRenderableRenderSpace(unsigned handle, RenderSpace space);
+
 	/*!
-	 * \brief Draws all renderable objects requested using getHandle.
+	 * \brief Draws all renderable objects that have been requested using getHandle()
+	 *		and that haven't been freed yet.
 	 */
 	void draw();
 
@@ -193,10 +212,10 @@ private:
 	std::unordered_map<unsigned, Model> modelMap;
 
 	/*! Map of shader ids to shaders. */
-	std::map<unsigned, ShaderCache> shaderMap;
+	std::unordered_map<unsigned, ShaderCache> shaderMap;
 	
 	/*! Map of renderable handles to Renderables. */
-	std::map<unsigned, Renderable> renderableMap;
+	std::unordered_map<unsigned, Renderable> renderableMap;
 
 	/*! The callback to call when an OpenGL debug message is emitted. */
 	DebugLogCallback debugLogCallback;

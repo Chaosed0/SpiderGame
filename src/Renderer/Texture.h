@@ -20,6 +20,7 @@ struct Texture
 {
 	Texture();
 	Texture(TextureType type, const std::string& imageLocation);
+	Texture(TextureType type, GLuint id);
 	bool loadFromFile(const std::string& imageLocation);
 	bool loadCubemap(const std::vector<std::string>& images);
 	TextureType type;

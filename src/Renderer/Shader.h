@@ -26,4 +26,6 @@ public:
 private:
 	bool ready;
 	GLuint shaderID;
+
+	GLuint projectionUniform, viewUniform, modelUniform;
 };
