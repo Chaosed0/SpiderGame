@@ -10,6 +10,8 @@ public:
 
 	glm::mat4 getViewMatrix();
 	glm::mat4 getProjectionMatrix();
+
+	glm::mat4 getViewMatrixOrtho();
 	glm::mat4 getProjectionMatrixOrtho();
 
 	glm::mat4 inverseViewMatrix;
@@ -19,7 +21,4 @@ private:
 	unsigned int height;
 	float nearClip;
 	float farClip;
-
-	glm::mat4 projectionPerspective;
-	glm::mat4 projectionOrtho;
 };

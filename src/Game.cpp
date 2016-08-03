@@ -165,7 +165,7 @@ int Game::setup()
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
-	textShader.compileAndLink("Shaders/basic.vert", "Shaders/textured.frag");
+	textShader.compileAndLink("Shaders/basic.vert", "Shaders/text.frag");
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(0.7f,  0.2f,  2.0f),
@@ -338,14 +338,16 @@ int Game::setup()
 
 	// Put some text up on the screen
 	Font font("assets/font/Inconsolata.otf", 24);
-	Mesh textMesh = font.generateMesh("This is some text.");
-	textMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
-	//textMesh.material.drawOrder = GL_ALWAYS;
+	Mesh textMesh = font.generateMesh("The brown fox jumped over the lazy dog");
+	textMesh.material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f)));
 	Model textModel(std::vector<Mesh> { textMesh });
 	unsigned textModelHandle = renderer.getModelHandle(textModel);
 	unsigned textHandle = renderer.getRenderableHandle(textModelHandle, textShader);
-	//renderer.setRenderableRenderSpace(textHandle, RenderSpace_UI);
-	renderer.setRenderableTransform(textHandle, Transform(glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(), glm::vec3(1/24.0f)));
+	renderer.setRenderableRenderSpace(textHandle, RenderSpace_UI);
+	renderer.setRenderableTransform(textHandle, Transform(glm::vec3(0.0f, 30.0f, 0.0f)));
+
+	unsigned textHandl3 = renderer.getRenderableHandle(textModelHandle, textShader);
+	renderer.setRenderableTransform(textHandl3, Transform(glm::vec3(0.0f), glm::quat(), glm::vec3(1/24.0f)));
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world);

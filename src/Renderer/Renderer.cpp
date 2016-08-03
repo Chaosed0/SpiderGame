@@ -12,7 +12,11 @@ static const unsigned int maxBones = 100;
 Renderer::Renderer()
 	: pointLights(maxPointLights), camera(nullptr),
 	nextRenderableHandle(0), nextModelHandle(0)
-{ }
+{
+	this->uiModelTransform = glm::mat4();
+	// Flip the y axis so we can use normal modelspace but position in UI space
+	this->uiModelTransform[1][1] = -1.0f;
+}
 
 void Renderer::setDebugLogCallback(const DebugLogCallback& callback)
 {
@@ -150,10 +154,27 @@ void Renderer::update(float dt)
 
 void Renderer::draw()
 {
+	this->drawInternal(RenderSpace_World);
+
+	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	this->drawInternal(RenderSpace_UI);
+}
+
+void Renderer::drawInternal(RenderSpace space)
+{
 	for (auto iter = shaderMap.begin(); iter != shaderMap.end(); iter++) {
 		const ShaderCache& shaderCache = iter->second;
 
 		shaderCache.shader.use();
+		if (space == RenderSpace_World) {
+			shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
+			shaderCache.shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
+		} else {
+			shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrixOrtho()[0][0]);
+			shaderCache.shader.setViewMatrix(&this->camera->getViewMatrixOrtho()[0][0]);
+			continue;
+		}
 
 		for (unsigned int i = 0; i < pointLights.size(); i++) {
 			PointLight light = pointLights[i];
@@ -177,19 +198,21 @@ void Renderer::draw()
 	// Render each renderable we have loaded through getHandle
 	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
 		Renderable& renderable = iter->second;
+		if (renderable.space != space) {
+			continue;
+		}
+
 		Model& model = modelMap[renderable.modelHandle];
 		ShaderCache& shaderCache = renderable.shaderCache;
 		Transform transform = renderable.transform;
 
-		shaderCache.shader.use();
-		shaderCache.shader.setModelMatrix(&transform.matrix()[0][0]);
-		if (renderable.space == RenderSpace_World) {
-			shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrix()[0][0]);
-			shaderCache.shader.setViewMatrix(&this->camera->getViewMatrix()[0][0]);
-		} else {
-			shaderCache.shader.setProjectionMatrix(&this->camera->getProjectionMatrixOrtho()[0][0]);
-			shaderCache.shader.setViewMatrix(&glm::mat4()[0][0]);
+		glm::mat4 modelMatrix = transform.matrix();
+		if (renderable.space == RenderSpace_UI) {
+			modelMatrix = modelMatrix * this->uiModelTransform;
 		}
+
+		shaderCache.shader.use();
+		shaderCache.shader.setModelMatrix(&modelMatrix[0][0]);
 
 		if (renderable.animatable) {
 			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);

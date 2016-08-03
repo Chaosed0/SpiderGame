@@ -199,6 +199,11 @@ public:
 	 */
 	void update(float dt);
 private:
+	/*!
+	 * \brief Draws all renderable objects in a certain render space.
+	 */
+	void drawInternal(RenderSpace space);
+
 	/*! Reference to the current camera. */
 	Camera* camera;
 
@@ -225,4 +230,7 @@ private:
 
 	/*! ID to assign to the next renderable requested through getRenderableHandle(). */
 	unsigned nextRenderableHandle;
+
+	/*! Model space transformation for UI space drawing. */
+	glm::mat4 uiModelTransform;
 };
