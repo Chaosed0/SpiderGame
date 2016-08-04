@@ -1,6 +1,7 @@
 
 #include "Renderer.h"
 #include "RenderUtil.h"
+#include "Optional.h"
 
 #include <algorithm>
 #include <sstream>
@@ -10,8 +11,7 @@ static const unsigned int maxPointLights = 4;
 static const unsigned int maxBones = 100;
 
 Renderer::Renderer()
-	: pointLights(maxPointLights), camera(nullptr),
-	nextRenderableHandle(0), nextModelHandle(0)
+	: pointLights(maxPointLights), camera(nullptr)
 {
 	this->uiModelTransform = glm::mat4();
 	// Flip the y axis so we can use normal modelspace but position in UI space
@@ -47,10 +47,7 @@ bool Renderer::initialize()
 
 unsigned Renderer::getModelHandle(const Model& model)
 {
-	unsigned handle = this->nextModelHandle;
-	modelMap.emplace(handle, model);
-	this->nextModelHandle++;
-	return handle;
+	return modelPool.getNewHandle(model);
 }
 
 unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shader)
@@ -61,67 +58,66 @@ unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shade
 		shaderIter = iterPair.first;
 	}
 
-	auto modelIter = modelMap.find(modelHandle);
-	if (modelIter == modelMap.end()) {
+	std::experimental::optional<Model&> model = modelPool.get(modelHandle);
+	if (!model) {
 		return 0;
 	}
-	bool animatable = (modelIter->second.animationData.animations.size() > 0);
 
-	unsigned int handle = this->nextRenderableHandle;
+	bool animatable = (model->animationData.animations.size() > 0);
+
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	renderableMap.emplace(std::make_pair(handle, Renderable(shader, modelHandle, animatable)));
-	this->nextRenderableHandle++;
+	uint32_t handle = this->renderablePool.getNewHandle(Renderable(shader, modelHandle, animatable));
 	return handle;
 }
 
-void Renderer::freeRenderableHandle(unsigned renderableHandle)
+void Renderer::freeRenderableHandle(uint32_t renderableHandle)
 {
-	renderableMap.erase(renderableHandle);
+	renderablePool.freeHandle(renderableHandle);
 }
 
 void Renderer::setRenderableTransform(unsigned handle, const Transform& transform)
 {
-	auto iter = renderableMap.find(handle);
-	if (iter != renderableMap.end()) {
-		iter->second.transform = transform;
+	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	if (renderable) {
+		renderable->transform = transform;
 	}
 }
 
 void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName, bool loop)
 {
-	auto iter = renderableMap.find(handle);
-	if (iter == renderableMap.end()) {
+	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	if (!renderable) {
 		return;
 	}
 
-	iter->second.animName = animName;
-	iter->second.time = 0.0f;
-	iter->second.loopAnimation = loop;
+	renderable->animName = animName;
+	renderable->time = 0.0f;
+	renderable->loopAnimation = loop;
 }
 
 void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 {
-	auto iter = renderableMap.find(handle);
-	if (iter == renderableMap.end()) {
+	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	if (!renderable) {
 		return;
 	}
 
-	iter->second.time = time;
+	renderable->time = time;
 }
 
 void Renderer::setRenderableRenderSpace(unsigned handle, RenderSpace space)
 {
-	auto iter = this->renderableMap.find(handle);
-	if (iter == this->renderableMap.end()) {
+	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	if (!renderable) {
 		return;
 	}
 
-	iter->second.space = space;
+	renderable->space = space;
 }
 
 void Renderer::update(float dt)
 {
-	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
+	for (auto iter = renderablePool.begin(); iter != renderablePool.end(); iter++) {
 		Renderable& renderable = iter->second;
 		std::string animName = iter->second.animName;
 
@@ -131,8 +127,10 @@ void Renderer::update(float dt)
 		}
 		renderable.time += dt;
 
-		Model& model = modelMap[iter->second.modelHandle];
-		auto& animationMap = model.animationData.animations;
+		std::experimental::optional<Model&> model = modelPool.get(iter->second.modelHandle);
+		assert(model);
+
+		auto& animationMap = model->animationData.animations;
 		auto animIter = animationMap.find(animName);
 
 		if (animIter == animationMap.end()) {
@@ -196,13 +194,15 @@ void Renderer::drawInternal(RenderSpace space)
 	}
 
 	// Render each renderable we have loaded through getHandle
-	for (auto iter = renderableMap.begin(); iter != renderableMap.end(); iter++) {
+	for (auto iter = renderablePool.begin(); iter != renderablePool.end(); iter++) {
 		Renderable& renderable = iter->second;
 		if (renderable.space != space) {
 			continue;
 		}
 
-		Model& model = modelMap[renderable.modelHandle];
+		std::experimental::optional<Model&> model = modelPool.get(renderable.modelHandle);
+		assert(model);
+
 		ShaderCache& shaderCache = renderable.shaderCache;
 		Transform transform = renderable.transform;
 
@@ -215,10 +215,10 @@ void Renderer::drawInternal(RenderSpace space)
 		shaderCache.shader.setModelMatrix(&modelMatrix[0][0]);
 
 		if (renderable.animatable) {
-			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
+			std::vector<glm::mat4> nodeTransforms = model->getNodeTransforms(renderable.animName, renderable.time, renderable.context);
 
-			for (unsigned i = 0; i < model.meshes.size(); i++) {
-				Mesh& mesh = model.meshes[i];
+			for (unsigned i = 0; i < model->meshes.size(); i++) {
+				Mesh& mesh = model->meshes[i];
 				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
 				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
 					glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
@@ -226,8 +226,8 @@ void Renderer::drawInternal(RenderSpace space)
 			}
 		}
 
-		for (unsigned i = 0; i < model.meshes.size(); i++) {
-			const Mesh& mesh = model.meshes[i];
+		for (unsigned i = 0; i < model->meshes.size(); i++) {
+			const Mesh& mesh = model->meshes[i];
 			mesh.material.apply(shaderCache.shader);
 			
 			glBindVertexArray(mesh.VAO);

@@ -28,12 +28,12 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	numBufferedLines = 0;
 	
 	glm::vec3 backQuadVerts[6];
-	backQuadVerts[0] = glm::vec3(0.0f, windowHeight - height, 0.0f);
 	backQuadVerts[1] = glm::vec3(0.0f, windowHeight, 0.0f);
+	backQuadVerts[0] = glm::vec3(0.0f, windowHeight - height, 0.0f);
 	backQuadVerts[2] = glm::vec3(width, windowHeight - height, 0.0f);
 	backQuadVerts[3] = glm::vec3(0.0f, windowHeight, 0.0f);
-	backQuadVerts[4] = glm::vec3(width, windowHeight, 0.0f);
 	backQuadVerts[5] = glm::vec3(width, windowHeight - height, 0.0f);
+	backQuadVerts[4] = glm::vec3(width, windowHeight, 0.0f);
 	
 	glGenVertexArrays(1, &glyphVao);
 	glGenBuffers(1, &glyphQuad);

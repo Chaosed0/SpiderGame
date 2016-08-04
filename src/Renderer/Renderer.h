@@ -16,6 +16,7 @@
 #include "Camera.h"
 #include "RenderUtil.h"
 #include "Shader.h"
+#include "HandlePool.h"
 
 /*! A point light in space. */
 struct PointLight
@@ -88,10 +89,10 @@ enum RenderSpace
 	their own transforms. */
 struct Renderable
 {
-	Renderable(const ShaderCache& shaderCache, unsigned modelHandle, bool animatable)
+	Renderable(const ShaderCache& shaderCache, uint32_t modelHandle, bool animatable)
 		: shaderCache(shaderCache), modelHandle(modelHandle), animatable(animatable), space(RenderSpace_World) { }
 
-	unsigned modelHandle;
+	uint32_t modelHandle;
 	ShaderCache shaderCache;
 	Transform transform;
 	AnimationContext context;
@@ -152,40 +153,40 @@ public:
 	 * \brief Gets a handle to a model object, which can be passed to the getRenderableHandle method.
 	 * The model is copied and stored internally, so you can release the reference to it.
 	 */
-	unsigned getModelHandle(const Model& model);
+	uint32_t getModelHandle(const Model& model);
 
 	/*!
 	 * \brief Gets a handle to a renderable object.
 	 */
-	unsigned getRenderableHandle(unsigned modelHandle, const Shader& shader);
+	uint32_t getRenderableHandle(uint32_t modelHandle, const Shader& shader);
 
 	/*!
 	 * \brief Frees a renderable handle. The renderable will stop rendering and
 	 *		the handle will become unusable.
 	 */
-	void freeRenderableHandle(unsigned renderableHandle);
+	void freeRenderableHandle(uint32_t renderableHandle);
 
 	/*!
 	 * \brief Updates the transform of a renderable object.
 	 */
-	void setRenderableTransform(unsigned handle, const Transform& transform);
+	void setRenderableTransform(uint32_t handle, const Transform& transform);
 
 	/*!
 	 * \brief Updates the animation of a renderable object.
 	 *		The animation will loop.
 	 */
-	void setRenderableAnimation(unsigned handle, const std::string& animation, bool loop = true);
+	void setRenderableAnimation(uint32_t handle, const std::string& animation, bool loop = true);
 
 	/*! 
 	 * \brief Sets the time at which to start the currently playing
 	 *		animation for the given object.
 	 */
-	void setRenderableAnimationTime(unsigned handle, float time);
+	void setRenderableAnimationTime(uint32_t handle, float time);
 
 	/*! 
 	 * \brief Sets the space in which the renderable will be rendered.
 	 */
-	void setRenderableRenderSpace(unsigned handle, RenderSpace space);
+	void setRenderableRenderSpace(uint32_t handle, RenderSpace space);
 
 	/*!
 	 * \brief Draws all renderable objects that have been requested using getHandle()
@@ -212,24 +213,21 @@ private:
 
 	/*! Point lights. */
 	std::vector<PointLight> pointLights;
-	
-	/*! Map of model IDs to Model objects. */
-	std::unordered_map<unsigned, Model> modelMap;
 
 	/*! Map of shader ids to shaders. */
 	std::unordered_map<unsigned, ShaderCache> shaderMap;
 	
-	/*! Map of renderable handles to Renderables. */
-	std::unordered_map<unsigned, Renderable> renderableMap;
+	/*! Pool for model objects registered with this renderer. */
+	HandlePool<Model> modelPool;
+	
+	/*! Pool for renderables registered with this renderer. */
+	HandlePool<Renderable> renderablePool;
 
 	/*! The callback to call when an OpenGL debug message is emitted. */
 	DebugLogCallback debugLogCallback;
 
 	/*! ID to assign to the next model requested through getModelHandle(). */
 	unsigned nextModelHandle;
-
-	/*! ID to assign to the next renderable requested through getRenderableHandle(). */
-	unsigned nextRenderableHandle;
 
 	/*! Model space transformation for UI space drawing. */
 	glm::mat4 uiModelTransform;

@@ -1,6 +1,8 @@
 
 #include "MeshBuilder.h"
 
+#include <algorithm>
+
 MeshBuilder::MeshBuilder()
 {
 	ivArray = nullptr;
@@ -11,10 +13,29 @@ void MeshBuilder::addRoom(const Room& room, float height)
 {
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide side = room.sides[i];
-		this->addPlane(glm::vec3((float)side.x0, height, (float)side.y0),
-			glm::vec3((float)side.x1, height, (float)side.y1),
-			glm::vec3((float)side.x0, 0.0f, (float)side.y0),
-			glm::vec3((float)side.x1, 0.0f, (float)side.y1));
+
+		// These calculation brought to you by the left-hand rule
+		float leftx, rightx, lefty, righty;
+		if (side.normal.y > 0) {
+			leftx = side.x1;
+			rightx = side.x0;
+		} else {
+			leftx = side.x0;
+			rightx = side.x1;
+		}
+
+		if (side.normal.x > 0) {
+			lefty = side.y0;
+			righty = side.y1;
+		} else {
+			lefty = side.y1;
+			righty = side.y0;
+		}
+
+		this->addPlane(glm::vec3((float)leftx, height, (float)lefty),
+			glm::vec3((float)rightx, height, (float)righty),
+			glm::vec3((float)leftx, 0.0f, (float)lefty),
+			glm::vec3((float)rightx, 0.0f, (float)righty));
 	}
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
