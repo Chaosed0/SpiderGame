@@ -34,6 +34,9 @@
 #include "Framework/Physics/Responders/PlayerJumpResponder.h"
 #include "Framework/Physics/Responders/HurtboxPlayerResponder.h"
 
+#include "Framework/EventManager.h"
+#include "Framework/Responders/DamageEventResponder.h"
+
 struct RoomData
 {
 	Room room;
@@ -111,6 +114,9 @@ private:
 	std::unique_ptr<Physics> physics;
 	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
 	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
+
+	EventManager eventManager;
+	std::shared_ptr<DamageEventResponder> damageEventResponder;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;

@@ -5,8 +5,11 @@
 #include "Framework/Components/PlayerComponent.h"
 #include "Framework/Components/HurtboxComponent.h"
 
-HurtboxPlayerResponder::HurtboxPlayerResponder(World& world)
-	: CollisionResponder(world)
+#include "Framework/Events/DamageEvent.h"
+
+HurtboxPlayerResponder::HurtboxPlayerResponder(World& world, EventManager& eventManager)
+	: CollisionResponder(world),
+	eventManager(eventManager)
 {
 	this->requireOne<HurtboxComponent>();
 	this->requireTwo<PlayerComponent>();
@@ -16,17 +19,19 @@ HurtboxPlayerResponder::HurtboxPlayerResponder(World& world)
 void HurtboxPlayerResponder::collisionBegan(eid_t e1, eid_t e2, btPersistentManifold* contactManifold)
 {
 	HurtboxComponent* hurtboxComponent = world.getComponent<HurtboxComponent>(e1);
-	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(e2);
-	HealthComponent* healthComponent = world.getComponent<HealthComponent>(e2);
 
 	std::vector<eid_t>& ignoreEntities = hurtboxComponent->collidedEntities;
 	if (std::find(ignoreEntities.begin(), ignoreEntities.end(), e2) != ignoreEntities.end()) {
 		return;
 	}
 
+	DamageEvent damageEvent;
+	damageEvent.aggressor = e1;
+	damageEvent.victim = e2;
+	damageEvent.damage = hurtboxComponent->damage;
+	eventManager.sendEvent(damageEvent);
+
 	ignoreEntities.push_back(e2);
-	healthComponent->health -= hurtboxComponent->damage;
-	printf("%d\n", healthComponent->health);
 }
 
 void HurtboxPlayerResponder::collisionEnded(eid_t e1, eid_t e2, btPersistentManifold* contactManifold)

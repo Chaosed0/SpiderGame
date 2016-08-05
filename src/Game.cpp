@@ -33,6 +33,8 @@
 #include "Framework/Components/ExpiresComponent.h"
 #include "Framework/Components/HurtboxComponent.h"
 
+#include "Framework/Events/HealthChangedEvent.h"
+
 #include "Renderer/UI/Label.h"
 
 const static int updatesPerSecond = 60;
@@ -41,7 +43,6 @@ const static int windowHeight = 720;
 
 static std::unique_ptr<Label> label;
 static std::shared_ptr<Font> font;
-static float textChangeTimer;
 
 Game::Game()
 {
@@ -161,7 +162,7 @@ int Game::setup()
 
 	physics = std::make_unique<Physics>(dynamicsWorld);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world);
-	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world);
+	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, eventManager);
 
 	physics->registerCollisionResponder(playerJumpResponder);
 	physics->registerCollisionResponder(hurtboxPlayerResponder);
@@ -297,7 +298,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 0; i++) {
+	for (int i = 0; i < 2; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -345,7 +346,7 @@ int Game::setup()
 	// Put some text up on the screen
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
 	label = std::make_unique<Label>(font);
-	label->setText("lol wtf");
+	label->setText("100");
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
@@ -358,6 +359,18 @@ int Game::setup()
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 
 	spiderSystem->debugShader = &lightShader;
+
+	damageEventResponder = std::make_unique<DamageEventResponder>(world, eventManager);
+	eventManager.registerForEvent<HealthChangedEvent>([world = &world](const HealthChangedEvent& event) {
+		PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.entity);
+		if (playerComponent == nullptr) {
+			return;
+		}
+
+		std::stringstream sstream;
+		sstream << event.newHealth;
+		label->setText(sstream.str());
+	});
 
 	return 0;
 }
@@ -441,18 +454,6 @@ void Game::update()
 	renderer.update(timeDelta);
 
 	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
-
-	static bool which = true;
-	textChangeTimer += timeDelta;
-	if (textChangeTimer >= 1.0f) {
-		textChangeTimer -= 1.0f;
-		if (which) {
-			label->setText("too right m8");
-		} else {
-			label->setText("lol wtf");
-		}
-		which = !which;
-	}
 
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);

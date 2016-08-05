@@ -14,6 +14,13 @@ Label::Label(const std::shared_ptr<Font>& font)
 Label::Label(const std::shared_ptr<Font>& font, unsigned maxSize)
 	: font(font), maxSize(maxSize), nVertices(0), nIndices(0)
 {
+	if (maxSize > 0) {
+		this->generateBuffers();
+	}
+}
+
+void Label::generateBuffers()
+{
 	glGenVertexArrays(1, &this->vao);
 	glGenBuffers(1, &this->vbo);
 	glGenBuffers(1, &this->ebo);
@@ -21,7 +28,8 @@ Label::Label(const std::shared_ptr<Font>& font, unsigned maxSize)
 
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
-	glBufferData(GL_ARRAY_BUFFER, this->maxSize * sizeof(float) * 4, NULL, GL_DYNAMIC_DRAW);
+	// 4 verts per char, 4 floats per vert
+	glBufferData(GL_ARRAY_BUFFER, this->maxSize * 4 * sizeof(GLfloat) * 4, NULL, GL_DYNAMIC_DRAW);
 	glCheckError();
 
 	std::vector<unsigned> indices(this->generateIndices());
@@ -65,6 +73,11 @@ void Label::setText(const std::string& newText)
 		cursorPos += (character.advance >> 6);
 	}
 
+	if (maxSize == 0) {
+		maxSize = newText.size();
+		this->generateBuffers();
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * verts.size() * 4, verts.data());
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -72,10 +85,6 @@ void Label::setText(const std::string& newText)
 
 	this->nVertices = newText.size() * 4;
 	this->nIndices = newText.size() * 6;
-
-	if (maxSize == 0) {
-		maxSize = newText.size();
-	}
 }
 
 std::vector<unsigned> Label::generateIndices()

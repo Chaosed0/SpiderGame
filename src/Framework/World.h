@@ -18,7 +18,7 @@ public:
 	World() : nextComponentId(0), nextEntityId(0) { }
 
 	template <class T>
-	void registerComponent();
+	cid_t registerComponent();
 	
 	eid_t getNewEntity(const std::string& name = "");
 	void removeEntity(eid_t entity);
@@ -62,6 +62,7 @@ public:
 	};
 
 	eid_iterator getEidIterator(ComponentBitmask match);
+
 private:
 	typedef std::unordered_map<eid_t, std::unique_ptr<Component>> ComponentPool;
 
@@ -74,12 +75,13 @@ private:
 };
 
 template <class T>
-void World::registerComponent()
+cid_t World::registerComponent()
 {
 	cid_t id = nextComponentId++;
 	componentIdMap.emplace(typeid(T).hash_code(), id);
 	entityComponentMaps.push_back(ComponentPool());
 	assert(componentIdMap.size() == entityComponentMaps.size());
+	return id;
 }
 
 template <class T>
@@ -87,8 +89,11 @@ cid_t World::getComponentId()
 {
 	size_t hash = typeid(T).hash_code();
 	auto iter = componentIdMap.find(hash);
+	cid_t id;
 	if (iter == componentIdMap.end()) {
-		throw "Tried to add unregistered component";
+		id = this->registerComponent<T>();
+	} else {
+		id = iter->second;
 	}
 	return iter->second;
 }

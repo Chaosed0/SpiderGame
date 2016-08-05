@@ -21,4 +21,5 @@ private:
 	unsigned maxSize;
 
 	std::vector<unsigned> generateIndices();
+	void generateBuffers();
 };
