@@ -56,18 +56,10 @@ Console::Console(float width, float height, float windowWidth, float windowHeigh
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	
-	glm::mat4 projection = glm::ortho(0.0f, windowWidth, 0.0f, windowHeight);
-	
-	backShader.compileAndLink("Shaders/back.vert", "Shaders/singlecolor.frag");
-	backShader.use();
-	glUniform4f(backShader.getUniformLocation("material.color"), 0.2f, 0.8f, 0.2f, 0.5f);
-	glUniformMatrix4fv(backShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
-	
-	textShader.compileAndLink("Shaders/text.vert", "Shaders/text.frag");
-	textShader.use();
-	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
-	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
+	this->projection = glm::ortho(0.0f, windowWidth, 0.0f, windowHeight);
 
+	backShader.compileAndLink("Shaders/back.vert", "Shaders/singlecolor.frag");
+	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
 }
 
 void Console::addCallback(const std::string& functionName, Callback callback)
@@ -127,16 +119,22 @@ void Console::print(const std::string& message)
 void Console::draw()
 {
 	backShader.use();
+	glUniform4f(backShader.getUniformLocation("material.color"), 0.2f, 0.8f, 0.2f, 0.5f);
+	glUniformMatrix4fv(backShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
 	glBindVertexArray(backVao);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
 
 	// Activate corresponding render state	
 	textShader.use();
+	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
+	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(textShader.getUniformLocation("model"), 1, GL_FALSE, &glm::mat4()[0][0]);
 	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, font.getTextureId());
+
 	glBindVertexArray(glyphVao);
 
-	glBindTexture(GL_TEXTURE_2D, font.getTextureId());
 	drawLine("> " + input, (unsigned int)(this->bottom + yPadding + lineHeight));
 	for (unsigned int i = 0; i < numBufferedLines; i++) {
 		int index = bufferEnd-i-1;

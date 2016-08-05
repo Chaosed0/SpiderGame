@@ -37,6 +37,8 @@ private:
 	unsigned int glyphVao, glyphQuad;
 	unsigned int backVao, backQuad;
 
+	glm::mat4 projection;
+
 	const static float xPadding;
 	const static float yPadding;
 	const static float linePadding;

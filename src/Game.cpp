@@ -33,9 +33,15 @@
 #include "Framework/Components/ExpiresComponent.h"
 #include "Framework/Components/HurtboxComponent.h"
 
+#include "Renderer/UI/Label.h"
+
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
+
+static std::unique_ptr<Label> label;
+static std::shared_ptr<Font> font;
+static float textChangeTimer;
 
 Game::Game()
 {
@@ -165,7 +171,7 @@ int Game::setup()
 	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
-	textShader.compileAndLink("Shaders/basic.vert", "Shaders/text.frag");
+	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(0.7f,  0.2f,  2.0f),
@@ -291,7 +297,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 0; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -337,17 +343,9 @@ int Game::setup()
 	}
 
 	// Put some text up on the screen
-	Font font("assets/font/Inconsolata.otf", 24);
-	Mesh textMesh = font.generateMesh("The brown fox jumped over the lazy dog");
-	textMesh.material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f)));
-	Model textModel(std::vector<Mesh> { textMesh });
-	unsigned textModelHandle = renderer.getModelHandle(textModel);
-	unsigned textHandle = renderer.getRenderableHandle(textModelHandle, textShader);
-	renderer.setRenderableRenderSpace(textHandle, RenderSpace_UI);
-	renderer.setRenderableTransform(textHandle, Transform(glm::vec3(0.0f, 30.0f, 0.0f)));
-
-	unsigned textHandl3 = renderer.getRenderableHandle(textModelHandle, textShader);
-	renderer.setRenderableTransform(textHandl3, Transform(glm::vec3(0.0f), glm::quat(), glm::vec3(1/24.0f)));
+	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
+	label = std::make_unique<Label>(font);
+	label->setText("lol wtf");
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
@@ -419,6 +417,22 @@ void Game::draw()
 		console->draw();
 	}
 
+	textShader.use();
+	glm::mat4 projection = glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f);
+	Transform transform(glm::vec3(0.0f, 64.0f, 0.0f));
+	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
+	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(textShader.getUniformLocation("model"), 1, GL_FALSE, &transform.matrix()[0][0]);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, font->getTextureId());
+
+	glBindVertexArray(label->getVao());
+	glDrawElements(GL_TRIANGLES, label->getIndexCount(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	glCheckError();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 	SDL_GL_SwapWindow(window);
 }
 
@@ -427,6 +441,18 @@ void Game::update()
 	renderer.update(timeDelta);
 
 	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
+
+	static bool which = true;
+	textChangeTimer += timeDelta;
+	if (textChangeTimer >= 1.0f) {
+		textChangeTimer -= 1.0f;
+		if (which) {
+			label->setText("too right m8");
+		} else {
+			label->setText("lol wtf");
+		}
+		which = !which;
+	}
 
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);
