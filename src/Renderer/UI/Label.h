@@ -22,4 +22,5 @@ private:
 
 	std::vector<unsigned> generateIndices();
 	void generateBuffers();
+	void resizeBuffers();
 };

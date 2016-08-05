@@ -298,7 +298,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 10; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 

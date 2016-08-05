@@ -7,6 +7,6 @@ class HealthChangedEvent : public Event
 {
 public:
 	eid_t entity;
-	unsigned newHealth;
-	unsigned healthChange;
+	int newHealth;
+	int healthChange;
 };

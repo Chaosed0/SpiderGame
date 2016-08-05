@@ -26,6 +26,11 @@ void Label::generateBuffers()
 	glGenBuffers(1, &this->ebo);
 	glCheckError();
 
+	this->resizeBuffers();
+}
+
+void Label::resizeBuffers()
+{
 	glBindVertexArray(this->vao);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
 	// 4 verts per char, 4 floats per vert
@@ -76,6 +81,9 @@ void Label::setText(const std::string& newText)
 	if (maxSize == 0) {
 		maxSize = newText.size();
 		this->generateBuffers();
+	} else if (maxSize < newText.size()) {
+		maxSize = newText.size();
+		this->resizeBuffers();
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);

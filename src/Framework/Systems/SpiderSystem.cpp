@@ -63,6 +63,8 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 		newState = SPIDER_ATTACKING;
 	} else if (distanceToAttackTarget < attackDistance) {
 		newState = SPIDER_ATTACKING;
+		spiderComponent->madeHurtbox = false;
+		spiderComponent->attackTimer = spiderComponent->attackTime;
 	}
 
 	if (healthComponent->health <= 0) {
@@ -80,7 +82,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 
 		btTransform spiderTransform = spiderBody->getWorldTransform();
 		btQuaternion spiderRotation = spiderTransform.getRotation();
-		glm::vec3 hurtboxHalfExtents(2.0f, 1.5f, 1.0f);
+		glm::vec3 hurtboxHalfExtents(1.5f, 1.5f, 1.0f);
 		btVector3 hurtboxOffset = btVector3(0.0f, 0.0f, aabbMax.z() + hurtboxHalfExtents.z).rotate(spiderRotation.getAxis(), spiderRotation.getAngle());
 		Transform hurtboxTransform(Util::btToGlm(spiderTransform.getOrigin() + hurtboxOffset), Util::btToGlm(spiderRotation));
 		this->createHurtbox(hurtboxTransform, hurtboxHalfExtents);
@@ -102,8 +104,6 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 		case SPIDER_ATTACKING:
 			anim = "AnimStack::attack";
 			rigidbodyMotorComponent->canMove = false;
-			spiderComponent->madeHurtbox = false;
-			spiderComponent->attackTimer = spiderComponent->attackTime;
 			break;
 		case SPIDER_DEAD:
 			anim = "AnimStack::die";
