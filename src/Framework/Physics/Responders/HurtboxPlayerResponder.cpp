@@ -26,10 +26,9 @@ void HurtboxPlayerResponder::collisionBegan(eid_t e1, eid_t e2, btPersistentMani
 	}
 
 	DamageEvent damageEvent;
-	damageEvent.aggressor = e1;
-	damageEvent.victim = e2;
+	damageEvent.source = e1;
 	damageEvent.damage = hurtboxComponent->damage;
-	eventManager.sendEvent(damageEvent);
+	eventManager.sendEvent(damageEvent, e2);
 
 	ignoreEntities.push_back(e2);
 }

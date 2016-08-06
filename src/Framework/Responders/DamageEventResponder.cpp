@@ -8,17 +8,20 @@
 DamageEventResponder::DamageEventResponder(World& world, EventManager& eventManager)
 	: world(world), eventManager(eventManager)
 {
-	eventManager.registerForEvent<DamageEvent>(std::bind(&DamageEventResponder::damageReceived, this, std::placeholders::_1));
+	ComponentBitmask bitmask;
+	bitmask.setBit(world.getComponentId<HealthComponent>(), true);
+
+	using namespace std::placeholders;
+	eventManager.registerForEvent<DamageEvent>(std::bind(&DamageEventResponder::damageReceived, this, _1, _2), bitmask);
 }
 
-void DamageEventResponder::damageReceived(const DamageEvent& event)
+void DamageEventResponder::damageReceived(const DamageEvent& event, eid_t entity)
 {
-	HealthComponent* healthComponent = world.getComponent<HealthComponent>(event.victim);
+	HealthComponent* healthComponent = world.getComponent<HealthComponent>(entity);
 	healthComponent->health -= event.damage;
 
 	HealthChangedEvent healthChangedEvent;
-	healthChangedEvent.entity = event.victim;
 	healthChangedEvent.healthChange = event.damage;
 	healthChangedEvent.newHealth = healthComponent->health;
-	eventManager.sendEvent(healthChangedEvent);
+	eventManager.sendEvent(healthChangedEvent, entity);
 }

@@ -4,33 +4,40 @@
 #include <functional>
 
 #include "Event.h"
+#include "ComponentBitmask.h"
+#include "World.h"
 
 typedef uint32_t eventid_t;
 
 class EventManager
 {
 public:
-	EventManager() : nextEventId(0) { }
+	EventManager(const World& world) : world(world), nextEventId(0) { }
 
 	template <class T>
-	void sendEvent(const T& event);
+	void sendEvent(const T& event, eid_t entity);
 
 	template <class T>
-	uint32_t registerForEvent(std::function<void(const T&)> eventListener);
+	uint32_t registerForEvent(std::function<void(const T&, eid_t entity)> eventListener, ComponentBitmask requiredComponents);
 private:
 	template <class T>
 	eventid_t registerEventType();
 
-	typedef std::function<void(const Event* event)> EventCallback;
-	typedef std::vector<EventCallback> EventCallbackList;
+	typedef std::function<void(const Event* event, eid_t entity)> EventCallbackInternal;
+	struct EventStorage {
+		ComponentBitmask requiredComponents;
+		EventCallbackInternal callback;
+	};
+	typedef std::vector<EventStorage> EventCallbackList;
 
 	std::unordered_map<size_t, eventid_t> eventTypeMap;
 	std::vector<EventCallbackList> eventListeners;
 	eventid_t nextEventId;
+	const World& world;
 };
 
 template <class T>
-void EventManager::sendEvent(const T& event)
+void EventManager::sendEvent(const T& event, eid_t entity)
 {
 	auto iter = this->eventTypeMap.find(typeid(T).hash_code());
 	if (iter == this->eventTypeMap.end()) {
@@ -38,13 +45,15 @@ void EventManager::sendEvent(const T& event)
 	}
 
 	EventCallbackList& list = eventListeners[iter->second];
-	for (EventCallback callback : list) {
-		callback(&event);
+	for (EventStorage& eventStorage : list) {
+		if (world.getEntityBitmask(entity).hasComponents(eventStorage.requiredComponents)) {
+			eventStorage.callback(&event, entity);
+		}
 	}
 }
 
 template <class T>
-uint32_t EventManager::registerForEvent(std::function<void(const T&)> eventListener)
+uint32_t EventManager::registerForEvent(std::function<void(const T&, eid_t entity)> eventListener, ComponentBitmask requiredComponents)
 {
 	eventid_t eventid;
 	auto iter = this->eventTypeMap.find(typeid(T).hash_code());
@@ -55,10 +64,12 @@ uint32_t EventManager::registerForEvent(std::function<void(const T&)> eventListe
 	}
 
 	EventCallbackList& list = eventListeners[eventid];
-	EventCallback callback([eventListener](const Event* event) {
-		eventListener(*(static_cast<const T*>(event)));
-	});
-	list.push_back(callback);
+	EventStorage eventStorage;
+	eventStorage.callback = [eventListener](const Event* event, eid_t entity) {
+		eventListener(*(static_cast<const T*>(event)), entity);
+	};
+	eventStorage.requiredComponents = requiredComponents;
+	list.push_back(eventStorage);
 
 	return list.size()-1;
 }

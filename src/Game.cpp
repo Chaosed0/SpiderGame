@@ -126,18 +126,8 @@ int Game::setup()
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
-	/* World */
-	world.registerComponent<TransformComponent>();
-	world.registerComponent<CameraComponent>();
-	world.registerComponent<CollisionComponent>();
-	world.registerComponent<FollowComponent>();
-	world.registerComponent<ModelRenderComponent>();
-	world.registerComponent<PlayerComponent>();
-	world.registerComponent<RigidbodyMotorComponent>();
-	world.registerComponent<HealthComponent>();
-	world.registerComponent<SpiderComponent>();
-	world.registerComponent<ExpiresComponent>();
-	world.registerComponent<HurtboxComponent>();
+	/*! Event Manager */
+	eventManager = std::make_unique<EventManager>(world);
 
 	/* Console */
 	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
@@ -162,7 +152,7 @@ int Game::setup()
 
 	physics = std::make_unique<Physics>(dynamicsWorld);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world);
-	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, eventManager);
+	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
 
 	physics->registerCollisionResponder(playerJumpResponder);
 	physics->registerCollisionResponder(hurtboxPlayerResponder);
@@ -360,17 +350,18 @@ int Game::setup()
 
 	spiderSystem->debugShader = &lightShader;
 
-	damageEventResponder = std::make_unique<DamageEventResponder>(world, eventManager);
-	eventManager.registerForEvent<HealthChangedEvent>([world = &world](const HealthChangedEvent& event) {
-		PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.entity);
-		if (playerComponent == nullptr) {
-			return;
-		}
+	damageEventResponder = std::make_unique<DamageEventResponder>(world, *eventManager);
+	std::function<void(const HealthChangedEvent& event, eid_t entity)> healthChangedCallback =
+		[world = &world](const HealthChangedEvent& event, eid_t entity) {
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(entity);
 
-		std::stringstream sstream;
-		sstream << event.newHealth;
-		label->setText(sstream.str());
-	});
+			std::stringstream sstream;
+			sstream << event.newHealth;
+			label->setText(sstream.str());
+		};
+	ComponentBitmask playerComponentBitmask;
+	playerComponentBitmask.setBit(world.getComponentId<PlayerComponent>(), true);
+	eventManager->registerForEvent(healthChangedCallback, playerComponentBitmask);
 
 	return 0;
 }

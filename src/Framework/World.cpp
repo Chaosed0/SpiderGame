@@ -84,7 +84,7 @@ void World::cleanupEntities()
 	}
 }
 
-std::string World::getEntityName(eid_t eid)
+std::string World::getEntityName(eid_t eid) const
 {
 	auto iter = entities.find(eid);
 	if (iter != entities.end()) {
@@ -93,7 +93,7 @@ std::string World::getEntityName(eid_t eid)
 	return "";
 }
 
-ComponentBitmask World::getEntityBitmask(eid_t eid)
+ComponentBitmask World::getEntityBitmask(eid_t eid) const
 {
 	auto iter = entities.find(eid);
 	if (iter != entities.end()) {

@@ -22,8 +22,8 @@ public:
 	
 	eid_t getNewEntity(const std::string& name = "");
 	void removeEntity(eid_t entity);
-	ComponentBitmask getEntityBitmask(eid_t eid);
-	std::string getEntityName(eid_t eid);
+	ComponentBitmask getEntityBitmask(eid_t eid) const;
+	std::string getEntityName(eid_t eid) const;
 	void cleanupEntities();
 
 	template <class T>
@@ -95,7 +95,7 @@ cid_t World::getComponentId()
 	} else {
 		id = iter->second;
 	}
-	return iter->second;
+	return id;
 }
 	
 template <class T>

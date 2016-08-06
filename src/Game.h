@@ -115,7 +115,7 @@ private:
 	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
 	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
 
-	EventManager eventManager;
+	std::unique_ptr<EventManager> eventManager;
 	std::shared_ptr<DamageEventResponder> damageEventResponder;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
