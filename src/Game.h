@@ -7,12 +7,16 @@
 #include <vector>
 #include <memory>
 
+#include "Renderer/Renderer.h"
 #include "Renderer/BulletDebugDrawer.h"
 #include "Renderer/Shader.h"
-#include "Renderer/Renderer.h"
 #include "Renderer/ModelLoader.h"
 #include "Renderer/Box.h"
 #include "Renderer/Model.h"
+
+#include "Renderer/UI/UIRenderer.h"
+#include "Renderer/UI/Label.h"
+#include "Renderer/UI/Font.h"
 
 #include "Console/Console.h"
 #include "Environment/Terrain.h"
@@ -82,6 +86,10 @@ private:
 
 	Renderer renderer;
 	ModelLoader modelLoader;
+
+	UIRenderer uiRenderer;
+	std::shared_ptr<Font> font;
+	std::shared_ptr<Label> healthLabel;
 
 	Shader shader;
 	Shader skinnedShader;

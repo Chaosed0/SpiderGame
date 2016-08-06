@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Font.h"
+#include "Renderable2d.h"
 
 #include <memory>
 
-class Label
+class Label : public Renderable2d
 {
 public:
 	Label(const std::shared_ptr<Font>& font);
@@ -12,8 +13,11 @@ public:
 
 	void setText(const std::string& newText);
 
-	unsigned getVao();
-	unsigned getIndexCount();
+	virtual unsigned getVao() const;
+	virtual unsigned getIndexCount() const;
+	virtual const Material& getMaterial() const;
+
+	Material material;
 private:
 	std::shared_ptr<Font> font;
 	unsigned vao, vbo, ebo;

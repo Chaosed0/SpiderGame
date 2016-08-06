@@ -1,5 +1,6 @@
 
 #include "Label.h"
+#include "Renderer/Texture.h"
 #include "Renderer/RenderUtil.h"
 
 #include <Windows.h>
@@ -17,6 +18,8 @@ Label::Label(const std::shared_ptr<Font>& font, unsigned maxSize)
 	if (maxSize > 0) {
 		this->generateBuffers();
 	}
+
+	material.setProperty("texture_diffuse", MaterialProperty(Texture(TextureType_diffuse, font->getTextureId())));
 }
 
 void Label::generateBuffers()
@@ -109,12 +112,17 @@ std::vector<unsigned> Label::generateIndices()
 	return indices;
 }
 
-unsigned Label::getVao()
+unsigned Label::getVao() const
 {
 	return this->vao;
 }
 
-unsigned Label::getIndexCount()
+unsigned Label::getIndexCount() const
 {
 	return this->nIndices;
+}
+
+const Material& Label::getMaterial() const
+{
+	return this->material;
 }

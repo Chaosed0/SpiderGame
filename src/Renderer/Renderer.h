@@ -87,9 +87,9 @@ enum RenderSpace
 /*! A renderable, stored internally in the renderer.
 	Renderables can be equated to entities. They reference a model and a shader, but have
 	their own transforms. */
-struct Renderable
+struct RendererEntity
 {
-	Renderable(const ShaderCache& shaderCache, uint32_t modelHandle, bool animatable)
+	RendererEntity(const ShaderCache& shaderCache, uint32_t modelHandle, bool animatable)
 		: shaderCache(shaderCache), modelHandle(modelHandle), animatable(animatable), space(RenderSpace_World) { }
 
 	uint32_t modelHandle;
@@ -221,7 +221,7 @@ private:
 	HandlePool<Model> modelPool;
 	
 	/*! Pool for renderables registered with this renderer. */
-	HandlePool<Renderable> renderablePool;
+	HandlePool<RendererEntity> entityPool;
 
 	/*! The callback to call when an OpenGL debug message is emitted. */
 	DebugLogCallback debugLogCallback;
