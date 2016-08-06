@@ -150,12 +150,7 @@ int Game::setup()
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
 	//debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 
-	physics = std::make_unique<Physics>(dynamicsWorld);
-	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world);
-	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
-
-	physics->registerCollisionResponder(playerJumpResponder);
-	physics->registerCollisionResponder(hurtboxPlayerResponder);
+	physics = std::make_unique<Physics>(dynamicsWorld, *eventManager);
 
 	/* Scene */
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
@@ -351,9 +346,12 @@ int Game::setup()
 	spiderSystem->debugShader = &lightShader;
 
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, *eventManager);
-	std::function<void(const HealthChangedEvent& event, eid_t entity)> healthChangedCallback =
-		[world = &world](const HealthChangedEvent& event, eid_t entity) {
-			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(entity);
+	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);
+	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
+
+	std::function<void(const HealthChangedEvent& event)> healthChangedCallback =
+		[world = &world](const HealthChangedEvent& event) {
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.target);
 
 			std::stringstream sstream;
 			sstream << event.newHealth;

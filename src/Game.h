@@ -30,9 +30,9 @@
 #include "Framework/Systems/SpiderSystem.h"
 #include "Framework/Systems/ExpiresSystem.h"
 
-#include "Framework/Physics/Physics.h"
-#include "Framework/Physics/Responders/PlayerJumpResponder.h"
-#include "Framework/Physics/Responders/HurtboxPlayerResponder.h"
+#include "Framework/Physics.h"
+#include "Framework/Responders/PlayerJumpResponder.h"
+#include "Framework/Responders/HurtboxPlayerResponder.h"
 
 #include "Framework/EventManager.h"
 #include "Framework/Responders/DamageEventResponder.h"
@@ -112,11 +112,11 @@ private:
 	std::unique_ptr<ExpiresSystem> expiresSystem;
 
 	std::unique_ptr<Physics> physics;
-	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
-	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
 
 	std::unique_ptr<EventManager> eventManager;
 	std::shared_ptr<DamageEventResponder> damageEventResponder;
+	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
+	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;

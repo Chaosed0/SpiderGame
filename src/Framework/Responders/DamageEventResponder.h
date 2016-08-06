@@ -1,7 +1,6 @@
 
-#include "Framework/World.h"
-#include "Framework/EventManager.h"
-
+class World;
+class EventManager;
 class DamageEvent;
 
 class DamageEventResponder
@@ -9,7 +8,7 @@ class DamageEventResponder
 public:
 	DamageEventResponder(World& world, EventManager& eventManager);
 private:
-	void damageReceived(const DamageEvent& event, eid_t entity);
+	void damageReceived(const DamageEvent& event);
 	World& world;
 	EventManager& eventManager;
 };

@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cassert>
 
+#include "Framework/Events/CollisionEvent.h"
+
 const unsigned Physics::framesBeforeUncaching = 60 * 30;
 
 static void bulletTickCallback(btDynamicsWorld* world, btScalar timeStep)
@@ -12,8 +14,9 @@ static void bulletTickCallback(btDynamicsWorld* world, btScalar timeStep)
 	physics->fixedUpdate(world, timeStep);
 }
 
-Physics::Physics(btDynamicsWorld* dynamicsWorld)
+Physics::Physics(btDynamicsWorld* dynamicsWorld, EventManager& eventManager)
 	: dynamicsWorld(dynamicsWorld),
+	eventManager(eventManager),
 	currentFrame(0)
 {
 	dynamicsWorld->setInternalTickCallback(bulletTickCallback, static_cast<void *>(this));
@@ -45,7 +48,7 @@ void Physics::fixedUpdate(btDynamicsWorld* world, float timeStep)
 		PhysicsContact& contact = contacts[std::make_pair(emin, emax)];
 
 		if (contact.lastContactFrame != currentFrame-1) {
-			this->handleContact(e1, e2, contactManifold, COLLISIONRESPONSETYPE_BEGAN);
+			this->handleContact(e1, e2, contactManifold, CollisionResponseType_Began);
 		}
 
 		contact.lastContactFrame = currentFrame;
@@ -59,7 +62,7 @@ void Physics::fixedUpdate(btDynamicsWorld* world, float timeStep)
 		PhysicsContact& contact = iter->second;
 
 		if (contact.lastContactFrame == currentFrame-1) {
-			this->handleContact(e1, e2, contact.contactManifold, COLLISIONRESPONSETYPE_ENDED);
+			this->handleContact(e1, e2, contact.contactManifold, CollisionResponseType_Ended);
 		}
 
 		if (currentFrame - contact.lastContactFrame >= framesBeforeUncaching) {
@@ -70,16 +73,19 @@ void Physics::fixedUpdate(btDynamicsWorld* world, float timeStep)
 	}
 }
 
-void Physics::registerCollisionResponder(const std::shared_ptr<CollisionResponder>& collisionResponder)
-{
-	this->collisionResponders.push_back(collisionResponder);
-}
-
 void Physics::handleContact(eid_t e1, eid_t e2, btPersistentManifold* contactManifold, CollisionResponseType type)
 {
-	for (std::shared_ptr<CollisionResponder> responder : this->collisionResponders) {
-		responder->handleCollisionResponse(e1, e2, contactManifold, type);
-	}
+	CollisionEvent event;
+	event.collisionManifold = contactManifold;
+	event.type = type;
+
+	event.target = e1;
+	event.collidedEntity = e2;
+	eventManager.sendEvent(event);
+
+	event.target = e2;
+	event.collidedEntity = e1;
+	eventManager.sendEvent(event);
 }
 
 btPersistentManifold* Physics::getContact(eid_t e1, eid_t e2)

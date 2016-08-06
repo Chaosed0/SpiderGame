@@ -1,9 +1,12 @@
 
 #include "DamageEventResponder.h"
 
+#include "Framework/World.h"
+#include "Framework/Components/HealthComponent.h"
+
+#include "Framework/EventManager.h"
 #include "Framework/Events/DamageEvent.h"
 #include "Framework/Events/HealthChangedEvent.h"
-#include "Framework/Components/HealthComponent.h"
 
 DamageEventResponder::DamageEventResponder(World& world, EventManager& eventManager)
 	: world(world), eventManager(eventManager)
@@ -11,17 +14,17 @@ DamageEventResponder::DamageEventResponder(World& world, EventManager& eventMana
 	ComponentBitmask bitmask;
 	bitmask.setBit(world.getComponentId<HealthComponent>(), true);
 
-	using namespace std::placeholders;
-	eventManager.registerForEvent<DamageEvent>(std::bind(&DamageEventResponder::damageReceived, this, _1, _2), bitmask);
+	eventManager.registerForEvent<DamageEvent>(std::bind(&DamageEventResponder::damageReceived, this, std::placeholders::_1), bitmask);
 }
 
-void DamageEventResponder::damageReceived(const DamageEvent& event, eid_t entity)
+void DamageEventResponder::damageReceived(const DamageEvent& event)
 {
-	HealthComponent* healthComponent = world.getComponent<HealthComponent>(entity);
+	HealthComponent* healthComponent = world.getComponent<HealthComponent>(event.target);
 	healthComponent->health -= event.damage;
 
 	HealthChangedEvent healthChangedEvent;
+	healthChangedEvent.target = event.target;
 	healthChangedEvent.healthChange = event.damage;
 	healthChangedEvent.newHealth = healthComponent->health;
-	eventManager.sendEvent(healthChangedEvent, entity);
+	eventManager.sendEvent(healthChangedEvent);
 }

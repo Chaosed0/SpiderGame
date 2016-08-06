@@ -5,7 +5,13 @@
 #include <unordered_map>
 
 #include "Framework/World.h"
-#include "CollisionResponder.h"
+#include "Framework/EventManager.h"
+
+enum CollisionResponseType
+{
+	CollisionResponseType_Began,
+	CollisionResponseType_Ended
+};
 
 template < >
 struct std::hash<std::pair<eid_t, eid_t>>
@@ -20,11 +26,9 @@ public:
 class Physics
 {
 public:
-	Physics(btDynamicsWorld* dynamicsWorld);
+	Physics(btDynamicsWorld* dynamicsWorld, EventManager& eventManager);
 
 	void fixedUpdate(btDynamicsWorld* world, float timeStep);
-
-	void registerCollisionResponder(const std::shared_ptr<CollisionResponder>& collisionResponder);
 
 	btPersistentManifold* getContact(eid_t e1, eid_t e2);
 private:
@@ -37,8 +41,9 @@ private:
 		btPersistentManifold* contactManifold;
 	};
 
+	EventManager& eventManager;
+
 	std::unordered_map<std::pair<eid_t, eid_t>, PhysicsContact> contacts;
-	std::vector<std::shared_ptr<CollisionResponder>> collisionResponders;
 	btDynamicsWorld* dynamicsWorld;
 	uint64_t currentFrame;
 
