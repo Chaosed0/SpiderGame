@@ -52,11 +52,12 @@ void UIRenderer::draw()
 		const Material& material = renderable.getMaterial();
 
 		shader.use();
-		material.apply(shader);
 		shader.setModelMatrix(&entity.transform.matrix()[0][0]);
 		shader.setProjectionMatrix(&projection[0][0]);
 		shader.setViewMatrix(&glm::mat4()[0][0]);
 		
+		material.apply(shader);
+
 		glBindVertexArray(renderable.getVao());
 		glDrawElements(material.drawType, renderable.getIndexCount(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);

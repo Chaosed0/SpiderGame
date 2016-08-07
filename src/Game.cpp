@@ -212,7 +212,7 @@ int Game::setup()
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
 	healthLabel = std::make_shared<Label>(font);
 	healthLabel->setText("100");
-	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 0.0f, 0.0f)));
+	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
 	unsigned labelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
 	uiRenderer.setTransform(labelHandle, Transform(glm::vec3(0.0f, windowHeight - 10.0f, 0.0f)));
 
