@@ -66,18 +66,18 @@ unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shade
 	bool animatable = (model->animationData.animations.size() > 0);
 
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	uint32_t handle = this->renderablePool.getNewHandle(Renderable(shader, modelHandle, animatable));
+	uint32_t handle = this->entityPool.getNewHandle(RendererEntity(shader, modelHandle, animatable));
 	return handle;
 }
 
 void Renderer::freeRenderableHandle(uint32_t renderableHandle)
 {
-	renderablePool.freeHandle(renderableHandle);
+	entityPool.freeHandle(renderableHandle);
 }
 
 void Renderer::setRenderableTransform(unsigned handle, const Transform& transform)
 {
-	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
 	if (renderable) {
 		renderable->transform = transform;
 	}
@@ -85,7 +85,7 @@ void Renderer::setRenderableTransform(unsigned handle, const Transform& transfor
 
 void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName, bool loop)
 {
-	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
 	if (!renderable) {
 		return;
 	}
@@ -97,7 +97,7 @@ void Renderer::setRenderableAnimation(unsigned handle, const std::string& animNa
 
 void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 {
-	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
 	if (!renderable) {
 		return;
 	}
@@ -107,7 +107,7 @@ void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 
 void Renderer::setRenderableRenderSpace(unsigned handle, RenderSpace space)
 {
-	std::experimental::optional<Renderable&> renderable = renderablePool.get(handle);
+	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
 	if (!renderable) {
 		return;
 	}
@@ -117,8 +117,8 @@ void Renderer::setRenderableRenderSpace(unsigned handle, RenderSpace space)
 
 void Renderer::update(float dt)
 {
-	for (auto iter = renderablePool.begin(); iter != renderablePool.end(); iter++) {
-		Renderable& renderable = iter->second;
+	for (auto iter = entityPool.begin(); iter != entityPool.end(); iter++) {
+		RendererEntity& renderable = iter->second;
 		std::string animName = iter->second.animName;
 
 		if (animName.size() == 0) {
@@ -194,8 +194,8 @@ void Renderer::drawInternal(RenderSpace space)
 	}
 
 	// Render each renderable we have loaded through getHandle
-	for (auto iter = renderablePool.begin(); iter != renderablePool.end(); iter++) {
-		Renderable& renderable = iter->second;
+	for (auto iter = entityPool.begin(); iter != entityPool.end(); iter++) {
+		RendererEntity& renderable = iter->second;
 		if (renderable.space != space) {
 			continue;
 		}

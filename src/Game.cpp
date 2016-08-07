@@ -41,9 +41,6 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
-static std::unique_ptr<Label> label;
-static std::shared_ptr<Font> font;
-
 Game::Game()
 {
 	running = false;
@@ -137,6 +134,7 @@ int Game::setup()
 
 	/* Renderer */
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
+	uiRenderer.setProjection(glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -204,6 +202,14 @@ int Game::setup()
 	unsigned seed = (unsigned)time(NULL);
 	this->generator.seed(seed);
 	printf("USING SEED: %ud\n", seed);
+
+	/*! Health label */
+	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
+	healthLabel = std::make_shared<Label>(font);
+	healthLabel->setText("100");
+	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	unsigned labelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
+	uiRenderer.setTransform(labelHandle, Transform(glm::vec3(0.0f, windowHeight - 10.0f, 0.0f)));
 
 	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
@@ -328,11 +334,6 @@ int Game::setup()
 		spiderComponent->attackTime = 1.0f;
 	}
 
-	// Put some text up on the screen
-	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
-	label = std::make_unique<Label>(font);
-	label->setText("100");
-
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
@@ -350,16 +351,16 @@ int Game::setup()
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
 
 	std::function<void(const HealthChangedEvent& event)> healthChangedCallback =
-		[world = &world](const HealthChangedEvent& event) {
+		[world = &world, healthLabel = healthLabel](const HealthChangedEvent& event) {
 			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.target);
 
 			std::stringstream sstream;
 			sstream << event.newHealth;
-			label->setText(sstream.str());
+			healthLabel->setText(sstream.str());
 		};
 	ComponentBitmask playerComponentBitmask;
 	playerComponentBitmask.setBit(world.getComponentId<PlayerComponent>(), true);
-	eventManager->registerForEvent(healthChangedCallback, playerComponentBitmask);
+	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback, playerComponentBitmask);
 
 	return 0;
 }
@@ -413,27 +414,13 @@ void Game::draw()
 	renderer.draw();
 	debugDrawer.draw();
 
+	glDisable(GL_DEPTH_TEST);
 	if (consoleIsVisible) {
-		glDisable(GL_DEPTH_TEST);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		console->draw();
 	}
 
-	textShader.use();
-	glm::mat4 projection = glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f);
-	Transform transform(glm::vec3(0.0f, 64.0f, 0.0f));
-	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
-	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
-	glUniformMatrix4fv(textShader.getUniformLocation("model"), 1, GL_FALSE, &transform.matrix()[0][0]);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, font->getTextureId());
-
-	glBindVertexArray(label->getVao());
-	glDrawElements(GL_TRIANGLES, label->getIndexCount(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
-	glCheckError();
-
-	glBindTexture(GL_TEXTURE_2D, 0);
+	uiRenderer.draw();
 
 	SDL_GL_SwapWindow(window);
 }

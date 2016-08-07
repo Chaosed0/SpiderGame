@@ -127,7 +127,7 @@ void Console::draw()
 
 	// Activate corresponding render state	
 	textShader.use();
-	glUniform3f(textShader.getUniformLocation("textColor"), 0.0f, 0.0f, 0.0f);
+	glUniform3f(textShader.getUniformLocation("material.textColor"), 0.0f, 0.0f, 0.0f);
 	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
 	glUniformMatrix4fv(textShader.getUniformLocation("model"), 1, GL_FALSE, &glm::mat4()[0][0]);
 	glActiveTexture(GL_TEXTURE0);
