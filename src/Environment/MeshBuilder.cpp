@@ -44,6 +44,10 @@ void MeshBuilder::addRoom(const Room& room, float height)
 			glm::vec3((float)box.right, 0.0f, (float)box.top),
 			glm::vec3((float)box.left, 0.0f, (float)box.bottom),
 			glm::vec3((float)box.right, 0.0f, (float)box.bottom));
+		this->addPlane(glm::vec3((float)box.left, height, (float)box.bottom),
+			glm::vec3((float)box.right, height, (float)box.bottom),
+			glm::vec3((float)box.left, height, (float)box.top),
+			glm::vec3((float)box.right, height, (float)box.top));
 	}
 }
 

@@ -93,7 +93,8 @@ void main()
 {
 	vec3 normal_n = normalize(normal);
 
-	vec3 result = CalcDirLight(dirLight, normal_n, fragPos);
+	//vec3 result = CalcDirLight(dirLight, normal_n, fragPos);
+	vec3 result = vec3(0.0f);
 	for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
 		result += CalcPointLight(pointLight[i], normal_n, fragPos);
 	}

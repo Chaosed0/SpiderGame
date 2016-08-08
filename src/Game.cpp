@@ -165,8 +165,9 @@ int Game::setup()
 	};
 
 	pointLightTransforms.resize(4);
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < pointLightTransforms.size(); i++) {
 		PointLight light;
+		light.position = pointLightPositions[i];
 		light.constant = 1.0f;
 		light.linear = 0.09f;
 		light.quadratic = 0.032f;
@@ -179,6 +180,16 @@ int Game::setup()
 		pointLightTransforms[i].setScale(glm::vec3(0.2f));
 	}
 
+	Mesh pointLightMesh = getBox(std::vector<Texture> {});
+	pointLightMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
+	pointLightModel = Model(std::vector<Mesh> { pointLightMesh });
+
+	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
+		unsigned lightModelHandle = renderer.getModelHandle(pointLightModel);
+		unsigned lightHandle = renderer.getRenderableHandle(lightModelHandle, lightShader);
+		renderer.setRenderableTransform(lightHandle, pointLightTransforms[i]);
+	}
+
 	DirLight dirLight;
 	dirLight.direction = glm::vec3(0.2f, -1.0f, 0.3f);
 	dirLight.ambient = glm::vec3(0.2f);
@@ -186,11 +197,7 @@ int Game::setup()
 	dirLight.specular = glm::vec3(1.0f);
 	renderer.setDirLight(dirLight);
 
-	Mesh pointLightMesh = getBox(std::vector<Texture> {});
-	pointLightMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
-	pointLightModel = Model(std::vector<Mesh> { pointLightMesh });
-
-	std::vector<std::string> skyboxFaces;
+	/*std::vector<std::string> skyboxFaces;
 	skyboxFaces.push_back("assets/img/skybox/miramar_ft.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_bk.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_up.tga");
@@ -198,6 +205,9 @@ int Game::setup()
 	skyboxFaces.push_back("assets/img/skybox/miramar_rt.tga");
 	skyboxFaces.push_back("assets/img/skybox/miramar_lf.tga");
 	skyboxModel = Model(std::vector<Mesh> { getSkybox(skyboxFaces) });
+	unsigned skyboxModelHandle = renderer.getModelHandle(skyboxModel);
+	unsigned skyboxHandle = renderer.getRenderableHandle(skyboxModelHandle, skyboxShader);
+	renderer.setRenderableTransform(skyboxHandle, Transform::identity);*/
 
 	unsigned seed = (unsigned)time(NULL);
 	this->generator.seed(seed);
@@ -248,7 +258,7 @@ int Game::setup()
 	HealthComponent* playerHealthComponent = world.addComponent<HealthComponent>(player);
 	RigidbodyMotorComponent* playerRigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(player);
 
-	playerTransform->transform.setPosition(glm::vec3(0.0f, 8.0f, 0.0f));
+	playerTransform->transform.setPosition(glm::vec3(0.0f, 3.0f, 0.0f));
 
 	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(playerTransform->transform));
@@ -275,15 +285,6 @@ int Game::setup()
 
 	renderer.setCamera(&cameraComponent->camera);
 	debugDrawer.setCamera(&cameraComponent->camera);
-
-	unsigned skyboxModelHandle = renderer.getModelHandle(skyboxModel);
-	unsigned skyboxHandle = renderer.getRenderableHandle(skyboxModelHandle, skyboxShader);
-	renderer.setRenderableTransform(skyboxHandle, Transform::identity);
-	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
-		unsigned lightModelHandle = renderer.getModelHandle(pointLightModel);
-		unsigned lightHandle = renderer.getRenderableHandle(lightModelHandle, lightShader);
-		renderer.setRenderableTransform(lightHandle, pointLightTransforms[i]);
-	}
 
 	// Load some mushrooms
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
