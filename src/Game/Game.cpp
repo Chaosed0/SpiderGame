@@ -158,23 +158,22 @@ int Game::setup()
 	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
 
 	glm::vec3 pointLightPositions[] = {
-		glm::vec3(0.7f,  0.2f,  2.0f),
-		glm::vec3(2.3f, -3.3f, -4.0f),
-		glm::vec3(-4.0f,  2.0f, -12.0f),
-		glm::vec3(0.0f,  0.0f, -3.0f)
+		glm::vec3(0.7f,  1.0f,  2.0f),
+		glm::vec3(2.3f, 1.0f, -4.0f),
+		glm::vec3(-4.0f,  1.0f, -12.0f),
 	};
 
-	pointLightTransforms.resize(4);
+	pointLightTransforms.resize(3);
 	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
 		PointLight light;
 		light.position = pointLightPositions[i];
 		light.constant = 1.0f;
 		light.linear = 0.09f;
 		light.quadratic = 0.032f;
-		light.ambient = glm::vec3(0.2f);
-		light.diffuse = glm::vec3(0.5f);
+		light.ambient = glm::vec3(0.1f);
+		light.diffuse = glm::vec3(0.2f);
 		light.specular = glm::vec3(1.0f);
-		renderer.setPointLight(i, light);
+		renderer.setPointLight(i+1, light);
 
 		pointLightTransforms[i].setPosition(pointLightPositions[i]);
 		pointLightTransforms[i].setScale(glm::vec3(0.2f));
@@ -430,14 +429,24 @@ void Game::update()
 {
 	renderer.update(timeDelta);
 
-	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
-
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);
 	rigidbodyMotorSystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
 
+	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
 	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(1.0f, 0.0f, 0.0f)));
+
+	Transform& playerTransform = world.getComponent<TransformComponent>(player)->transform;
+	PointLight light;
+	light.position = playerTransform.getPosition();
+	light.constant = 2.0f;
+	light.linear = 0.4f;
+	light.quadratic = 1.0f;
+	light.ambient = glm::vec3(0.2f);
+	light.diffuse = glm::vec3(0.8f);
+	light.specular = glm::vec3(1.0f);
+	renderer.setPointLight(0, light);
 
 	dynamicsWorld->stepSimulation(timeDelta);
 

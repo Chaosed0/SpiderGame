@@ -55,7 +55,7 @@ void MeshBuilder::addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm
 {
 	glm::vec3 uvec = brv - blv;
 	glm::vec3 vvec = tlv - blv;
-	glm::vec3 normal = glm::normalize(glm::cross(uvec, vvec));
+	glm::vec3 normal = glm::normalize(glm::cross(vvec, uvec));
 	glm::vec2 tltc = glm::vec2(glm::dot(tlv, uvec), glm::dot(tlv, vvec));
 	glm::vec2 tcl = glm::vec2(glm::length(uvec), glm::length(vvec));
 	unsigned tli = this->addVert(tlv, normal, tltc);
@@ -63,12 +63,12 @@ void MeshBuilder::addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm
 	unsigned bli = this->addVert(blv, normal, tltc + glm::vec2(0.0f, tcl.y));
 	unsigned bri = this->addVert(brv, normal, tltc + tcl);
 
+	this->indices.push_back(bli);
+	this->indices.push_back(tri);
 	this->indices.push_back(tli);
-	this->indices.push_back(tri);
 	this->indices.push_back(bli);
-	this->indices.push_back(tri);
 	this->indices.push_back(bri);
-	this->indices.push_back(bli);
+	this->indices.push_back(tri);
 }
 
 unsigned MeshBuilder::addVert(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& texCoord)
