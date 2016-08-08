@@ -5,9 +5,9 @@
 #include "Framework/World.h"
 #include "Framework/EventManager.h"
 
-#include "Framework/Components/RigidbodyMotorComponent.h"
-#include "Framework/Components/PlayerComponent.h"
-#include "Framework/Events/CollisionEvent.h"
+#include "Game/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/PlayerComponent.h"
+#include "Framework/CollisionEvent.h"
 
 #include <btBulletCollisionCommon.h>
 

@@ -1,7 +1,7 @@
 
 #include "ExpiresSystem.h"
 
-#include "Framework/Components/ExpiresComponent.h"
+#include "Game/Components/ExpiresComponent.h"
 
 ExpiresSystem::ExpiresSystem(World& world)
 	: System(world)

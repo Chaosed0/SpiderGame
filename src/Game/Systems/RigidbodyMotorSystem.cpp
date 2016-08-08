@@ -1,9 +1,9 @@
 
 #include "RigidbodyMotorSystem.h"
 
-#include "Framework/Components/RigidbodyMotorComponent.h"
-#include "Framework/Components/CollisionComponent.h"
-#include "Framework/Components/HealthComponent.h"
+#include "Game/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/CollisionComponent.h"
+#include "Game/Components/HealthComponent.h"
 
 #include "Util.h"
 

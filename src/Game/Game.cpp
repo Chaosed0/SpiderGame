@@ -21,19 +21,19 @@
 #include "Renderer/Camera.h"
 #include "Util.h"
 
-#include "Framework/Components/ModelRenderComponent.h"
-#include "Framework/Components/CameraComponent.h"
-#include "Framework/Components/CollisionComponent.h"
-#include "Framework/Components/TransformComponent.h"
-#include "Framework/Components/PlayerComponent.h"
-#include "Framework/Components/RigidbodyMotorComponent.h"
-#include "Framework/Components/FollowComponent.h"
-#include "Framework/Components/HealthComponent.h"
-#include "Framework/Components/SpiderComponent.h"
-#include "Framework/Components/ExpiresComponent.h"
-#include "Framework/Components/HurtboxComponent.h"
+#include "Game/Components/ModelRenderComponent.h"
+#include "Game/Components/CameraComponent.h"
+#include "Game/Components/CollisionComponent.h"
+#include "Game/Components/TransformComponent.h"
+#include "Game/Components/PlayerComponent.h"
+#include "Game/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/FollowComponent.h"
+#include "Game/Components/HealthComponent.h"
+#include "Game/Components/SpiderComponent.h"
+#include "Game/Components/ExpiresComponent.h"
+#include "Game/Components/HurtboxComponent.h"
 
-#include "Framework/Events/HealthChangedEvent.h"
+#include "Game/Events/HealthChangedEvent.h"
 
 #include "Renderer/UI/Label.h"
 
@@ -340,12 +340,12 @@ int Game::setup()
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
-	cameraSystem = std::make_unique<CameraSystem>(world, renderer);
+	cameraSystem = std::make_unique<CameraSystem>(world);
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
 	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 
-	spiderSystem->debugShader = &lightShader;
+	spiderSystem->debugShader = lightShader;
 
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, *eventManager);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);

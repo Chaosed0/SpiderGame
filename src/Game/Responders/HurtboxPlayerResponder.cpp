@@ -1,13 +1,13 @@
 
 #include "HurtboxPlayerResponder.h"
 
-#include "Framework/Components/HealthComponent.h"
-#include "Framework/Components/PlayerComponent.h"
-#include "Framework/Components/HurtboxComponent.h"
+#include "Game/Components/HealthComponent.h"
+#include "Game/Components/PlayerComponent.h"
+#include "Game/Components/HurtboxComponent.h"
 
 #include "Framework/EventManager.h"
-#include "Framework/Events/CollisionEvent.h"
-#include "Framework/Events/DamageEvent.h"
+#include "Framework/CollisionEvent.h"
+#include "Game/Events/DamageEvent.h"
 
 #include <btBulletCollisionCommon.h>
 

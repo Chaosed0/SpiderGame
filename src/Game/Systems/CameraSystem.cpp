@@ -1,12 +1,11 @@
 
 #include "CameraSystem.h"
 
-#include "Framework/Components/TransformComponent.h"
-#include "Framework/Components/CameraComponent.h"
+#include "Game/Components/TransformComponent.h"
+#include "Game/Components/CameraComponent.h"
 
-CameraSystem::CameraSystem(World& world, Renderer& renderer)
-	: System(world),
-	renderer(renderer)
+CameraSystem::CameraSystem(World& world)
+	: System(world)
 {
 	require<TransformComponent>();
 	require<CameraComponent>();

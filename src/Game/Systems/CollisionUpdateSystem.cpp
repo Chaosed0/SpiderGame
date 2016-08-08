@@ -1,8 +1,8 @@
 
 #include "CollisionUpdateSystem.h"
 
-#include "Framework/Components/CollisionComponent.h"
-#include "Framework/Components/TransformComponent.h"
+#include "Game/Components/CollisionComponent.h"
+#include "Game/Components/TransformComponent.h"
 
 #include "Util.h"
 

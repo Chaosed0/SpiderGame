@@ -8,15 +8,16 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/Model.h"
+#include "Renderer/Shader.h"
 
-#include "Framework/Components/PlayerComponent.h"
-#include "Framework/Components/TransformComponent.h"
-#include "Framework/Components/RigidbodyMotorComponent.h"
-#include "Framework/Components/CollisionComponent.h"
-#include "Framework/Components/HealthComponent.h"
+#include "Game/Components/PlayerComponent.h"
+#include "Game/Components/TransformComponent.h"
+#include "Game/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/CollisionComponent.h"
+#include "Game/Components/HealthComponent.h"
 
-#include "Framework/Components/ExpiresComponent.h"
-#include "Framework/Components/ModelRenderComponent.h"
+#include "Game/Components/ExpiresComponent.h"
+#include "Game/Components/ModelRenderComponent.h"
 
 ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer)
 	: System(world),

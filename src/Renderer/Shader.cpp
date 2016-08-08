@@ -5,14 +5,17 @@
 #include <fstream>
 #include <vector>
 
-Shader::Shader() {
-}
+Shader::Shader()
+	: shaderID(0)
+{ }
 
-Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath) {
+Shader::Shader(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
+{
 	compileAndLink(vertexShaderPath, fragmentShaderPath);
 }
 
-void Shader::compileAndLink(const std::string& vertexShaderPath, const std::string& fragmentShaderPath) {
+void Shader::compileAndLink(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
+{
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);

@@ -7,25 +7,25 @@
 
 #include "Util.h"
 #include "Renderer/Box.h"
+#include "Renderer/Renderer.h"
 
-#include "Framework/Components/TransformComponent.h"
-#include "Framework/Components/CollisionComponent.h"
-#include "Framework/Components/ModelRenderComponent.h"
-#include "Framework/Components/HealthComponent.h"
-#include "Framework/Components/SpiderComponent.h"
-#include "Framework/Components/FollowComponent.h"
-#include "Framework/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/TransformComponent.h"
+#include "Game/Components/CollisionComponent.h"
+#include "Game/Components/ModelRenderComponent.h"
+#include "Game/Components/HealthComponent.h"
+#include "Game/Components/SpiderComponent.h"
+#include "Game/Components/FollowComponent.h"
+#include "Game/Components/RigidbodyMotorComponent.h"
 
-#include "Framework/Components/ExpiresComponent.h"
-#include "Framework/Components/HurtboxComponent.h"
+#include "Game/Components/ExpiresComponent.h"
+#include "Game/Components/HurtboxComponent.h"
 
 const float SpiderSystem::attackDistance = 3.0f;
 
 SpiderSystem::SpiderSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer)
 	: System(world),
 	dynamicsWorld(dynamicsWorld),
-	renderer(renderer),
-	debugShader(nullptr)
+	renderer(renderer)
 {
 	require<RigidbodyMotorComponent>();
 	require<TransformComponent>();
@@ -140,11 +140,11 @@ void SpiderSystem::createHurtbox(const Transform& transform, const glm::vec3& ha
 
 	expiresComponent->expiryTime = 0.5f;
 
-	if (debugShader != nullptr) {
+	if (debugShader.getID() != 0) {
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(hurtboxEntity);
 		Model model(std::vector<Mesh> { getDebugBoxMesh(halfExtents) });
 		unsigned debugModelHandle = renderer.getModelHandle(model);
-		unsigned renderableHandle = renderer.getRenderableHandle(debugModelHandle, *debugShader);
+		unsigned renderableHandle = renderer.getRenderableHandle(debugModelHandle, debugShader);
 		modelComponent->rendererHandle = renderableHandle;
 		modelComponent->renderer = &this->renderer;
 	}

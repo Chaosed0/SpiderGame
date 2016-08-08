@@ -1,7 +1,8 @@
 
 #include "ModelRenderSystem.h"
-#include "Framework/Components/ModelRenderComponent.h"
-#include "Framework/Components/TransformComponent.h"
+#include "Game/Components/ModelRenderComponent.h"
+#include "Game/Components/TransformComponent.h"
+#include "Renderer/Renderer.h"
 
 ModelRenderSystem::ModelRenderSystem(World& world, Renderer& renderer)
 	: System(world),

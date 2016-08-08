@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "Framework/Events/CollisionEvent.h"
+#include "Framework/CollisionEvent.h"
 
 const unsigned Physics::framesBeforeUncaching = 60 * 30;
 

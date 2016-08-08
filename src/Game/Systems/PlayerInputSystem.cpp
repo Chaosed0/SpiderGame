@@ -2,8 +2,8 @@
 #include "PlayerInputSystem.h"
 
 #include "Util.h"
-#include "Framework/Components/RigidbodyMotorComponent.h"
-#include "Framework/Components/PlayerComponent.h"
+#include "Game/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/PlayerComponent.h"
 
 PlayerInputSystem::PlayerInputSystem(World& world)
 	: System(world),

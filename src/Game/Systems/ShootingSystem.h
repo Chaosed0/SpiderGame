@@ -1,11 +1,10 @@
 #pragma once
 
 #include "Framework/System.h"
-
 #include "Renderer/Shader.h"
 
-#include <btBulletDynamicsCommon.h>
-
+class btDynamicsWorld;
+class Shader;
 class Renderer;
 
 class ShootingSystem : public System

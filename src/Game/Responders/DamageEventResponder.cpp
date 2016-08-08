@@ -2,11 +2,11 @@
 #include "DamageEventResponder.h"
 
 #include "Framework/World.h"
-#include "Framework/Components/HealthComponent.h"
+#include "Game/Components/HealthComponent.h"
 
 #include "Framework/EventManager.h"
-#include "Framework/Events/DamageEvent.h"
-#include "Framework/Events/HealthChangedEvent.h"
+#include "Game/Events/DamageEvent.h"
+#include "Game/Events/HealthChangedEvent.h"
 
 DamageEventResponder::DamageEventResponder(World& world, EventManager& eventManager)
 	: world(world), eventManager(eventManager)

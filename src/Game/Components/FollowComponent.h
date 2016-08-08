@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Framework/Component.h"
-#include "Framework/Components/TransformComponent.h"
+#include "Game/Components/TransformComponent.h"
 
 class FollowComponent : public Component
 {

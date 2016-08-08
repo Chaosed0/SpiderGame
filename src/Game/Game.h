@@ -24,22 +24,21 @@
 #include "Environment/MeshBuilder.h"
 
 #include "Framework/World.h"
-#include "Framework/Systems/ShootingSystem.h"
-#include "Framework/Systems/ModelRenderSystem.h"
-#include "Framework/Systems/CollisionUpdateSystem.h"
-#include "Framework/Systems/CameraSystem.h"
-#include "Framework/Systems/RigidbodyMotorSystem.h"
-#include "Framework/Systems/PlayerInputSystem.h"
-#include "Framework/Systems/FollowSystem.h"
-#include "Framework/Systems/SpiderSystem.h"
-#include "Framework/Systems/ExpiresSystem.h"
+#include "Game/Systems/ShootingSystem.h"
+#include "Game/Systems/ModelRenderSystem.h"
+#include "Game/Systems/CollisionUpdateSystem.h"
+#include "Game/Systems/CameraSystem.h"
+#include "Game/Systems/RigidbodyMotorSystem.h"
+#include "Game/Systems/PlayerInputSystem.h"
+#include "Game/Systems/FollowSystem.h"
+#include "Game/Systems/SpiderSystem.h"
+#include "Game/Systems/ExpiresSystem.h"
 
 #include "Framework/Physics.h"
-#include "Framework/Responders/PlayerJumpResponder.h"
-#include "Framework/Responders/HurtboxPlayerResponder.h"
-
 #include "Framework/EventManager.h"
-#include "Framework/Responders/DamageEventResponder.h"
+#include "Game/Responders/DamageEventResponder.h"
+#include "Game/Responders/PlayerJumpResponder.h"
+#include "Game/Responders/HurtboxPlayerResponder.h"
 
 struct RoomData
 {
