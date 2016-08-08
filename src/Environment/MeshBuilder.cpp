@@ -15,7 +15,7 @@ void MeshBuilder::addRoom(const Room& room, float height)
 		RoomSide side = room.sides[i];
 
 		// These calculations brought to you by the left-hand rule
-		float leftx, rightx, lefty, righty;
+		int leftx, rightx, lefty, righty;
 		if (side.normal.y > 0) {
 			leftx = side.x1;
 			rightx = side.x0;

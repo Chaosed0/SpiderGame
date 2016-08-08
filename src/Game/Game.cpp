@@ -165,7 +165,7 @@ int Game::setup()
 	};
 
 	pointLightTransforms.resize(4);
-	for (int i = 0; i < pointLightTransforms.size(); i++) {
+	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
 		PointLight light;
 		light.position = pointLightPositions[i];
 		light.constant = 1.0f;

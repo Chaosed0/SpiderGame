@@ -251,23 +251,23 @@ static Room boxesToRoom(std::vector<RoomBox> boxes)
 					 side.x1 == otherSide.x0 || side.x1 == otherSide.x0) &&
 					side.y0 == side.y1 && side.y1 == otherSide.y0 && otherSide.y0 == otherSide.y1)
 				{
-					float min = std::min(std::min(std::min(side.x0, side.x1), otherSide.x0), otherSide.x1);
-					float max = std::max(std::max(std::max(side.x0, side.x1), otherSide.x0), otherSide.x1);
+					int min = std::min(std::min(std::min(side.x0, side.x1), otherSide.x0), otherSide.x1);
+					int max = std::max(std::max(std::max(side.x0, side.x1), otherSide.x0), otherSide.x1);
 					side.x0 = min;
 					side.x1 = max;
-					otherSide.x0 = FLT_MAX;
-					otherSide.x1 = FLT_MAX;
+					otherSide.x0 = INT_MAX;
+					otherSide.x1 = INT_MAX;
 				}
 				else if ((side.y0 == otherSide.y0 || side.y0 == otherSide.y1 ||
 					 side.y1 == otherSide.y0 || side.y1 == otherSide.y0) &&
 					side.x0 == side.x1 && side.x1 == otherSide.x0 && otherSide.x0 == otherSide.x1)
 				{
-					float min = std::min(std::min(std::min(side.y0, side.y1), otherSide.y0), otherSide.y1);
-					float max = std::max(std::max(std::max(side.y0, side.y1), otherSide.y0), otherSide.y1);
+					int min = std::min(std::min(std::min(side.y0, side.y1), otherSide.y0), otherSide.y1);
+					int max = std::max(std::max(std::max(side.y0, side.y1), otherSide.y0), otherSide.y1);
 					side.y0 = min;
 					side.y1 = max;
-					otherSide.y0 = FLT_MAX;
-					otherSide.y1 = FLT_MAX;
+					otherSide.y0 = INT_MAX;
+					otherSide.y1 = INT_MAX;
 				}
 			}
 		}
