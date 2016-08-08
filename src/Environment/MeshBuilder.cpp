@@ -14,17 +14,17 @@ void MeshBuilder::addRoom(const Room& room, float height)
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide side = room.sides[i];
 
-		// These calculations brought to you by the left-hand rule
+		// These calculations brought to you by the right-hand rule
 		int leftx, rightx, lefty, righty;
 		if (side.normal.y > 0) {
-			leftx = side.x1;
-			rightx = side.x0;
-		} else {
 			leftx = side.x0;
 			rightx = side.x1;
+		} else {
+			leftx = side.x1;
+			rightx = side.x0;
 		}
 
-		if (side.normal.x > 0) {
+		if (side.normal.x < 0) {
 			lefty = side.y0;
 			righty = side.y1;
 		} else {
@@ -40,14 +40,14 @@ void MeshBuilder::addRoom(const Room& room, float height)
 
 	for (unsigned i = 0; i < room.boxes.size(); i++) {
 		RoomBox box = room.boxes[i];
-		this->addPlane(glm::vec3((float)box.left, 0.0f, (float)box.top),
-			glm::vec3((float)box.right, 0.0f, (float)box.top),
-			glm::vec3((float)box.left, 0.0f, (float)box.bottom),
-			glm::vec3((float)box.right, 0.0f, (float)box.bottom));
-		this->addPlane(glm::vec3((float)box.left, height, (float)box.bottom),
-			glm::vec3((float)box.right, height, (float)box.bottom),
-			glm::vec3((float)box.left, height, (float)box.top),
-			glm::vec3((float)box.right, height, (float)box.top));
+		this->addPlane(glm::vec3((float)box.left, 0.0f, (float)box.bottom),
+			glm::vec3((float)box.right, 0.0f, (float)box.bottom),
+			glm::vec3((float)box.left, 0.0f, (float)box.top),
+			glm::vec3((float)box.right, 0.0f, (float)box.top));
+		this->addPlane(glm::vec3((float)box.left, height, (float)box.top),
+			glm::vec3((float)box.right, height, (float)box.top),
+			glm::vec3((float)box.left, height, (float)box.bottom),
+			glm::vec3((float)box.right, height, (float)box.bottom));
 	}
 }
 
@@ -55,9 +55,14 @@ void MeshBuilder::addPlane(const glm::vec3& tlv, const glm::vec3& trv, const glm
 {
 	glm::vec3 uvec = brv - blv;
 	glm::vec3 vvec = tlv - blv;
-	glm::vec3 normal = glm::normalize(glm::cross(vvec, uvec));
-	glm::vec2 tltc = glm::vec2(glm::dot(tlv, uvec), glm::dot(tlv, vvec));
+	glm::vec3 normal = glm::normalize(glm::cross(uvec, vvec));
+
+	// Top-left texture coord
+	glm::vec2 tltc = glm::vec2(glm::dot(tlv, glm::normalize(uvec)), glm::dot(tlv, glm::normalize(vvec)));
+
+	// Texture coord length
 	glm::vec2 tcl = glm::vec2(glm::length(uvec), glm::length(vvec));
+
 	unsigned tli = this->addVert(tlv, normal, tltc);
 	unsigned tri = this->addVert(trv, normal, tltc + glm::vec2(tcl.x, 0.0f));
 	unsigned bli = this->addVert(blv, normal, tltc + glm::vec2(0.0f, tcl.y));

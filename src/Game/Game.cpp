@@ -225,7 +225,6 @@ int Game::setup()
 	roomGenerator = RoomGenerator(seedRand(generator));
 	Room room = roomGenerator.generate();
 	const unsigned height = 6;
-	Texture testTexture(TextureType_diffuse, "assets/img/test.png");
 
 	roomData.room = room;
 	roomData.meshBuilder.addRoom(room, (float)height);
@@ -237,7 +236,8 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(roomData.rigidBody, CollisionGroupWall, CollisionGroupAll);
 
 	// Render the room
-	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ testTexture });
+	Texture roomTexture(TextureType_diffuse, "assets/img/brick.png");
+	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ roomTexture });
 	roomModel.meshes[0].material.setProperty("shininess", MaterialProperty(FLT_MAX));
 	unsigned roomModelHandle = renderer.getModelHandle(roomModel);
 	unsigned roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
