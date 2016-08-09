@@ -37,6 +37,9 @@ Transform::~Transform()
 
 glm::vec3 Transform::getPosition() const
 {
+	if (parent != nullptr) {
+		return parent->getPosition() + position;
+	}
 	return position;
 }
 
@@ -47,6 +50,9 @@ void Transform::setPosition(glm::vec3 newPosition)
 
 glm::quat Transform::getRotation() const
 {
+	if (parent != nullptr) {
+		return parent->getRotation() * rotation;
+	}
 	return rotation;
 }
 
@@ -57,6 +63,9 @@ void Transform::setRotation(glm::quat newRotation)
 
 glm::vec3 Transform::getScale() const
 {
+	if (parent != nullptr) {
+		return parent->getScale() * scale;
+	}
 	return scale;
 }
 

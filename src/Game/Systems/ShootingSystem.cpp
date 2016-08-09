@@ -18,6 +18,7 @@
 
 #include "Game/Components/ExpiresComponent.h"
 #include "Game/Components/ModelRenderComponent.h"
+#include "Game/Components/VelocityComponent.h"
 
 ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer)
 	: System(world),
@@ -28,6 +29,15 @@ ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Ren
 	require<PlayerComponent>();
 	require<TransformComponent>();
 	require<RigidbodyMotorComponent>();
+
+	Vertex fromVert;
+	fromVert.position = glm::vec3(0.0f);
+	Vertex toVert;
+	toVert.position = Util::forward * 3.0f;
+	Mesh lineMesh(std::vector<Vertex>{fromVert, toVert}, std::vector<unsigned>{0,1}, std::vector<Texture>{});
+	lineMesh.material.drawType = GL_LINES;
+	lineMesh.material.setProperty("color", MaterialProperty(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f)));
+	bulletMeshHandle = renderer.getModelHandle(std::vector<Mesh>{ lineMesh });
 }
 
 void ShootingSystem::updateEntity(float dt, eid_t entity)
@@ -51,22 +61,22 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
 		this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);
 
-		Vertex fromVert;
-		fromVert.position = from;
-		Vertex toVert;
-		toVert.position = to;
-		Mesh lineMesh(std::vector<Vertex>{fromVert, toVert}, std::vector<unsigned>{0,1}, std::vector<Texture>{});
-		lineMesh.material.drawType = GL_LINES;
-		lineMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-		unsigned lineHandle = renderer.getModelHandle(std::vector<Mesh>{ lineMesh });
+		glLineWidth(3.0f);
 
 		eid_t line = world.getNewEntity();
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(line);
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
 		ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(line);
-		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(lineHandle, lineShader);
+		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(line);
+
+		TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
+
+		transformComponent->transform.setPosition(cameraTransformComponent->transform.getPosition() + cameraTransformComponent->transform.getRotation() * Util::right * 0.1f);
+		transformComponent->transform.setRotation(cameraTransformComponent->transform.getRotation());
+		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(bulletMeshHandle, lineShader);
 		modelRenderComponent->renderer = &renderer;
-		expiresComponent->expiryTime = 1.0f;
+		expiresComponent->expiryTime = 0.2f;
+		velocityComponent->speed = 100.0f;
 
 		if (!rayCallback.hasHit()) {
 			return;

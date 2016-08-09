@@ -281,6 +281,7 @@ int Game::setup()
 	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -0.5f, 0.0f));
 
 	playerTransform->transform.addChild(&cameraTransformComponent->transform);
+	playerComponent->camera = camera;
 
 	renderer.setCamera(&cameraComponent->camera);
 	debugDrawer.setCamera(&cameraComponent->camera);
@@ -343,6 +344,7 @@ int Game::setup()
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
 	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
+	velocitySystem = std::make_unique<VelocitySystem>(world);
 
 	spiderSystem->debugShader = lightShader;
 
@@ -432,6 +434,7 @@ void Game::update()
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);
 	rigidbodyMotorSystem->update(timeDelta);
+	velocitySystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
 
 	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;

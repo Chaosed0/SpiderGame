@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Framework/Component.h"
+#include "Framework/World.h"
 
 class PlayerComponent : public Component
 {
@@ -12,4 +13,6 @@ public:
 	float shotTimer;
 	float maxShotDistance;
 	unsigned shotDamage;
+
+	eid_t camera;
 };

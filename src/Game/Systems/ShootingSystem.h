@@ -16,4 +16,6 @@ private:
 	btDynamicsWorld* dynamicsWorld;
 	Renderer& renderer;
 	Shader lineShader;
+
+	unsigned bulletMeshHandle;
 };
