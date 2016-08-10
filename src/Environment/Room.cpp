@@ -8,23 +8,23 @@
 static Room boxesToRoom(std::vector<RoomBox> boxes);
 
 RoomGenerator::RoomGenerator()
-{
-
-}
+	: minimumArea(2500)
+{ }
 
 RoomGenerator::RoomGenerator(int seed)
+	: RoomGenerator()
 {
 	generator.seed(seed);
 }
 
 Room RoomGenerator::generate()
 {
-	const int minimumArea = 2500;
 	const int minBoxSize = 5;
 	const int maxBoxSize = 15;
 
 	unsigned currentArea = 0;
 	std::uniform_int_distribution<int> boxSizeRand(minBoxSize, maxBoxSize);
+
 	// Right-pointing-down, right-pointing-up, left-pointing-down, left-pointing-up,
 	// bot-pointing-right, bot-pointing-left, top-pointing-right, top-pointing-left
 	std::uniform_int_distribution<int> dirRand(0, 7);
@@ -112,7 +112,12 @@ Room RoomGenerator::generate()
 		boxes.push_back(newBox);
 	}
 
-	return boxesToRoom(boxes);
+	Room room(boxesToRoom(boxes));
+	room.rightmostBox = maxRighti;
+	room.leftmostBox = maxLefti;
+	room.topmostBox = maxTopi;
+	room.bottommostBox = maxBoti;
+	return room;
 }
 
 SDL_Surface* Room::saveToSurface()

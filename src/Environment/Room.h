@@ -27,6 +27,8 @@ struct Room
 	std::vector<RoomBox> boxes;
 	int minX, minY;
 	int maxX, maxY;
+	int rightmostBox, leftmostBox;
+	int topmostBox, bottommostBox;
 	SDL_Surface* saveToSurface();
 };
 
@@ -36,6 +38,8 @@ public:
 	RoomGenerator();
 	RoomGenerator(int seed);
 	Room generate();
+
+	int minimumArea;
 private:
 	std::default_random_engine generator;
 };

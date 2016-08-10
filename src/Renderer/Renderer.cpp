@@ -255,7 +255,7 @@ void Renderer::setPointLight(unsigned int index, PointLight pointLight)
 {
 	if (index < pointLights.size()) {
 		pointLights[index] = pointLight;
-		pointLightCount = std::max(index, pointLightCount);
+		pointLightCount = std::max(index + 1, pointLightCount);
 	}
 }
 

@@ -198,10 +198,20 @@ int Game::setup()
 	roomData.meshBuilder.addRoom(room, (float)height);
 	roomData.meshBuilder.construct();
 
-	// Put a light in each room
-	int lights = std::max(renderer.getMaxPointLights() - 1, room.boxes.size());
-	for (unsigned i = 0; i < room.boxes.size(); i++) {
-		RoomBox box = room.boxes[i];
+	// Put a light in the center room and the rooms that are farthest out
+	for (unsigned i = 0; i < 5; i++) {
+		RoomBox box;
+		if (i == 0) {
+			box = room.boxes[room.leftmostBox];
+		} else if (i == 1) {
+			box = room.boxes[room.rightmostBox];
+		} else if (i == 2) {
+			box = room.boxes[room.bottommostBox];
+		} else if (i == 3) {
+			box = room.boxes[room.topmostBox];
+		} else {
+			box = room.boxes[0];
+		}
 
 		PointLight light;
 		light.position = glm::vec3(box.left + (box.right - box.left) / 2.0f, height / 2.0f, box.bottom + (box.top - box.bottom) / 2.0f);
@@ -209,7 +219,7 @@ int Game::setup()
 		light.linear = 0.18f;
 		light.quadratic = 0.064f;
 		light.ambient = glm::vec3(0.0f);
-		light.diffuse = glm::vec3(0.1f);
+		light.diffuse = glm::vec3(0.4f);
 		light.specular = glm::vec3(1.0f);
 		renderer.setPointLight(i+1, light);
 	}
