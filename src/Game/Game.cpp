@@ -157,38 +157,6 @@ int Game::setup()
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
 	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
 
-	glm::vec3 pointLightPositions[] = {
-		glm::vec3(0.7f,  1.0f,  2.0f),
-		glm::vec3(2.3f, 1.0f, -4.0f),
-		glm::vec3(-4.0f,  1.0f, -12.0f),
-	};
-
-	pointLightTransforms.resize(3);
-	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
-		PointLight light;
-		light.position = pointLightPositions[i];
-		light.constant = 1.0f;
-		light.linear = 0.09f;
-		light.quadratic = 0.032f;
-		light.ambient = glm::vec3(0.1f);
-		light.diffuse = glm::vec3(0.2f);
-		light.specular = glm::vec3(1.0f);
-		renderer.setPointLight(i+1, light);
-
-		pointLightTransforms[i].setPosition(pointLightPositions[i]);
-		pointLightTransforms[i].setScale(glm::vec3(0.2f));
-	}
-
-	Mesh pointLightMesh = getBox(std::vector<Texture> {});
-	pointLightMesh.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
-	pointLightModel = Model(std::vector<Mesh> { pointLightMesh });
-
-	for (unsigned i = 0; i < pointLightTransforms.size(); i++) {
-		unsigned lightModelHandle = renderer.getModelHandle(pointLightModel);
-		unsigned lightHandle = renderer.getRenderableHandle(lightModelHandle, lightShader);
-		renderer.setRenderableTransform(lightHandle, pointLightTransforms[i]);
-	}
-
 	DirLight dirLight;
 	dirLight.direction = glm::vec3(0.2f, -1.0f, 0.3f);
 	dirLight.ambient = glm::vec3(0.2f);
@@ -229,6 +197,22 @@ int Game::setup()
 	roomData.room = room;
 	roomData.meshBuilder.addRoom(room, (float)height);
 	roomData.meshBuilder.construct();
+
+	// Put a light in each room
+	int lights = std::max(renderer.getMaxPointLights() - 1, room.boxes.size());
+	for (unsigned i = 0; i < room.boxes.size(); i++) {
+		RoomBox box = room.boxes[i];
+
+		PointLight light;
+		light.position = glm::vec3(box.left + (box.right - box.left) / 2.0f, height / 2.0f, box.bottom + (box.top - box.bottom) / 2.0f);
+		light.constant = 1.0f;
+		light.linear = 0.18f;
+		light.quadratic = 0.064f;
+		light.ambient = glm::vec3(0.0f);
+		light.diffuse = glm::vec3(0.1f);
+		light.specular = glm::vec3(1.0f);
+		renderer.setPointLight(i+1, light);
+	}
 
 	// Add the room to collision
 	btCollisionShape* roomShape = roomData.meshBuilder.getCollisionMesh();
@@ -444,8 +428,8 @@ void Game::update()
 	PointLight light;
 	light.position = playerTransform.getPosition();
 	light.constant = 2.0f;
-	light.linear = 0.4f;
-	light.quadratic = 1.0f;
+	light.linear = 0.2f;
+	light.quadratic = 0.5f;
 	light.ambient = glm::vec3(0.2f);
 	light.diffuse = glm::vec3(0.8f);
 	light.specular = glm::vec3(1.0f);

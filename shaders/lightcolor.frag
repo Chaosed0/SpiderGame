@@ -1,6 +1,6 @@
 #version 330 core
 
-#define MAX_POINT_LIGHTS 4
+#define MAX_POINT_LIGHTS 64
 
 struct Material {
     sampler2D texture_diffuse;
@@ -39,6 +39,7 @@ uniform PointLight pointLight[MAX_POINT_LIGHTS];
 uniform DirLight dirLight;
 uniform Material material;
 uniform mat4 view;
+uniform int pointLightCount;
 
 // Calculates the color when using a point light.
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos)
@@ -95,7 +96,7 @@ void main()
 
 	//vec3 result = CalcDirLight(dirLight, normal_n, fragPos);
 	vec3 result = vec3(0.0f);
-	for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
+	for (int i = 0; i < min(MAX_POINT_LIGHTS, pointLightCount); i++) {
 		result += CalcPointLight(pointLight[i], normal_n, fragPos);
 	}
 

@@ -72,6 +72,7 @@ struct ShaderCache
 	DirLightCache dirLight;
 	std::vector<PointLightCache> pointLights;
 	std::vector<GLuint> bones;
+	GLuint pointLightCount;
 };
 
 /*! Different render spaces. */
@@ -228,6 +229,9 @@ private:
 
 	/*! ID to assign to the next model requested through getModelHandle(). */
 	unsigned nextModelHandle;
+
+	/*! Total point lights to send to the shader. */
+	unsigned pointLightCount;
 
 	/*! Model space transformation for UI space drawing. */
 	glm::mat4 uiModelTransform;

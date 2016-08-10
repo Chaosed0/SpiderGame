@@ -7,11 +7,13 @@
 #include <sstream>
 #include <ctime>
 
-static const unsigned int maxPointLights = 4;
+static const unsigned int maxPointLights = 64;
 static const unsigned int maxBones = 100;
 
 Renderer::Renderer()
-	: pointLights(maxPointLights), camera(nullptr)
+	: pointLights(maxPointLights),
+	camera(nullptr),
+	pointLightCount(0)
 {
 	this->uiModelTransform = glm::mat4();
 	// Flip the y axis so we can use normal modelspace but position in UI space
@@ -190,6 +192,7 @@ void Renderer::drawInternal(RenderSpace space)
 		glUniform3f(shaderCache.dirLight.ambient, dirLight.ambient.x, dirLight.ambient.y, dirLight.ambient.z);
 		glUniform3f(shaderCache.dirLight.diffuse, dirLight.diffuse.x, dirLight.diffuse.y, dirLight.diffuse.z);
 		glUniform3f(shaderCache.dirLight.specular, dirLight.specular.x, dirLight.specular.y, dirLight.specular.z);
+		glUniform1i(shaderCache.pointLightCount, pointLightCount);
 		glCheckError();
 	}
 
@@ -252,6 +255,7 @@ void Renderer::setPointLight(unsigned int index, PointLight pointLight)
 {
 	if (index < pointLights.size()) {
 		pointLights[index] = pointLight;
+		pointLightCount = std::max(index, pointLightCount);
 	}
 }
 
@@ -283,6 +287,8 @@ ShaderCache::ShaderCache(const Shader& shader)
 	this->dirLight.ambient = shader.getUniformLocation("dirLight.ambient");
 	this->dirLight.diffuse = shader.getUniformLocation("dirLight.diffuse");
 	this->dirLight.specular = shader.getUniformLocation("dirLight.specular");
+
+	this->pointLightCount = shader.getUniformLocation("pointLightCount");
 
 	for (unsigned int i = 0; i < maxBones; i++) {
 		std::stringstream sstream;
