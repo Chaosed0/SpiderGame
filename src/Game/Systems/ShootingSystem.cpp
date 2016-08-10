@@ -54,8 +54,10 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		Transform& transform = transformComponent->transform;
 		playerComponent->shotTimer = 0.0f;
 
-		glm::vec3 from = transform.getPosition();
-		glm::vec3 to = from + rigidbodyMotorComponent->facing * (Util::forward * playerComponent->maxShotDistance);
+		TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
+
+		glm::vec3 from = cameraTransformComponent->transform.getPosition();
+		glm::vec3 to = from + cameraTransformComponent->transform.getRotation() * (Util::forward * playerComponent->maxShotDistance);
 		btVector3 btStart(Util::glmToBt(from));
 		btVector3 btEnd(Util::glmToBt(to));
 		btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
@@ -68,8 +70,6 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
 		ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(line);
 		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(line);
-
-		TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
 
 		transformComponent->transform.setPosition(cameraTransformComponent->transform.getPosition() + cameraTransformComponent->transform.getRotation() * Util::right * 0.1f);
 		transformComponent->transform.setRotation(cameraTransformComponent->transform.getRotation());

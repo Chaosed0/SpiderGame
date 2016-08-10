@@ -164,18 +164,6 @@ int Game::setup()
 	dirLight.specular = glm::vec3(1.0f);
 	renderer.setDirLight(dirLight);
 
-	/*std::vector<std::string> skyboxFaces;
-	skyboxFaces.push_back("assets/img/skybox/miramar_ft.tga");
-	skyboxFaces.push_back("assets/img/skybox/miramar_bk.tga");
-	skyboxFaces.push_back("assets/img/skybox/miramar_up.tga");
-	skyboxFaces.push_back("assets/img/skybox/miramar_dn.tga");
-	skyboxFaces.push_back("assets/img/skybox/miramar_rt.tga");
-	skyboxFaces.push_back("assets/img/skybox/miramar_lf.tga");
-	skyboxModel = Model(std::vector<Mesh> { getSkybox(skyboxFaces) });
-	unsigned skyboxModelHandle = renderer.getModelHandle(skyboxModel);
-	unsigned skyboxHandle = renderer.getRenderableHandle(skyboxModelHandle, skyboxShader);
-	renderer.setRenderableTransform(skyboxHandle, Transform::identity);*/
-
 	unsigned seed = (unsigned)time(NULL);
 	this->generator.seed(seed);
 	printf("USING SEED: %ud\n", seed);
@@ -304,9 +292,12 @@ int Game::setup()
 		transformComponent->transform.setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
 		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
 
-		btBoxShape* shape = new btBoxShape(btVector3(200.0f, 75.0f, 120.0f) * transformComponent->transform.getScale().x);
+		glm::vec3 halfExtents(200.0f, 75.0f, 120.0f);
+		btCompoundShape* shape = new btCompoundShape();
+		btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents * transformComponent->transform.getScale().x));
+		shape->addChildShape(btTransform(btQuaternion(), btVector3(0.0f, halfExtents.y * 2.0f, 0.0f) * transformComponent->transform.getScale().x), boxShape);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
-		btRigidBody* spiderRigidBody = new btRigidBody(1.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+		btRigidBody* spiderRigidBody = new btRigidBody(10.0f, playerMotionState, shape);
 		// This pointer is freed by the CollisionComponent destructor
 		spiderRigidBody->setUserPointer(new eid_t(spider));
 		dynamicsWorld->addRigidBody(spiderRigidBody, CollisionGroupEnemy, CollisionGroupAll);
