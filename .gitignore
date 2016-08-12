@@ -3,3 +3,6 @@ build
 *.swp
 .vs
 premake5.exe
+*.blend1
+*.blend2
+*.blend3

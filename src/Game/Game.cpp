@@ -186,6 +186,9 @@ int Game::setup()
 	roomData.meshBuilder.addRoom(room, (float)height);
 	roomData.meshBuilder.construct();
 
+	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
+	unsigned pedestalModelHandle = renderer.getModelHandle(pedestalModel);
+
 	// Put a light in the center room and the rooms that are farthest out
 	for (unsigned i = 0; i < 5; i++) {
 		RoomBox box;
@@ -201,8 +204,10 @@ int Game::setup()
 			box = room.boxes[0];
 		}
 
+		glm::vec3 center = glm::vec3(box.left + (box.right - box.left) / 2.0f, 0.0f, box.bottom + (box.top - box.bottom) / 2.0f);
+
 		PointLight light;
-		light.position = glm::vec3(box.left + (box.right - box.left) / 2.0f, height / 2.0f, box.bottom + (box.top - box.bottom) / 2.0f);
+		light.position = center + glm::vec3(0.0f, height / 2.0f, 0.0f);
 		light.constant = 1.0f;
 		light.linear = 0.18f;
 		light.quadratic = 0.064f;
@@ -210,6 +215,9 @@ int Game::setup()
 		light.diffuse = glm::vec3(0.4f);
 		light.specular = glm::vec3(1.0f);
 		renderer.setPointLight(i+1, light);
+
+		unsigned pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
+		renderer.setRenderableTransform(pedestalHandle, Transform(center));
 	}
 
 	// Add the room to collision
