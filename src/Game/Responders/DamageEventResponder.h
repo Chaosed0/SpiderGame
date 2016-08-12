@@ -1,4 +1,6 @@
 
+#include "Framework/ComponentBitmask.h"
+
 class World;
 class EventManager;
 class DamageEvent;
@@ -11,4 +13,5 @@ private:
 	void damageReceived(const DamageEvent& event);
 	World& world;
 	EventManager& eventManager;
+	ComponentBitmask requiredComponents;
 };

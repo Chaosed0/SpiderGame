@@ -6,6 +6,7 @@
 class DamageEvent : public Event
 {
 public:
+	eid_t target;
 	eid_t source;
 	unsigned damage;
 };

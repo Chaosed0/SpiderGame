@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Framework/ComponentBitmask.h"
+
 class World;
 class EventManager;
 class CollisionEvent;
@@ -12,4 +14,6 @@ public:
 private:
 	World& world;
 	EventManager& eventManager;
+	ComponentBitmask requiredComponents1;
+	ComponentBitmask requiredComponents2;
 };

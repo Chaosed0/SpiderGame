@@ -106,3 +106,25 @@ World::eid_iterator World::getEidIterator(ComponentBitmask match)
 {
 	return eid_iterator(entities.begin(), entities.end(), match);
 }
+
+bool World::orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2)
+{
+	ComponentBitmask eb1 = this->getEntityBitmask(e1);
+	ComponentBitmask eb2 = this->getEntityBitmask(e2);
+	if (eb1.hasComponents(b1) && eb2.hasComponents(b2)) {
+		return true;
+	} else if (eb2.hasComponents(b2) && eb1.hasComponents(b1)) {
+		eid_t tmp = e1;
+		e1 = e2;
+		e2 = tmp;
+		return true;
+	}
+
+	return false;
+}
+
+bool World::entityHasComponents(eid_t entity, const ComponentBitmask& bitmask)
+{
+	ComponentBitmask eb = this->getEntityBitmask(entity);
+	return eb.hasComponents(bitmask);
+}

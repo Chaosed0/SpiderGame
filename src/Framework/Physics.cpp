@@ -76,15 +76,10 @@ void Physics::fixedUpdate(btDynamicsWorld* world, float timeStep)
 void Physics::handleContact(eid_t e1, eid_t e2, btPersistentManifold* contactManifold, CollisionResponseType type)
 {
 	CollisionEvent event;
+	event.e1 = e1;
+	event.e2 = e2;
 	event.collisionManifold = contactManifold;
 	event.type = type;
-
-	event.target = e1;
-	event.collidedEntity = e2;
-	eventManager.sendEvent(event);
-
-	event.target = e2;
-	event.collidedEntity = e1;
 	eventManager.sendEvent(event);
 }
 

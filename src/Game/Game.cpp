@@ -254,7 +254,9 @@ int Game::setup()
 
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
-	playerRigidbodyMotorComponent->noclip = false;
+
+	playerComponent->shotCooldown = 1.0f;
+	playerComponent->shotDamage = 100;
 
 	camera = world.getNewEntity("Camera");
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
@@ -339,7 +341,7 @@ int Game::setup()
 
 	std::function<void(const HealthChangedEvent& event)> healthChangedCallback =
 		[world = &world, healthLabel = healthLabel](const HealthChangedEvent& event) {
-			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.target);
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.entity);
 
 			std::stringstream sstream;
 			sstream << event.newHealth;
@@ -347,7 +349,7 @@ int Game::setup()
 		};
 	ComponentBitmask playerComponentBitmask;
 	playerComponentBitmask.setBit(world.getComponentId<PlayerComponent>(), true);
-	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback, playerComponentBitmask);
+	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback);
 
 	return 0;
 }

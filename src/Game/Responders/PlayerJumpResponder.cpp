@@ -14,23 +14,27 @@
 PlayerJumpResponder::PlayerJumpResponder(World& world, EventManager& eventManager)
 	: world(world), eventManager(eventManager)
 {
-	ComponentBitmask bitmask;
-	bitmask.setBit(world.getComponentId<PlayerComponent>(), true);
-	bitmask.setBit(world.getComponentId<RigidbodyMotorComponent>(), true);
-	this->eventManager.registerForEvent<CollisionEvent>(std::bind(&PlayerJumpResponder::handleCollisionEvent, this, std::placeholders::_1), bitmask);
+	requiredComponents.setBit(world.getComponentId<PlayerComponent>(), true);
+	requiredComponents.setBit(world.getComponentId<RigidbodyMotorComponent>(), true);
+	this->eventManager.registerForEvent<CollisionEvent>(std::bind(&PlayerJumpResponder::handleCollisionEvent, this, std::placeholders::_1));
 }
 
 void PlayerJumpResponder::handleCollisionEvent(const CollisionEvent& collisionEvent)
 {
+	eid_t e1 = collisionEvent.e1, e2 = collisionEvent.e2;
+	if (!world.orderEntities(e1, e2, requiredComponents, ComponentBitmask())) {
+		return;
+	}
+
 	if (collisionEvent.type != CollisionResponseType_Began) {
 		return;
 	}
 
 	btCollisionObject* collidedBody = nullptr;
-	if (*((eid_t*)collisionEvent.collisionManifold->getBody0()->getUserPointer()) == collisionEvent.target) {
-		collidedBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody0();
-	} else {
+	if (*((eid_t*)collisionEvent.collisionManifold->getBody0()->getUserPointer()) == e1) {
 		collidedBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody1();
+	} else {
+		collidedBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody0();
 	}
 
 	if ((collidedBody->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE) != 0) {
@@ -38,6 +42,6 @@ void PlayerJumpResponder::handleCollisionEvent(const CollisionEvent& collisionEv
 		return;
 	}
 
-	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(collisionEvent.target);
+	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(e1);
 	rigidbodyMotorComponent->canJump = true;
 }

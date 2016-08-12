@@ -6,6 +6,7 @@
 class HealthChangedEvent : public Event
 {
 public:
+	eid_t entity;
 	int newHealth;
 	int healthChange;
 };

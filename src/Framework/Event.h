@@ -4,6 +4,4 @@
 
 class Event
 {
-public:
-	eid_t target;
 };
