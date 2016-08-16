@@ -8,17 +8,16 @@
 
 #include <algorithm>
 
+const unsigned Label::defaultSize = 64;
+
 Label::Label(const std::shared_ptr<Font>& font)
-	: Label(font, 0)
+	: Label(font, defaultSize)
 { }
 
 Label::Label(const std::shared_ptr<Font>& font, unsigned maxSize)
 	: font(font), maxSize(maxSize), nVertices(0), nIndices(0)
 {
-	if (maxSize > 0) {
-		this->generateBuffers();
-	}
-
+	this->generateBuffers();
 	material.setProperty("texture_diffuse", MaterialProperty(Texture(TextureType_diffuse, font->getTextureId())));
 }
 

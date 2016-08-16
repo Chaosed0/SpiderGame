@@ -5,10 +5,11 @@
 #include "Transform.h"
 
 enum CollisionGroup {
-	CollisionGroupEnemy = 1,
-	CollisionGroupPlayer = 2,
-	CollisionGroupWall = 4,
-	CollisionGroupAll = CollisionGroupEnemy | CollisionGroupPlayer | CollisionGroupWall
+	CollisionGroupDefault = 1,
+	CollisionGroupEnemy = 1 << 1,
+	CollisionGroupPlayer = 1 << 2,
+	CollisionGroupWall = 1 << 3,
+	CollisionGroupAll = CollisionGroupDefault | CollisionGroupEnemy | CollisionGroupPlayer | CollisionGroupWall
 };
 
 class Util

@@ -56,15 +56,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 
 		TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
 
-		glm::vec3 from = cameraTransformComponent->transform.getPosition();
-		glm::vec3 to = from + cameraTransformComponent->transform.getRotation() * (Util::forward * playerComponent->maxShotDistance);
-		btVector3 btStart(Util::glmToBt(from));
-		btVector3 btEnd(Util::glmToBt(to));
-		btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
-		this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);
-
-		glLineWidth(3.0f);
-
+		/* Create the shot tracer */
 		eid_t line = world.getNewEntity();
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(line);
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
@@ -77,6 +69,14 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		modelRenderComponent->renderer = &renderer;
 		expiresComponent->expiryTime = 0.2f;
 		velocityComponent->speed = 100.0f;
+
+		/* Do the raytrace to see if we hit anything */
+		glm::vec3 from = cameraTransformComponent->transform.getPosition();
+		glm::vec3 to = from + cameraTransformComponent->transform.getRotation() * (Util::forward * playerComponent->maxShotDistance);
+		btVector3 btStart(Util::glmToBt(from));
+		btVector3 btEnd(Util::glmToBt(to));
+		btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
+		this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);
 
 		if (!rayCallback.hasHit()) {
 			return;
@@ -94,6 +94,5 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		}
 
 		enemyHealthComponent->health -= playerComponent->shotDamage;
-		printf("%s %d\n", world.getEntityName(hitEntity).c_str(), enemyHealthComponent->health);
 	}
 }

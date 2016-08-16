@@ -27,4 +27,6 @@ private:
 	std::vector<unsigned> generateIndices();
 	void generateBuffers();
 	void resizeBuffers();
+
+	const static unsigned defaultSize;
 };

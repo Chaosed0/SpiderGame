@@ -34,6 +34,7 @@
 #include "Game/Systems/SpiderSystem.h"
 #include "Game/Systems/ExpiresSystem.h"
 #include "Game/Systems/VelocitySystem.h"
+#include "Game/Systems/PlayerFacingSystem.h"
 
 #include "Framework/Physics.h"
 #include "Framework/EventManager.h"
@@ -119,6 +120,7 @@ private:
 	std::unique_ptr<SpiderSystem> spiderSystem;
 	std::unique_ptr<ExpiresSystem> expiresSystem;
 	std::unique_ptr<VelocitySystem> velocitySystem;
+	std::unique_ptr<PlayerFacingSystem> playerFacingSystem;
 
 	std::unique_ptr<Physics> physics;
 

@@ -169,13 +169,19 @@ int Game::setup()
 	this->generator.seed(seed);
 	printf("USING SEED: %ud\n", seed);
 
-	/*! Health label */
+	/* Health label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
 	healthLabel = std::make_shared<Label>(font);
 	healthLabel->setText("100");
 	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
 	unsigned labelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
 	uiRenderer.setTransform(labelHandle, Transform(glm::vec3(0.0f, windowHeight - 10.0f, 0.0f)));
+
+	/* Notification label */
+	std::shared_ptr<Label> facingLabel = std::make_shared<Label>(font);
+	facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	unsigned facingLabelHandle = uiRenderer.getEntityHandle(facingLabel, textShader);
+	uiRenderer.setTransform(facingLabelHandle, Transform(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f)));
 
 	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
@@ -224,29 +230,32 @@ int Game::setup()
 
 		unsigned gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
 
-		eid_t gemEntity = world.getNewEntity("Gem " + i);
+		std::stringstream namestream;
+		namestream << "Gem " << i;
+		eid_t gemEntity = world.getNewEntity(namestream.str());
 		TransformComponent* transformComponent = world.addComponent<TransformComponent>(gemEntity);
 		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(gemEntity);
-		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(gemEntity);
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(gemEntity);
+		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(gemEntity);
 
-		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.25, 0.25, 0.1));
-		btCollisionObject* gemCollisionObject = new btCollisionObject();
-		gemCollisionObject->setCollisionShape(gemCollisionShape);
-		dynamicsWorld->addCollisionObject(gemCollisionObject);
+		glm::vec3 gemPosition = center + glm::vec3(0.0f, 1.5f, 0.0f);
+		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
+		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion(), Util::glmToBt(gemPosition))), gemCollisionShape);
+		btRigidBody* gemCollisionObject = new btRigidBody(info);
+		gemCollisionObject->setUserPointer(new eid_t(gemEntity));
+		dynamicsWorld->addRigidBody(gemCollisionObject, CollisionGroupDefault, CollisionGroupAll);
 
-		transformComponent->transform = Transform(center + glm::vec3(0.0f, 1.5f, 0.0f));
-
-		velocityComponent->speed = 0.0f;
-		velocityComponent->angularSpeed = 0.05f;
-		velocityComponent->rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+		transformComponent->transform = Transform(gemPosition);
 
 		collisionComponent->collisionObject = gemCollisionObject;
 		collisionComponent->world = dynamicsWorld;
 		collisionComponent->controlsMovement = false;
 
-		modelRenderComponent->renderer = &renderer;
+		velocityComponent->angularSpeed = 1.0f;
+		velocityComponent->rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+
 		modelRenderComponent->rendererHandle = gemHandle;
+		modelRenderComponent->renderer = &renderer;
 	}
 
 	// Add the room to collision
@@ -262,7 +271,7 @@ int Game::setup()
 	unsigned roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
 
 	// Make the room an entity so it registers in our Physics system
-	eid_t roomEntity = world.getNewEntity();
+	eid_t roomEntity = world.getNewEntity("Level");
 	CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(roomEntity);
 	collisionComponent->collisionObject = roomData.rigidBody;
 	collisionComponent->world = dynamicsWorld;
@@ -311,7 +320,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 0; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -369,6 +378,7 @@ int Game::setup()
 	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 	velocitySystem = std::make_unique<VelocitySystem>(world);
+	playerFacingSystem = std::make_unique<PlayerFacingSystem>(world, dynamicsWorld, facingLabel);
 
 	spiderSystem->debugShader = lightShader;
 
@@ -488,6 +498,7 @@ void Game::update()
 
 	cameraSystem->update(timeDelta);
 	collisionUpdateSystem->update(timeDelta);
+	playerFacingSystem->update(timeDelta);
 	modelRenderSystem->update(timeDelta);
 
 	expiresSystem->update(timeDelta);
