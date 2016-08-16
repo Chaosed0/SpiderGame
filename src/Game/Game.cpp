@@ -32,6 +32,7 @@
 #include "Game/Components/SpiderComponent.h"
 #include "Game/Components/ExpiresComponent.h"
 #include "Game/Components/HurtboxComponent.h"
+#include "Game/Components/VelocityComponent.h"
 
 #include "Game/Events/HealthChangedEvent.h"
 
@@ -188,6 +189,8 @@ int Game::setup()
 
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
 	unsigned pedestalModelHandle = renderer.getModelHandle(pedestalModel);
+	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
+	unsigned gemModelHandle = renderer.getModelHandle(gemModel);
 
 	// Put a light in the center room and the rooms that are farthest out
 	for (unsigned i = 0; i < 5; i++) {
@@ -218,6 +221,32 @@ int Game::setup()
 
 		unsigned pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
 		renderer.setRenderableTransform(pedestalHandle, Transform(center));
+
+		unsigned gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
+
+		eid_t gemEntity = world.getNewEntity("Gem " + i);
+		TransformComponent* transformComponent = world.addComponent<TransformComponent>(gemEntity);
+		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(gemEntity);
+		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(gemEntity);
+		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(gemEntity);
+
+		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.25, 0.25, 0.1));
+		btCollisionObject* gemCollisionObject = new btCollisionObject();
+		gemCollisionObject->setCollisionShape(gemCollisionShape);
+		dynamicsWorld->addCollisionObject(gemCollisionObject);
+
+		transformComponent->transform = Transform(center + glm::vec3(0.0f, 1.5f, 0.0f));
+
+		velocityComponent->speed = 0.0f;
+		velocityComponent->angularSpeed = 0.05f;
+		velocityComponent->rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+
+		collisionComponent->collisionObject = gemCollisionObject;
+		collisionComponent->world = dynamicsWorld;
+		collisionComponent->controlsMovement = false;
+
+		modelRenderComponent->renderer = &renderer;
+		modelRenderComponent->rendererHandle = gemHandle;
 	}
 
 	// Add the room to collision
@@ -247,9 +276,9 @@ int Game::setup()
 	HealthComponent* playerHealthComponent = world.addComponent<HealthComponent>(player);
 	RigidbodyMotorComponent* playerRigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(player);
 
-	playerTransform->transform.setPosition(glm::vec3(0.0f, 3.0f, 0.0f));
+	playerTransform->transform.setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 
-	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 2.0f * playerTransform->transform.getScale().y);
+	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 0.7f * playerTransform->transform.getScale().y);
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(playerTransform->transform));
 	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
@@ -270,7 +299,7 @@ int Game::setup()
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
 	CameraComponent* cameraComponent = world.addComponent<CameraComponent>(camera);
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, -0.5f, 0.0f));
+	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, 0.85f, 0.0f));
 
 	playerTransform->transform.addChild(&cameraTransformComponent->transform);
 	playerComponent->camera = camera;

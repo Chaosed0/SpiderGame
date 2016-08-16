@@ -20,4 +20,5 @@ void VelocitySystem::updateEntity(float dt, eid_t entity)
 
 	Transform& transform = transformComponent->transform;
 	transform.setPosition(transform.getPosition() + transform.getRotation() * Util::forward * velocityComponent->speed * dt);
+	transform.setRotation(transform.getRotation() * glm::angleAxis(velocityComponent->angularSpeed, velocityComponent->rotationAxis));
 }

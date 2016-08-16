@@ -8,7 +8,7 @@
 
 struct CollisionComponent : public Component
 {
-	CollisionComponent() : world(nullptr), collisionObject(nullptr) { }
+	CollisionComponent() : world(nullptr), collisionObject(nullptr), controlsMovement(true) { }
 	~CollisionComponent()
 	{
 		if (world != nullptr) {
@@ -23,4 +23,5 @@ struct CollisionComponent : public Component
 
 	btDynamicsWorld* world;
 	btCollisionObject* collisionObject;
+	bool controlsMovement;
 };
