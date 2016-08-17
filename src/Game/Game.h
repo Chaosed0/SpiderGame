@@ -89,7 +89,6 @@ private:
 	ModelLoader modelLoader;
 
 	UIRenderer uiRenderer;
-	std::shared_ptr<Font> font;
 	std::shared_ptr<Label> healthLabel;
 
 	Shader shader;

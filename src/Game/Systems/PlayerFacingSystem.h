@@ -4,6 +4,7 @@
 
 #include "Framework/System.h"
 #include "Renderer/UI/Label.h"
+#include "Renderer/UI/UIRenderer.h"
 
 #include <btBulletDynamicsCommon.h>
 

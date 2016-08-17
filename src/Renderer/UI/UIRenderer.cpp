@@ -32,16 +32,6 @@ unsigned UIRenderer::getEntityHandle(const std::shared_ptr<Renderable2d>& render
 	return pool.getNewHandle(entity);
 }
 
-void UIRenderer::setTransform(uint32_t handle, const Transform& transform)
-{
-	std::experimental::optional<UIRendererEntity&> entity = this->pool.get(handle);
-	if (!entity) {
-		return;
-	}
-
-	entity->transform = transform;
-}
-
 void UIRenderer::draw()
 {
 	for (auto iter = pool.begin(); iter != pool.end(); ++iter)
@@ -52,7 +42,7 @@ void UIRenderer::draw()
 		const Material& material = renderable.getMaterial();
 
 		shader.use();
-		shader.setModelMatrix(&entity.transform.matrix()[0][0]);
+		shader.setModelMatrix(&renderable.getTransform()[0][0]);
 		shader.setProjectionMatrix(&projection[0][0]);
 		shader.setViewMatrix(&glm::mat4()[0][0]);
 		

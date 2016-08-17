@@ -1,6 +1,8 @@
 
 #include "World.h"
 
+const eid_t World::NullEntity = UINT32_MAX;
+
 World::eid_iterator::eid_iterator()
 { }
 

@@ -14,6 +14,8 @@ public:
 	glm::mat4 getViewMatrixOrtho();
 	glm::mat4 getProjectionMatrixOrtho();
 
+	glm::vec2 worldToScreenPoint(glm::vec3 worldPoint);
+
 	glm::mat4 inverseViewMatrix;
 private:
 	float fieldOfView;

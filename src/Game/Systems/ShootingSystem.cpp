@@ -73,21 +73,8 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		/* Do the raytrace to see if we hit anything */
 		glm::vec3 from = cameraTransformComponent->transform.getPosition();
 		glm::vec3 to = from + cameraTransformComponent->transform.getRotation() * (Util::forward * playerComponent->maxShotDistance);
-		btVector3 btStart(Util::glmToBt(from));
-		btVector3 btEnd(Util::glmToBt(to));
-		btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
-		this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);
+		eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
 
-		if (!rayCallback.hasHit()) {
-			return;
-		}
-
-		void* userPtr = rayCallback.m_collisionObject->getUserPointer();
-		if (userPtr == nullptr) {
-			return;
-		}
-
-		eid_t hitEntity = *((eid_t*)userPtr);
 		HealthComponent* enemyHealthComponent = world.getComponent<HealthComponent>(hitEntity);
 		if (enemyHealthComponent == nullptr) {
 			return;

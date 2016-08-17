@@ -125,3 +125,8 @@ const Material& Label::getMaterial() const
 {
 	return this->material;
 }
+
+glm::mat4 Label::getTransform() const
+{
+	return this->transform.matrix();
+}

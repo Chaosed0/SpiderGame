@@ -170,18 +170,20 @@ int Game::setup()
 	printf("USING SEED: %ud\n", seed);
 
 	/* Health label */
-	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 64);
+	std::shared_ptr<Font> font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
 	healthLabel = std::make_shared<Label>(font);
 	healthLabel->setText("100");
 	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	healthLabel->transform = Transform(glm::vec3(0.0f, windowHeight - 10.0f, 0.0f));
 	unsigned labelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
-	uiRenderer.setTransform(labelHandle, Transform(glm::vec3(0.0f, windowHeight - 10.0f, 0.0f)));
 
 	/* Notification label */
+	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);
 	std::shared_ptr<Label> facingLabel = std::make_shared<Label>(font);
 	facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	facingLabel->transform = Transform(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f));
 	unsigned facingLabelHandle = uiRenderer.getEntityHandle(facingLabel, textShader);
-	uiRenderer.setTransform(facingLabelHandle, Transform(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f)));
+	font.reset();
 
 	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);

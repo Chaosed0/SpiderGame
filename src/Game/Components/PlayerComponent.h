@@ -13,6 +13,7 @@ public:
 	float shotTimer;
 	float maxShotDistance;
 	unsigned shotDamage;
+	eid_t lastFacedEntity;
 
 	eid_t camera;
 };

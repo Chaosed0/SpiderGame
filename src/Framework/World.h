@@ -64,7 +64,7 @@ public:
 	};
 
 	eid_iterator getEidIterator(ComponentBitmask match);
-
+	const static eid_t NullEntity;
 private:
 	typedef std::unordered_map<eid_t, std::unique_ptr<Component>> ComponentPool;
 
