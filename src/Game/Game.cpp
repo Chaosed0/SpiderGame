@@ -37,6 +37,7 @@
 #include "Game/Events/HealthChangedEvent.h"
 
 #include "Renderer/UI/Label.h"
+#include "Renderer/UI/Image.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
@@ -157,6 +158,7 @@ int Game::setup()
 	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
 	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
+	imageShader.compileAndLink("Shaders/basic2d.vert", "Shaders/texture2d.frag");
 
 	DirLight dirLight;
 	dirLight.direction = glm::vec3(0.2f, -1.0f, 0.3f);
@@ -174,14 +176,19 @@ int Game::setup()
 	healthLabel = std::make_shared<Label>(font);
 	healthLabel->setText("100");
 	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
-	healthLabel->transform = Transform(glm::vec3(0.0f, windowHeight - 10.0f, 0.0f));
+	healthLabel->transform.setPosition(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f));
 	unsigned labelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
+
+	/* Health image */
+	std::shared_ptr<Image> healthImage = std::make_shared<Image>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
+	healthImage->transform.setPosition(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f));
+	unsigned healthImageHandle = uiRenderer.getEntityHandle(healthImage, imageShader);
 
 	/* Notification label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);
 	std::shared_ptr<Label> facingLabel = std::make_shared<Label>(font);
 	facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
-	facingLabel->transform = Transform(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f));
+	facingLabel->transform.setPosition(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f));
 	unsigned facingLabelHandle = uiRenderer.getEntityHandle(facingLabel, textShader);
 	font.reset();
 

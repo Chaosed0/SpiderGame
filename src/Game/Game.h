@@ -96,6 +96,7 @@ private:
 	Shader lightShader;
 	Shader skyboxShader;
 	Shader textShader;
+	Shader imageShader;
 
 	RoomGenerator roomGenerator;
 	RoomData roomData;
