@@ -35,6 +35,7 @@
 #include "Game/Components/VelocityComponent.h"
 
 #include "Game/Events/HealthChangedEvent.h"
+#include "Game/Events/GemCountChangedEvent.h"
 
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/Image.h"
@@ -391,7 +392,7 @@ int Game::setup()
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
-	playerInputSystem = std::make_unique<PlayerInputSystem>(world);
+	playerInputSystem = std::make_unique<PlayerInputSystem>(world, *eventManager);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
@@ -416,9 +417,15 @@ int Game::setup()
 			sstream << event.newHealth;
 			healthLabel->setText(sstream.str());
 		};
-	ComponentBitmask playerComponentBitmask;
-	playerComponentBitmask.setBit(world.getComponentId<PlayerComponent>(), true);
 	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback);
+
+	std::function<void(const GemCountChangedEvent& event)> gemCountChangedCallback =
+		[world = &world, gemLabel = gemLabel](const GemCountChangedEvent& event) {
+			std::stringstream sstream;
+			sstream << event.newGemCount;
+			gemLabel->setText(sstream.str());
+		};
+	eventManager->registerForEvent<GemCountChangedEvent>(gemCountChangedCallback);
 
 	return 0;
 }
@@ -589,6 +596,9 @@ void Game::handleEvent(SDL_Event& event)
 			break;
 		case SDLK_a:
 			playerInputSystem->startMoving(glm::vec2(0,-1));
+			break;
+		case SDLK_e:
+			playerInputSystem->activate();
 			break;
 		case SDLK_SPACE:
 			playerInputSystem->startJump();

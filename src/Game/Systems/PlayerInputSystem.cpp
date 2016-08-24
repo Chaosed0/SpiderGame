@@ -4,11 +4,12 @@
 #include "Util.h"
 #include "Game/Components/RigidbodyMotorComponent.h"
 #include "Game/Components/PlayerComponent.h"
+#include "Game/Events/GemCountChangedEvent.h"
 
-PlayerInputSystem::PlayerInputSystem(World& world)
-	: System(world),
+PlayerInputSystem::PlayerInputSystem(World& world, EventManager& eventManager)
+	: System(world), eventManager(eventManager),
 	forward(false), back(false), left(false), right(false),
-	jump(false), noclip(false), shooting(false),
+	jump(false), noclip(false), shooting(false), activating(false),
 	horizontalRad(0.0f), verticalRad(0.0f),
 	rotateHorizontal(0.0f), rotateVertical(0.0f)
 {
@@ -43,6 +44,11 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 		verticalRad = glm::clamp(verticalRad, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
 	}
 
+	if (activating) {
+		this->tryActivate(playerComponent);
+		activating = false;
+	}
+
 	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad);
 	rigidbodyMotorComponent->movement = movement;
 	rigidbodyMotorComponent->jump = jump;
@@ -51,6 +57,25 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 
 	playerComponent->shooting = shooting;
 	rotateHorizontal = rotateVertical = 0.0f;
+}
+
+void PlayerInputSystem::tryActivate(PlayerComponent* playerComponent)
+{
+	eid_t entity = playerComponent->lastFacedEntity;
+
+	if (entity == World::NullEntity) {
+		return;
+	}
+
+	if (world.getEntityName(entity).compare(0, 3, "Gem") == 0) {
+		playerComponent->gemCount++;
+		world.removeEntity(entity);
+
+		GemCountChangedEvent event;
+		event.newGemCount = playerComponent->gemCount;
+		event.oldGemCount = event.newGemCount - 1;
+		eventManager.sendEvent(event);
+	}
 }
 
 void PlayerInputSystem::startMoving(glm::vec2 movement)
@@ -105,4 +130,9 @@ void PlayerInputSystem::rotateCamera(float horizontal, float vertical)
 float PlayerInputSystem::getCameraVertical()
 {
 	return this->verticalRad;
+}
+
+void PlayerInputSystem::activate()
+{
+	activating = true;
 }

@@ -75,10 +75,6 @@ void Label::setText(const std::string& newText)
 
 void Label::generateTextMesh()
 {
-	if (text.size() == 0) {
-		return;
-	}
-
 	float cursorPos = 0.0f;
 	std::vector<glm::vec4> verts;
 	for (unsigned i = 0; i < text.size(); i++) {
