@@ -90,6 +90,7 @@ private:
 
 	UIRenderer uiRenderer;
 	std::shared_ptr<Label> healthLabel;
+	std::shared_ptr<Label> gemLabel;
 
 	Shader shader;
 	Shader skinnedShader;

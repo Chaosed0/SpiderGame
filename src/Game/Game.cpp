@@ -177,12 +177,25 @@ int Game::setup()
 	healthLabel->setText("100");
 	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
 	healthLabel->transform.setPosition(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f));
-	unsigned labelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
+	unsigned healthLabelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
 
 	/* Health image */
 	std::shared_ptr<Image> healthImage = std::make_shared<Image>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
 	healthImage->transform.setPosition(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f));
 	unsigned healthImageHandle = uiRenderer.getEntityHandle(healthImage, imageShader);
+
+	/* Gem label */
+	gemLabel = std::make_shared<Label>(font);
+	gemLabel->setAlignment(Label::Alignment_right);
+	gemLabel->setText("0");
+	gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	gemLabel->transform.setPosition(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f));
+	unsigned gemLabelHandle = uiRenderer.getEntityHandle(gemLabel, textShader);
+
+	/* Gem image */
+	std::shared_ptr<Image> gemImage = std::make_shared<Image>(Texture(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
+	gemImage->transform.setPosition(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f));
+	unsigned gemImageHandle = uiRenderer.getEntityHandle(gemImage, imageShader);
 
 	/* Notification label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);

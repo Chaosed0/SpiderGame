@@ -15,7 +15,8 @@ Label::Label(const std::shared_ptr<Font>& font)
 { }
 
 Label::Label(const std::shared_ptr<Font>& font, unsigned maxSize)
-	: font(font), maxSize(maxSize), nVertices(0), nIndices(0)
+	: font(font), maxSize(maxSize), nVertices(0), nIndices(0),
+	text(""), alignment(Alignment_left)
 {
 	this->generateBuffers();
 	material.setProperty("texture_diffuse", MaterialProperty(Texture(TextureType_diffuse, font->getTextureId())));
@@ -52,12 +53,36 @@ void Label::resizeBuffers()
 	glCheckError();
 }
 
+void Label::setAlignment(const Alignment& alignment)
+{
+	if (this->alignment == alignment) {
+		return;
+	}
+
+	this->alignment = alignment;
+	generateTextMesh();
+}
+
 void Label::setText(const std::string& newText)
 {
+	if (this->text.compare(newText) == 0) {
+		return;
+	}
+
+	this->text = newText;
+	generateTextMesh();
+}
+
+void Label::generateTextMesh()
+{
+	if (text.size() == 0) {
+		return;
+	}
+
 	float cursorPos = 0.0f;
 	std::vector<glm::vec4> verts;
-	for (unsigned i = 0; i < newText.size(); i++) {
-		char c = newText[i];
+	for (unsigned i = 0; i < text.size(); i++) {
+		char c = text[i];
 		Character character = font->getCharacter(c);
 
 		float xpos = (float)(cursorPos + character.bearing.x);
@@ -80,11 +105,29 @@ void Label::setText(const std::string& newText)
 		cursorPos += (character.advance >> 6);
 	}
 
+	glm::vec2 offset(0.0f);
+	switch(alignment) {
+	case Alignment_left:
+		// nothing
+		break;
+	case Alignment_right:
+		offset.x = -cursorPos;
+		break;
+	case Alignment_center:
+		offset.x = -cursorPos/2.0f;
+		break;
+	}
+
+	for (unsigned i = 0; i < verts.size(); i++) {
+		verts[i].x += offset.x;
+		verts[i].y += offset.y;
+	}
+
 	if (maxSize == 0) {
-		maxSize = newText.size();
+		maxSize = text.size();
 		this->generateBuffers();
-	} else if (maxSize < newText.size()) {
-		maxSize = newText.size();
+	} else if (maxSize < text.size()) {
+		maxSize = text.size();
 		this->resizeBuffers();
 	}
 
@@ -93,8 +136,8 @@ void Label::setText(const std::string& newText)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glCheckError();
 
-	this->nVertices = newText.size() * 4;
-	this->nIndices = newText.size() * 6;
+	this->nVertices = text.size() * 4;
+	this->nIndices = text.size() * 6;
 }
 
 std::vector<unsigned> Label::generateIndices()
