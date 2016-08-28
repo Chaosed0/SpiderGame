@@ -38,7 +38,7 @@
 #include "Game/Events/GemCountChangedEvent.h"
 
 #include "Renderer/UI/Label.h"
-#include "Renderer/UI/Image.h"
+#include "Renderer/UI/UIQuad.h"
 
 const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
@@ -126,14 +126,25 @@ int Game::setup()
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
+	/* Shaders */
+	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
+	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
+	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
+	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
+	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
+	imageShader.compileAndLink("Shaders/basic2d.vert", "Shaders/texture2d.frag");
+	backShader.compileAndLink("Shaders/basic2d.vert", "Shaders/singlecolor.frag");
+
 	/*! Event Manager */
 	eventManager = std::make_unique<EventManager>(world);
 
 	/* Console */
-	console = std::make_unique<Console>((float)windowWidth, windowHeight * 0.6f, (float)windowWidth, (float)windowHeight);
+	std::shared_ptr<Font> font(std::make_shared<Font>("assets/font/Inconsolata.otf", 12));
+	console = std::make_unique<Console>(font, glm::vec2((float)windowWidth, windowHeight * 0.6f));
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
 	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
+	console->addToRenderer(uiRenderer, backShader, textShader);
 
 	/* Renderer */
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
@@ -154,13 +165,6 @@ int Game::setup()
 	physics = std::make_unique<Physics>(dynamicsWorld, *eventManager);
 
 	/* Scene */
-	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
-	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
-	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
-	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
-	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
-	imageShader.compileAndLink("Shaders/basic2d.vert", "Shaders/texture2d.frag");
-
 	DirLight dirLight;
 	dirLight.direction = glm::vec3(0.2f, -1.0f, 0.3f);
 	dirLight.ambient = glm::vec3(0.2f);
@@ -173,15 +177,15 @@ int Game::setup()
 	printf("USING SEED: %ud\n", seed);
 
 	/* Health label */
-	std::shared_ptr<Font> font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
+	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
 	healthLabel = std::make_shared<Label>(font);
 	healthLabel->setText("100");
-	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	healthLabel->transform.setPosition(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f));
 	unsigned healthLabelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
 
 	/* Health image */
-	std::shared_ptr<Image> healthImage = std::make_shared<Image>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
+	std::shared_ptr<UIQuad> healthImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
 	healthImage->transform.setPosition(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f));
 	unsigned healthImageHandle = uiRenderer.getEntityHandle(healthImage, imageShader);
 
@@ -189,19 +193,19 @@ int Game::setup()
 	gemLabel = std::make_shared<Label>(font);
 	gemLabel->setAlignment(Label::Alignment_right);
 	gemLabel->setText("0");
-	gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gemLabel->transform.setPosition(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f));
 	unsigned gemLabelHandle = uiRenderer.getEntityHandle(gemLabel, textShader);
 
 	/* Gem image */
-	std::shared_ptr<Image> gemImage = std::make_shared<Image>(Texture(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
+	std::shared_ptr<UIQuad> gemImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
 	gemImage->transform.setPosition(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f));
 	unsigned gemImageHandle = uiRenderer.getEntityHandle(gemImage, imageShader);
 
 	/* Notification label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);
 	std::shared_ptr<Label> facingLabel = std::make_shared<Label>(font);
-	facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec3(1.0f, 1.0f, 1.0f)));
+	facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	facingLabel->transform.setPosition(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f));
 	unsigned facingLabelHandle = uiRenderer.getEntityHandle(facingLabel, textShader);
 	font.reset();
@@ -343,7 +347,7 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	for (int i = 0; i < 0; i++) {
+	for (int i = 0; i < 10; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -478,13 +482,6 @@ void Game::draw()
 
 	renderer.draw();
 	debugDrawer.draw();
-
-	glDisable(GL_DEPTH_TEST);
-	if (consoleIsVisible) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		console->draw();
-	}
-
 	uiRenderer.draw();
 
 	SDL_GL_SwapWindow(window);
@@ -565,6 +562,7 @@ void Game::handleEvent(SDL_Event& event)
 				SDL_StopTextInput();
 				SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
+			console->setVisible(consoleIsVisible);
 		}
 
 		if (consoleIsVisible) {

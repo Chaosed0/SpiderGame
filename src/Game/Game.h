@@ -98,6 +98,7 @@ private:
 	Shader skyboxShader;
 	Shader textShader;
 	Shader imageShader;
+	Shader backShader;
 
 	RoomGenerator roomGenerator;
 	RoomData roomData;

@@ -10,6 +10,9 @@
 
 const unsigned Label::defaultSize = 64;
 
+Label::Label()
+{ }
+
 Label::Label(const std::shared_ptr<Font>& font)
 	: Label(font, defaultSize)
 { }
@@ -73,8 +76,22 @@ void Label::setText(const std::string& newText)
 	generateTextMesh();
 }
 
+void Label::setFont(const std::shared_ptr<Font>& font)
+{
+	if (this->font == font) {
+		return;
+	}
+
+	this->font = font;
+	generateTextMesh();
+}
+
 void Label::generateTextMesh()
 {
+	if (font == nullptr) {
+		return;
+	}
+
 	float cursorPos = 0.0f;
 	std::vector<glm::vec4> verts;
 	for (unsigned i = 0; i < text.size(); i++) {

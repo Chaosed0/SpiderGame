@@ -4,15 +4,16 @@
 #include "Renderable2d.h"
 #include "Transform.h"
 #include "Renderer/Texture.h"
+#include "Renderer/UI/UIUtil.h"
 
 #include <memory>
 
-class Image : public Renderable2d
+class UIQuad : public Renderable2d
 {
 public:
-	Image(const Texture& texture, const glm::vec2& size);
-
-	void initialize(const Texture& texture, const glm::vec2& size);
+	UIQuad(const glm::vec2& size);
+	UIQuad(const Texture& texture, const glm::vec2& size);
+	UIQuad(const glm::vec4& color, const glm::vec2& size);
 
 	virtual unsigned getVao() const;
 	virtual unsigned getIndexCount() const;
@@ -23,5 +24,5 @@ public:
 	Transform transform;
 private:
 	Texture texture;
-	unsigned vao, vbo, ebo;
+	UIUtilQuad quad;
 };

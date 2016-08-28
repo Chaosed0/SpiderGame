@@ -24,11 +24,12 @@ MaterialProperty Material::getProperty(const std::string& key)
 void Material::setProperty(const std::string& key, MaterialProperty property)
 {
 	auto iter = properties.find(key);
-	property.propertyId = nextId++;
 
 	if (iter != properties.end()) {
+		property.propertyId = iter->second.propertyId;
 		iter->second = property;
 	} else {
+		property.propertyId = nextId++;
 		properties.emplace(key, property);
 	}
 }

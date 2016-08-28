@@ -3,7 +3,6 @@ in vec2 textureCoord;
 out vec4 color;
 
 struct Material {
-	vec3 textColor;
 	sampler2D texture_diffuse;
 };
 uniform Material material;

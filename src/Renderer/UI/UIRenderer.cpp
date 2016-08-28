@@ -37,6 +37,8 @@ void UIRenderer::draw()
 	for (auto iter = pool.begin(); iter != pool.end(); ++iter)
 	{
 		UIRendererEntity& entity = iter->second;
+		assert(entity.renderable != NULL);
+
 		const Renderable2d& renderable = *entity.renderable;
 		const Shader& shader = shaderMap[entity.shaderHandle];
 		const Material& material = renderable.getMaterial();

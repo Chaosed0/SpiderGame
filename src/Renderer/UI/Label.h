@@ -16,11 +16,13 @@ public:
 		Alignment_right
 	};
 
+	Label();
 	Label(const std::shared_ptr<Font>& font);
 	Label(const std::shared_ptr<Font>& font, unsigned maxSize);
 
 	void setAlignment(const Alignment& alignment);
 	void setText(const std::string& newText);
+	void setFont(const std::shared_ptr<Font>& font);
 
 	virtual unsigned getVao() const;
 	virtual unsigned getIndexCount() const;

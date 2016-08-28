@@ -1,9 +1,6 @@
 
 #include "Console.h"
 
-#include <Windows.h>
-#include <GL/glew.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -17,49 +14,23 @@ const float Console::yPadding = 2.0f;
 const float Console::linePadding = 2.0f;
 const unsigned int Console::maxBufferLines = 30;
 const unsigned int Console::maxLineSize = 250;
+const glm::vec4 Console::textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+const glm::vec4 Console::backColor = glm::vec4(0.0f, 0.7f, 0.2f, 0.5f);
 
-Console::Console(float width, float height, float windowWidth, float windowHeight)
-	: width(width), height(height), bottom(windowHeight - height), buffer(maxBufferLines)
+Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
+	: size(size), font(font),
+	buffer(maxBufferLines), bufferEnd(0), numBufferedLines(0),
+	backQuad(std::make_shared<UIQuad>(size)), inputLabel(std::make_shared<Label>(font)),
+	bufferLabels(maxBufferLines)
 {
-	font.loadCharacters("assets/font/Inconsolata.otf", 12);
-
+	backQuad->material.setProperty("color", backColor);
 	lineHeight = 15.0f;
-	bufferEnd = 0;
-	numBufferedLines = 0;
-	
-	glm::vec3 backQuadVerts[6];
-	backQuadVerts[1] = glm::vec3(0.0f, windowHeight, 0.0f);
-	backQuadVerts[0] = glm::vec3(0.0f, windowHeight - height, 0.0f);
-	backQuadVerts[2] = glm::vec3(width, windowHeight - height, 0.0f);
-	backQuadVerts[3] = glm::vec3(0.0f, windowHeight, 0.0f);
-	backQuadVerts[5] = glm::vec3(width, windowHeight - height, 0.0f);
-	backQuadVerts[4] = glm::vec3(width, windowHeight, 0.0f);
-	
-	glGenVertexArrays(1, &glyphVao);
-	glGenBuffers(1, &glyphQuad);
-	glGenVertexArrays(1, &backVao);
-	glGenBuffers(1, &backQuad);
-	
-	glBindVertexArray(glyphVao);
-	glBindBuffer(GL_ARRAY_BUFFER, glyphQuad);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4 * maxLineSize, NULL, GL_DYNAMIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	
-	glBindVertexArray(backVao);
-	glBindBuffer(GL_ARRAY_BUFFER, backQuad);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(backQuadVerts), backQuadVerts, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	
-	this->projection = glm::ortho(0.0f, windowWidth, 0.0f, windowHeight);
+	for (unsigned i = 0; i < bufferLabels.size(); i++) {
+		bufferLabels[i] = std::make_shared<Label>(font);
+	}
 
-	backShader.compileAndLink("Shaders/back.vert", "Shaders/singlecolor.frag");
-	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
+	this->repositionLabels();
+	this->inputLabel->setText("> ");
 }
 
 void Console::addCallback(const std::string& functionName, Callback callback)
@@ -70,6 +41,15 @@ void Console::addCallback(const std::string& functionName, Callback callback)
 void Console::inputChar(char c)
 {
 	this->input.push_back(c);
+	this->inputLabel->setText("> " + this->input);
+}
+
+void Console::backspace()
+{
+	if (!input.empty()) {
+		input.pop_back();
+	}
+	this->inputLabel->setText("> " + this->input);
 }
 
 void Console::endLine()
@@ -100,100 +80,55 @@ void Console::endLine()
 	}
 
 	this->input.clear();
+	this->inputLabel->setText("> ");
 }
 
-void Console::backspace()
+void Console::addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader textShader)
 {
-	if (!input.empty()) {
-		input.pop_back();
+	uiRenderer.getEntityHandle(backQuad, backShader);
+	uiRenderer.getEntityHandle(inputLabel, textShader);
+	for (unsigned i = 0; i < bufferLabels.size(); i++) {
+		uiRenderer.getEntityHandle(bufferLabels[i], textShader);
+	}
+}
+
+void Console::setVisible(bool visible)
+{
+	float alpha = 0.0f;
+	if (visible) {
+		alpha = 1.0f;
+	}
+
+	glm::vec4 localTextColor(textColor);
+	glm::vec4 localBackColor(backColor);
+	localTextColor.a *= alpha;
+	localBackColor.a *= alpha;
+
+	backQuad->material.setProperty("color", localBackColor);
+	inputLabel->material.setProperty("textColor", localTextColor);
+	for (unsigned i = 0; i < bufferLabels.size(); i++) {
+		bufferLabels[i]->material.setProperty("textColor", localTextColor);
 	}
 }
 
 void Console::print(const std::string& message)
 {
 	this->buffer[this->bufferEnd] = message;
+	this->bufferLabels[this->bufferEnd]->setText(message);
 	this->bufferEnd = (this->bufferEnd+1)%buffer.size();
 	this->numBufferedLines = std::min((unsigned int)this->buffer.size(), this->numBufferedLines+1);
+
+	this->repositionLabels();
 }
 
-void Console::draw()
+void Console::repositionLabels()
 {
-	backShader.use();
-	glUniform4f(backShader.getUniformLocation("material.color"), 0.2f, 0.8f, 0.2f, 0.5f);
-	glUniformMatrix4fv(backShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
-	glBindVertexArray(backVao);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	glBindVertexArray(0);
+	float bottom = size.y - yPadding;
+	this->inputLabel->transform.setPosition(glm::vec3(this->xPadding, bottom, 0.0f));
 
-	// Activate corresponding render state	
-	textShader.use();
-	glUniform3f(textShader.getUniformLocation("material.textColor"), 0.0f, 0.0f, 0.0f);
-	glUniformMatrix4fv(textShader.getUniformLocation("projection"), 1, GL_FALSE, &projection[0][0]);
-	glUniformMatrix4fv(textShader.getUniformLocation("model"), 1, GL_FALSE, &glm::mat4()[0][0]);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, font.getTextureId());
-
-	glBindVertexArray(glyphVao);
-
-	drawLine("> " + input, (unsigned int)(this->bottom + yPadding + lineHeight));
-	for (unsigned int i = 0; i < numBufferedLines; i++) {
-		int index = bufferEnd-i-1;
-		if (index < 0) {
-			index = buffer.size() + index;
-		}
-		float top = this->bottom + yPadding + (i+2) * (linePadding + lineHeight);
-		drawLine(buffer[index], (unsigned int)top);
+	for (unsigned i = 0; i < numBufferedLines; i++) {
+		bottom -= linePadding + lineHeight;
+		int index = (this->buffer.size() * 2 + (this->bufferEnd - 1 - i)) % this->buffer.size();
+		this->bufferLabels[index]->transform.setPosition(glm::vec3(this->xPadding, bottom, 0.0f));
 	}
-
-	glBindVertexArray(0);
-}
-
-void Console::drawLine(std::string line, unsigned int top)
-{
-	unsigned int x = (unsigned int)xPadding;
-	unsigned int y = top;
-	unsigned int lineSize = std::min((unsigned int)line.size(), maxLineSize);
-	float scale = 1.0f;
-	glm::ivec2 textureSize = font.getTextureSize();
-
-	// six verts * four floats, per character
-	GLfloat vertices[6 * 4 * maxLineSize];
-
-	for (unsigned int i = 0; i < lineSize; i++) {
-		Character ch = font.getCharacter(line[i]);
-
-		GLfloat xpos = x + ch.bearing.x * scale;
-		GLfloat ypos = y - (ch.size.y - ch.bearing.y) * scale;
-
-		GLfloat w = ch.size.x * scale;
-		GLfloat h = ch.size.y * scale;
-
-		// Normalize texture coordinates
-		float texLeft = ch.origin.x / (float)textureSize.x;
-		float texRight = (ch.origin.x + ch.size.x) / (float)textureSize.x;
-		float texBot = ch.origin.y / (float)textureSize.y;
-		float texTop = (ch.origin.y + ch.size.y) / (float)textureSize.y;
-		GLfloat charVerts[24] = {
-			xpos,     ypos + h,   texLeft, texBot,
-			xpos,     ypos,       texLeft, texTop,
-			xpos + w, ypos,       texRight, texTop,
-
-			xpos,     ypos + h,   texLeft, texBot,
-			xpos + w, ypos,       texRight, texTop,
-			xpos + w, ypos + h,   texRight, texBot
-		};
-
-		memcpy(vertices + i*24, charVerts, sizeof(charVerts));
-
-		// Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-		x += (unsigned)((ch.advance >> 6) * scale); // Bitshift by 6 to get value in pixels (2^6 = 64)
-	}
-
-	// Update content of VBO memory
-	glBindBuffer(GL_ARRAY_BUFFER, glyphQuad);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * 24 * lineSize, vertices);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// Render quads
-	glDrawArrays(GL_TRIANGLES, 0, lineSize * 6);
 }

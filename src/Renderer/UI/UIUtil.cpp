@@ -1,20 +1,15 @@
 
-#include "Image.h"
+#include "UIUtil.h"
 #include "Renderer/RenderUtil.h"
+
+#include <vector>
 
 #include <Windows.h>
 #include <GL/glew.h>
 
-#include <algorithm>
-
-Image::Image(const Texture& texture, const glm::vec2& size)
+UIUtilQuad UIUtil::generateQuad(const glm::vec2& size)
 {
-	initialize(texture, size);
-}
-
-void Image::initialize(const Texture& texture, const glm::vec2& size)
-{
-	material.setProperty("texture_diffuse", texture);
+	UIUtilQuad quad;
 
 	std::vector<glm::vec4> verts;
 	verts.push_back(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -30,18 +25,18 @@ void Image::initialize(const Texture& texture, const glm::vec2& size)
 	indices.push_back(3);
 	indices.push_back(1);
 
-	glGenVertexArrays(1, &this->vao);
-	glGenBuffers(1, &this->vbo);
-	glGenBuffers(1, &this->ebo);
+	glGenVertexArrays(1, &quad.vao);
+	glGenBuffers(1, &quad.vbo);
+	glGenBuffers(1, &quad.ebo);
 	glCheckError();
 
-	glBindVertexArray(this->vao);
+	glBindVertexArray(quad.vao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, this->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
 	glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(GLfloat) * 4, verts.data(), GL_STATIC_DRAW);
 	glCheckError();
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 	glCheckError();
 
@@ -51,24 +46,6 @@ void Image::initialize(const Texture& texture, const glm::vec2& size)
 
 	glBindVertexArray(0);
 	glCheckError();
-}
 
-unsigned Image::getVao() const
-{
-	return this->vao;
-}
-
-unsigned Image::getIndexCount() const
-{
-	return 6;
-}
-
-const Material& Image::getMaterial() const
-{
-	return this->material;
-}
-
-glm::mat4 Image::getTransform() const
-{
-	return this->transform.matrix();
+	return quad;
 }
