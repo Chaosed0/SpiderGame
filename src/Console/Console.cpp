@@ -86,11 +86,11 @@ void Console::endLine()
 
 void Console::addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader textShader)
 {
-	uiRenderer.getEntityHandle(backQuad, backShader);
 	uiRenderer.getEntityHandle(inputLabel, textShader);
 	for (unsigned i = 0; i < bufferLabels.size(); i++) {
 		uiRenderer.getEntityHandle(bufferLabels[i], textShader);
 	}
+	uiRenderer.getEntityHandle(backQuad, backShader);
 }
 
 void Console::setVisible(bool visible)
@@ -132,7 +132,7 @@ void Console::print(const std::string& message)
 void Console::repositionLabels()
 {
 	float bottom = size.y - yPadding;
-	this->inputLabel->transform.setPosition(glm::vec3(this->xPadding, bottom, -1.0f));
+	this->inputLabel->transform.setPosition(glm::vec3(this->xPadding, bottom, 1.0f));
 
 	// This rotates the labels' positions.
 	// We could keep the labels at the same position and rotate the text, but setting
@@ -140,7 +140,7 @@ void Console::repositionLabels()
 	for (unsigned i = 0; i < numBufferedLines; i++) {
 		bottom -= linePadding + lineHeight;
 		int index = (this->buffer.size() * 2 + (this->bufferEnd - 1 - i)) % this->buffer.size();
-		this->bufferLabels[index]->transform.setPosition(glm::vec3(this->xPadding, bottom, -1.0f));
+		this->bufferLabels[index]->transform.setPosition(glm::vec3(this->xPadding, bottom, 1.0f));
 	}
 }
 

@@ -9,6 +9,11 @@
 #include "Renderer/Material.h"
 #include "Renderer/RenderUtil.h"
 
+bool UIRenderer::UIRendererSortComparator::operator() (const std::pair<uint32_t, UIRendererEntity>& p1, const std::pair<uint32_t, UIRendererEntity>& p2)
+{
+	return p1.second.renderable->getTransform().getPosition().z < p2.second.renderable->getTransform().getPosition().z;
+}
+
 UIRenderer::UIRenderer()
 { }
 
@@ -29,12 +34,16 @@ unsigned UIRenderer::getEntityHandle(const std::shared_ptr<Renderable2d>& render
 	entity.renderable = renderable;
 	entity.shaderHandle = shader.getID();
 
-	return pool.getNewHandle(entity);
+	uint32_t handle = pool.getNewHandle(entity);
+	sortedEntities.push_back(std::make_pair(handle, entity));
+
+	return handle;
 }
 
 void UIRenderer::draw()
 {
-	for (auto iter = pool.begin(); iter != pool.end(); ++iter)
+	sortedEntities.sort(comparator);
+	for (auto iter = sortedEntities.begin(); iter != sortedEntities.end(); ++iter)
 	{
 		UIRendererEntity& entity = iter->second;
 		assert(entity.renderable != NULL);
@@ -44,7 +53,7 @@ void UIRenderer::draw()
 		const Material& material = renderable.getMaterial();
 
 		shader.use();
-		shader.setModelMatrix(&renderable.getTransform()[0][0]);
+		shader.setModelMatrix(&renderable.getTransform().matrix()[0][0]);
 		shader.setProjectionMatrix(&projection[0][0]);
 		shader.setViewMatrix(&glm::mat4()[0][0]);
 		

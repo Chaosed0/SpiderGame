@@ -18,7 +18,7 @@ public:
 	virtual unsigned getVao() const;
 	virtual unsigned getIndexCount() const;
 	virtual const Material& getMaterial() const;
-	virtual glm::mat4 getTransform() const;
+	virtual Transform getTransform() const;
 
 	Material material;
 	Transform transform;

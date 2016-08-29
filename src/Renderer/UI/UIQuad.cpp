@@ -39,7 +39,7 @@ const Material& UIQuad::getMaterial() const
 	return this->material;
 }
 
-glm::mat4 UIQuad::getTransform() const
+Transform UIQuad::getTransform() const
 {
-	return this->transform.matrix();
+	return this->transform;
 }
