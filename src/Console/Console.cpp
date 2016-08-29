@@ -10,11 +10,11 @@
 #include <algorithm>
 
 const float Console::xPadding = 5.0f;
-const float Console::yPadding = 2.0f;
+const float Console::yPadding = 5.0f;
 const float Console::linePadding = 2.0f;
 const unsigned int Console::maxBufferLines = 30;
 const unsigned int Console::maxLineSize = 250;
-const glm::vec4 Console::textColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+const glm::vec4 Console::textColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 const glm::vec4 Console::backColor = glm::vec4(0.0f, 0.7f, 0.2f, 0.5f);
 
 Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
@@ -30,7 +30,8 @@ Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
 	}
 
 	this->repositionLabels();
-	this->inputLabel->setText("> ");
+	this->updateInputLabel();
+	this->setVisible(false);
 }
 
 void Console::addCallback(const std::string& functionName, Callback callback)
@@ -41,24 +42,24 @@ void Console::addCallback(const std::string& functionName, Callback callback)
 void Console::inputChar(char c)
 {
 	this->input.push_back(c);
-	this->inputLabel->setText("> " + this->input);
+	this->updateInputLabel();
 }
 
 void Console::backspace()
 {
 	if (!input.empty()) {
-		input.pop_back();
+		this->input.pop_back();
+		this->updateInputLabel();
 	}
-	this->inputLabel->setText("> " + this->input);
 }
 
 void Console::endLine()
 {
-	if (input.empty()) {
+	if (this->input.empty()) {
 		return;
 	}
 
-	this->print(input);
+	this->print(this->input);
 
 	size_t firstSpace = input.find_first_of(' ');
 	std::string functionName;
@@ -74,13 +75,13 @@ void Console::endLine()
 	CallbackMap::Error error = callbackMap.call(functionName, args);
 
 	if (error == CallbackMap::CALLBACK_NOT_FOUND) {
-		print("Error: Didn't find callback with name " + functionName);
+		this->print("Error: Didn't find callback with name " + functionName);
 	} else if (error == CallbackMap::CALLBACK_BAD_ARGS) {
-		print("Error: Bad arguments passed to function " + functionName);
+		this->print("Error: Bad arguments passed to function " + functionName);
 	}
 
 	this->input.clear();
-	this->inputLabel->setText("> ");
+	this->updateInputLabel();
 }
 
 void Console::addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader textShader)
@@ -94,6 +95,8 @@ void Console::addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader te
 
 void Console::setVisible(bool visible)
 {
+	this->visible = visible;
+
 	float alpha = 0.0f;
 	if (visible) {
 		alpha = 1.0f;
@@ -111,6 +114,11 @@ void Console::setVisible(bool visible)
 	}
 }
 
+bool Console::isVisible()
+{
+	return this->visible;
+}
+
 void Console::print(const std::string& message)
 {
 	this->buffer[this->bufferEnd] = message;
@@ -124,11 +132,19 @@ void Console::print(const std::string& message)
 void Console::repositionLabels()
 {
 	float bottom = size.y - yPadding;
-	this->inputLabel->transform.setPosition(glm::vec3(this->xPadding, bottom, 0.0f));
+	this->inputLabel->transform.setPosition(glm::vec3(this->xPadding, bottom, -1.0f));
 
+	// This rotates the labels' positions.
+	// We could keep the labels at the same position and rotate the text, but setting
+	// text is a more expensive operation than setting position.
 	for (unsigned i = 0; i < numBufferedLines; i++) {
 		bottom -= linePadding + lineHeight;
 		int index = (this->buffer.size() * 2 + (this->bufferEnd - 1 - i)) % this->buffer.size();
-		this->bufferLabels[index]->transform.setPosition(glm::vec3(this->xPadding, bottom, 0.0f));
+		this->bufferLabels[index]->transform.setPosition(glm::vec3(this->xPadding, bottom, -1.0f));
 	}
+}
+
+void Console::updateInputLabel()
+{
+	this->inputLabel->setText("> " + input);
 }

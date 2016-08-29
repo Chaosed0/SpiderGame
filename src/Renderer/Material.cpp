@@ -42,7 +42,7 @@ void Material::apply(const Shader& shader) const
 		const std::string& propertyName = iter->first;
 		const MaterialProperty& property = iter->second;
 
-		// Simple hash - assume we'll never have more than 2^56 total material properties and 2^8
+		// Simple mapping - assume we'll never have more than 2^56 total material properties and 2^8
 		// shaders and that shaders are assigned ids sequentially (foolish to assume on all implementations?)
 		assert (property.propertyId < ((uint64_t)1 << 56) && shader.getID() < (1 << 8));
 		uint64_t hash = property.propertyId << 8 | shader.getID();

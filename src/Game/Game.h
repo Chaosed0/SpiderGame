@@ -135,7 +135,6 @@ private:
 	BulletDebugDrawer debugDrawer;
 
 	std::unique_ptr<Console> console;
-	bool consoleIsVisible;
 
 	std::default_random_engine generator;
 

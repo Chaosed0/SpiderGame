@@ -22,7 +22,9 @@ public:
 
 	void backspace();
 	void endLine();
+
 	void setVisible(bool visible);
+	bool isVisible();
 
 	void addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader textShader);
 
@@ -30,6 +32,7 @@ public:
 private:
 	std::string input;
 	std::vector<std::string> buffer;
+	unsigned int bufferEnd, numBufferedLines;
 
 	std::shared_ptr<Font> font;
 	std::shared_ptr<Label> inputLabel;
@@ -39,13 +42,9 @@ private:
 
 	CallbackMap callbackMap;
 
-	unsigned int bufferEnd, numBufferedLines;
-
 	glm::vec2 size;
 	float lineHeight;
-
-	Shader textShader;
-	Shader backShader;
+	bool visible;
 
 	const static float xPadding;
 	const static float yPadding;
@@ -56,4 +55,5 @@ private:
 	const static glm::vec4 backColor;
 
 	void repositionLabels();
+	void updateInputLabel();
 };

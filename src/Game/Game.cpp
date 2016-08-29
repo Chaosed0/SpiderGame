@@ -443,25 +443,25 @@ int Game::loop()
 {
 	// Initialize lastUpdate to get an accurate time
 	lastUpdate = SDL_GetTicks();
-	consoleIsVisible = true;
+	console->setVisible(true);
 	while (running)
 	{
-		// Pause while the console is visible
-		if (!consoleIsVisible) {
-			accumulator += SDL_GetTicks() - lastUpdate;
-		}
-
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			this->handleEvent(event);
 		}
 
-		lastUpdate = SDL_GetTicks();
-		if (accumulator >= 1000.0f / updatesPerSecond)
-		{
-			timeDelta = 1.0f / updatesPerSecond;
-			update();
-			accumulator -= 1000.0f / updatesPerSecond;
+		// Pause while the console is visible
+		if (!console->isVisible()) {
+			accumulator += SDL_GetTicks() - lastUpdate;
+
+			lastUpdate = SDL_GetTicks();
+			if (accumulator >= 1000.0f / updatesPerSecond)
+			{
+				timeDelta = 1.0f / updatesPerSecond;
+				update();
+				accumulator -= 1000.0f / updatesPerSecond;
+			}
 		}
 	
 		draw();
@@ -472,13 +472,7 @@ int Game::loop()
 
 void Game::draw()
 {
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, this->wireframe ? GL_LINE : GL_FILL);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	renderer.draw();
 	debugDrawer.draw();
@@ -542,7 +536,7 @@ void Game::handleEvent(SDL_Event& event)
 		playerInputSystem->rotateCamera((float)event.motion.xrel, (float)event.motion.yrel);
 		break;
 	case SDL_TEXTINPUT:
-		if (consoleIsVisible) {
+		if (console->isVisible()) {
 			char c;
 			for (int i = 0; (c = event.text.text[i]) != '\0'; i++) {
 				if (c == '`') {
@@ -554,18 +548,17 @@ void Game::handleEvent(SDL_Event& event)
 		}
 	case SDL_KEYDOWN:
 		if (event.key.keysym.sym == SDLK_BACKQUOTE) {
-			consoleIsVisible = !consoleIsVisible;
-			if (consoleIsVisible) {
+			console->setVisible(!console->isVisible());
+			if (console->isVisible()) {
 				SDL_StartTextInput();
 				SDL_SetRelativeMouseMode(SDL_FALSE);
 			} else {
 				SDL_StopTextInput();
 				SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
-			console->setVisible(consoleIsVisible);
 		}
 
-		if (consoleIsVisible) {
+		if (console->isVisible()) {
 			switch(event.key.keysym.sym) {
 			case SDLK_RETURN:
 				console->endLine();
@@ -604,7 +597,7 @@ void Game::handleEvent(SDL_Event& event)
 		}
 		break;
 	case SDL_KEYUP:
-		if (consoleIsVisible) {
+		if (console->isVisible()) {
 			break;
 		}
 
