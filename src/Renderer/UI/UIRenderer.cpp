@@ -42,7 +42,11 @@ unsigned UIRenderer::getEntityHandle(const std::shared_ptr<Renderable2d>& render
 
 void UIRenderer::draw()
 {
+	// We can't sort only when an element is added - elements' transforms might change
+	// without us knowing. That being said, this is going to be slow for large amounts
+	// of UI elements. Right now we don't have that many...
 	sortedEntities.sort(comparator);
+
 	for (auto iter = sortedEntities.begin(); iter != sortedEntities.end(); ++iter)
 	{
 		UIRendererEntity& entity = iter->second;
