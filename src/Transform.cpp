@@ -1,5 +1,6 @@
 
 #include "Transform.h"
+#include "Util.h"
 
 const Transform Transform::identity = Transform();
 
@@ -76,7 +77,7 @@ void Transform::setScale(glm::vec3 newScale)
 
 glm::vec3 Transform::getForward() const
 {
-	return rotation * glm::vec3(0,0,1);
+	return rotation * Util::forward;
 }
 
 void Transform::addChild(Transform* child)

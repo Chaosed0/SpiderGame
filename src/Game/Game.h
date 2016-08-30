@@ -18,6 +18,8 @@
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/Font.h"
 
+#include "Sound/SoundManager.h"
+
 #include "Console/Console.h"
 #include "Environment/Terrain.h"
 #include "Environment/Room.h"
@@ -130,6 +132,8 @@ private:
 	std::shared_ptr<DamageEventResponder> damageEventResponder;
 	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
 	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
+
+	SoundManager soundManager;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;

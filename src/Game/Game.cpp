@@ -36,6 +36,7 @@
 
 #include "Game/Events/HealthChangedEvent.h"
 #include "Game/Events/GemCountChangedEvent.h"
+#include "Game/Events/ShotEvent.h"
 
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/UIQuad.h"
@@ -121,6 +122,10 @@ int Game::setup()
 	}
 
 	if (!renderer.initialize()) {
+		return -1;
+	}
+
+	if (!soundManager.initialize()) {
 		return -1;
 	}
 
@@ -395,7 +400,7 @@ int Game::setup()
 		spiderComponent->attackTime = 1.0f;
 	}
 
-	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer);
+	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world, *eventManager);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
@@ -412,6 +417,17 @@ int Game::setup()
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, *eventManager);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
+
+	unsigned audioSourceHandle = soundManager.getSourceHandle();
+	AudioClip shotClip("assets/sound/hvylas.wav");
+	std::function<void(const ShotEvent& event)> shotCallback =
+		[world = &world, soundManager = &soundManager, audioSourceHandle, shotClip](const ShotEvent& event) {
+			TransformComponent* transformComponent = world->getComponent<TransformComponent>(event.source);
+			soundManager->setListenerTransform(transformComponent->transform);
+			soundManager->setSourcePosition(audioSourceHandle, transformComponent->transform.getPosition());
+			soundManager->playClipAtSource(shotClip, audioSourceHandle);
+		};
+	eventManager->registerForEvent<ShotEvent>(shotCallback);
 
 	std::function<void(const HealthChangedEvent& event)> healthChangedCallback =
 		[world = &world, healthLabel = healthLabel](const HealthChangedEvent& event) {
@@ -484,6 +500,7 @@ void Game::draw()
 void Game::update()
 {
 	renderer.update(timeDelta);
+	soundManager.update();
 
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);

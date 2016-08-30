@@ -13,13 +13,15 @@ project "OpenGLTest"
     targetdir "bin/%{cfg.buildcfg}"
 
     files { "src/**.h", "src/**.cpp" }
-    links { "BulletDynamics", "BulletCollision", "LinearMath", "SDL2", "SDL2main", "SDL2_image", "glew32", "OpenGL32", "libnoise" }
+    links { "BulletDynamics", "BulletCollision", "LinearMath", "SDL2", "SDL2main", "SDL2_image", "OpenAL32", "libsndfile-1", "glew32", "OpenGL32", "libnoise" }
     includedirs {
                     os.getenv("FREETYPE_INCLUDEDIR"),
                     os.getenv("ASSIMP_INCLUDEDIR"),
                     os.getenv("BULLET_INCLUDEDIR"),
                     os.getenv("SDL_INCLUDEDIR"),
                     os.getenv("SDL_IMAGE_INCLUDEDIR"),
+                    os.getenv("OPENAL_INCLUDEDIR"),
+                    os.getenv("LIBSNDFILE_INCLUDEDIR"),
                     os.getenv("GLM_INCLUDEDIR"),
                     os.getenv("GLEW_INCLUDEDIR"),
                     os.getenv("NOISE_INCLUDEDIR"),
@@ -35,6 +37,8 @@ project "OpenGLTest"
             os.getenv("BULLET_LIBDIR_D"),
             os.getenv("SDL_LIBDIR_D"),
             os.getenv("SDL_IMAGE_LIBDIR_D"),
+            os.getenv("OPENAL_LIBDIR_D"),
+            os.getenv("LIBSNDFILE_LIBDIR_D"),
             os.getenv("GLEW_LIBDIR_D"),
             os.getenv("NOISE_LIBDIR_D"),
             os.getenv("EXTRA_LIBDIR_D")
@@ -51,6 +55,8 @@ project "OpenGLTest"
             os.getenv("BULLET_LIBDIR"),
             os.getenv("SDL_LIBDIR"),
             os.getenv("SDL_IMAGE_LIBDIR"),
+            os.getenv("OPENAL_LIBDIR"),
+            os.getenv("LIBSNDFILE_LIBDIR"),
             os.getenv("GLEW_LIBDIR"),
             os.getenv("NOISE_LIBDIR"),
             os.getenv("EXTRA_LIBDIR")

@@ -8,6 +8,7 @@ template <class T>
 class HandlePool
 {
 public:
+	HandlePool() : nextHandle(0) { }
 	using Pool = std::unordered_map<uint32_t, T>;
 
 	uint32_t getNewHandle(const T& obj);

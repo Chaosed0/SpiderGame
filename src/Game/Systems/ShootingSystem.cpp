@@ -20,9 +20,12 @@
 #include "Game/Components/ModelRenderComponent.h"
 #include "Game/Components/VelocityComponent.h"
 
-ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer)
+#include "Game/Events/ShotEvent.h"
+
+ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer, EventManager& eventManager)
 	: System(world),
 	dynamicsWorld(dynamicsWorld),
+	eventManager(eventManager),
 	renderer(renderer),
 	lineShader("Shaders/basic.vert", "Shaders/singlecolor.frag")
 {
@@ -53,6 +56,11 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	{
 		Transform& transform = transformComponent->transform;
 		playerComponent->shotTimer = 0.0f;
+
+		/* Fire off an event to let people know we shot a bullet */
+		ShotEvent event;
+		event.source = entity;
+		eventManager.sendEvent(event);
 
 		TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
 
