@@ -26,7 +26,9 @@ public:
 	void setSourceVolume(unsigned handle, float volume);
 	void setSourcePriority(unsigned handle, int priority);
 
-	void playClipAtSource(AudioClip clip, unsigned sourceHandle);
+	unsigned playClipAtSource(AudioClip clip, unsigned sourceHandle);
+	void stopClip(unsigned clipHandle);
+	bool clipValid(unsigned clipHandle);
 
 	void update();
 private:
@@ -35,13 +37,15 @@ private:
 		glm::vec3 position;
 		float volume;
 		int priority;
+		bool dirty;
 	};
 
 	struct Source
 	{
 		ALuint alSource;
 		unsigned logicalSourceHandle;
-		bool wasPlaying;
+		unsigned clipHandle;
+		bool startPlaying;
 		bool playing;
 	};
 
@@ -49,10 +53,13 @@ private:
 	ALCcontext* context;
 
 	HandlePool<LogicalSource> sourcePool;
+	HandlePool<size_t> clipPool;
 	std::vector<Source> sources;
 
 	std::deque<size_t> freeSources;
 	unsigned sourceCount;
+	Transform listenerTransform;
 
 	const static unsigned maxSources;
+	static LogicalSource invalidSource;
 };

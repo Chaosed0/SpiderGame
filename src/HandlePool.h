@@ -15,7 +15,7 @@ public:
 	void freeHandle(uint32_t handle);
 	typename Pool::iterator begin();
 	typename Pool::iterator end();
-	std::experimental::optional<T&> get(uint32_t handle);
+	std::experimental::optional<std::reference_wrapper<T>> get(uint32_t handle);
 private:
 	uint32_t nextHandle;
 	Pool pool;
@@ -47,11 +47,11 @@ typename HandlePool<T>::Pool::iterator HandlePool<T>::end()
 }
 
 template <class T>
-std::experimental::optional<T&> HandlePool<T>::get(uint32_t handle)
+std::experimental::optional<std::reference_wrapper<T>> HandlePool<T>::get(uint32_t handle)
 {
 	auto iter = this->pool.find(handle);
 	if (iter == this->pool.end()) {
-		return std::experimental::optional<T&>();
+		return std::experimental::optional<std::reference_wrapper<T>>();
 	}
-	return std::experimental::optional<T&>(iter->second);
+	return std::experimental::optional<std::reference_wrapper<T>>(iter->second);
 }

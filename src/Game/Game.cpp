@@ -45,6 +45,8 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
+static unsigned playerSourceHandle;
+
 Game::Game()
 {
 	running = false;
@@ -333,7 +335,7 @@ int Game::setup()
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
 
-	playerComponent->shotCooldown = 1.0f;
+	playerComponent->shotCooldown = 0.1f;
 	playerComponent->shotDamage = 100;
 
 	camera = world.getNewEntity("Camera");
@@ -418,14 +420,12 @@ int Game::setup()
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
 
-	unsigned audioSourceHandle = soundManager.getSourceHandle();
 	AudioClip shotClip("assets/sound/hvylas.wav");
+	playerSourceHandle = soundManager.getSourceHandle();
 	std::function<void(const ShotEvent& event)> shotCallback =
-		[world = &world, soundManager = &soundManager, audioSourceHandle, shotClip](const ShotEvent& event) {
+		[world = &world, soundManager = &soundManager, shotClip](const ShotEvent& event) {
 			TransformComponent* transformComponent = world->getComponent<TransformComponent>(event.source);
-			soundManager->setListenerTransform(transformComponent->transform);
-			soundManager->setSourcePosition(audioSourceHandle, transformComponent->transform.getPosition());
-			soundManager->playClipAtSource(shotClip, audioSourceHandle);
+			soundManager->playClipAtSource(shotClip, playerSourceHandle);
 		};
 	eventManager->registerForEvent<ShotEvent>(shotCallback);
 
@@ -500,7 +500,6 @@ void Game::draw()
 void Game::update()
 {
 	renderer.update(timeDelta);
-	soundManager.update();
 
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);
@@ -512,6 +511,10 @@ void Game::update()
 	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(1.0f, 0.0f, 0.0f)));
 
 	Transform& playerTransform = world.getComponent<TransformComponent>(player)->transform;
+	soundManager.setSourcePosition(playerSourceHandle, playerTransform.getPosition());
+	soundManager.setListenerTransform(playerTransform);
+	soundManager.update();
+
 	PointLight light;
 	light.position = playerTransform.getPosition();
 	light.constant = 2.0f;

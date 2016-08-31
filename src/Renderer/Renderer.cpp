@@ -60,12 +60,13 @@ unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shade
 		shaderIter = iterPair.first;
 	}
 
-	std::experimental::optional<Model&> model = modelPool.get(modelHandle);
-	if (!model) {
-		return 0;
+	std::experimental::optional<std::reference_wrapper<Model>> modelOpt = modelPool.get(modelHandle);
+	if (!modelOpt) {
+		return UINT_MAX;
 	}
+	Model& model = *modelOpt;
 
-	bool animatable = (model->animationData.animations.size() > 0);
+	bool animatable = (model.animationData.animations.size() > 0);
 
 	// Index modelMap to initialize this so we don't depend on the passed reference
 	uint32_t handle = this->entityPool.getNewHandle(RendererEntity(shader, modelHandle, animatable));
@@ -79,42 +80,46 @@ void Renderer::freeRenderableHandle(uint32_t renderableHandle)
 
 void Renderer::setRenderableTransform(unsigned handle, const Transform& transform)
 {
-	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
-	if (renderable) {
-		renderable->transform = transform;
+	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
+	if (renderableOpt) {
+		RendererEntity& renderable = *renderableOpt;
+		renderable.transform = transform;
 	}
 }
 
 void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName, bool loop)
 {
-	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
-	if (!renderable) {
+	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
+	if (!renderableOpt) {
 		return;
 	}
 
-	renderable->animName = animName;
-	renderable->time = 0.0f;
-	renderable->loopAnimation = loop;
+	RendererEntity& renderable = *renderableOpt;
+	renderable.animName = animName;
+	renderable.time = 0.0f;
+	renderable.loopAnimation = loop;
 }
 
 void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 {
-	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
-	if (!renderable) {
+	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
+	if (!renderableOpt) {
 		return;
 	}
 
-	renderable->time = time;
+	RendererEntity& renderable = *renderableOpt;
+	renderable.time = time;
 }
 
 void Renderer::setRenderableRenderSpace(unsigned handle, RenderSpace space)
 {
-	std::experimental::optional<RendererEntity&> renderable = entityPool.get(handle);
-	if (!renderable) {
+	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
+	if (!renderableOpt) {
 		return;
 	}
 
-	renderable->space = space;
+	RendererEntity& renderable = *renderableOpt;
+	renderable.space = space;
 }
 
 void Renderer::update(float dt)
@@ -129,10 +134,11 @@ void Renderer::update(float dt)
 		}
 		renderable.time += dt;
 
-		std::experimental::optional<Model&> model = modelPool.get(iter->second.modelHandle);
-		assert(model);
+		std::experimental::optional<std::reference_wrapper<Model>> modelOpt = modelPool.get(iter->second.modelHandle);
+		assert(modelOpt);
 
-		auto& animationMap = model->animationData.animations;
+		Model& model = *modelOpt;
+		auto& animationMap = model.animationData.animations;
 		auto animIter = animationMap.find(animName);
 
 		if (animIter == animationMap.end()) {
@@ -210,9 +216,10 @@ void Renderer::drawInternal(RenderSpace space)
 			continue;
 		}
 
-		std::experimental::optional<Model&> model = modelPool.get(renderable.modelHandle);
-		assert(model);
+		std::experimental::optional<std::reference_wrapper<Model>> modelOpt = modelPool.get(iter->second.modelHandle);
+		assert(modelOpt);
 
+		Model& model = *modelOpt;
 		ShaderCache& shaderCache = renderable.shaderCache;
 		Transform transform = renderable.transform;
 
@@ -225,10 +232,10 @@ void Renderer::drawInternal(RenderSpace space)
 		shaderCache.shader.setModelMatrix(&modelMatrix[0][0]);
 
 		if (renderable.animatable) {
-			std::vector<glm::mat4> nodeTransforms = model->getNodeTransforms(renderable.animName, renderable.time, renderable.context);
+			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
 
-			for (unsigned i = 0; i < model->meshes.size(); i++) {
-				Mesh& mesh = model->meshes[i];
+			for (unsigned i = 0; i < model.meshes.size(); i++) {
+				Mesh& mesh = model.meshes[i];
 				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
 				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
 					glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
@@ -236,8 +243,8 @@ void Renderer::drawInternal(RenderSpace space)
 			}
 		}
 
-		for (unsigned i = 0; i < model->meshes.size(); i++) {
-			const Mesh& mesh = model->meshes[i];
+		for (unsigned i = 0; i < model.meshes.size(); i++) {
+			const Mesh& mesh = model.meshes[i];
 			mesh.material.apply(shaderCache.shader);
 			
 			glBindVertexArray(mesh.VAO);
