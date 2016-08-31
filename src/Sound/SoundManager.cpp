@@ -143,6 +143,7 @@ unsigned SoundManager::playClipAtSource(AudioClip clip, unsigned sourceHandle)
 
 void SoundManager::update()
 {
+	alcSuspendContext(context);
 	for (unsigned i = 0; i < sources.size(); i++) {
 		Source& source = sources[i];
 
@@ -156,7 +157,6 @@ void SoundManager::update()
 		if (logicalSource.dirty || source.startPlaying) {
 			alSourcef(alSource, AL_GAIN, logicalSource.volume);
 			alSource3f(alSource, AL_POSITION, logicalSource.position.x, logicalSource.position.y, logicalSource.position.z);
-			logicalSource.dirty = false;
 		}
 
 		if (source.startPlaying) {
@@ -174,11 +174,17 @@ void SoundManager::update()
 		}
 	}
 
+	for (auto iter = sourcePool.begin(); iter != sourcePool.end(); ++iter) {
+		iter->second.dirty = false;
+	}
+
 	alListener3f(AL_POSITION, listenerTransform.getPosition().x, listenerTransform.getPosition().y, listenerTransform.getPosition().z);
 
 	glm::vec3 at = listenerTransform.getForward();
 	ALfloat orientation[6] = { at.x, at.y, at.z, 0.0f, 1.0f, 0.0f };
 	alListenerfv(AL_ORIENTATION, orientation);
+
+	alcProcessContext(context);
 }
 
 void SoundManager::stopClip(unsigned clipHandle)

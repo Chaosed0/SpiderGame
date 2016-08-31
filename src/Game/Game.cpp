@@ -335,7 +335,7 @@ int Game::setup()
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
 
-	playerComponent->shotCooldown = 0.1f;
+	playerComponent->shotCooldown = 1.0f;
 	playerComponent->shotDamage = 100;
 
 	camera = world.getNewEntity("Camera");
