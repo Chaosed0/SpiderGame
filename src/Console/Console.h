@@ -37,6 +37,7 @@ private:
 	std::shared_ptr<Font> font;
 	std::shared_ptr<Label> inputLabel;
 	std::vector<std::shared_ptr<Label>> bufferLabels;
+	std::vector<UIRenderer::UIElementHandle> UIHandles;
 
 	std::shared_ptr<UIQuad> backQuad;
 

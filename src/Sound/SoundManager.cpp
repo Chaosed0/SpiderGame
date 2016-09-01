@@ -5,7 +5,7 @@
 #include <al.h>
 
 const unsigned SoundManager::maxSources = 256;
-SoundManager::LogicalSource SoundManager::invalidSource = { glm::vec3(0.0f), 0.0f, INT_MIN, false };
+LogicalSource SoundManager::invalidSource = { glm::vec3(0.0f), 0.0f, INT_MIN, false };
 
 SoundManager::SoundManager()
 	: device(nullptr)
@@ -68,7 +68,7 @@ void SoundManager::setListenerTransform(const Transform& transform)
 	listenerTransform.setRotation(transform.getRotation());
 }
 
-unsigned SoundManager::getSourceHandle()
+SoundManager::SourceHandle SoundManager::getSourceHandle()
 {
 	LogicalSource source;
 	source.position = glm::vec3(0.0f);
@@ -77,28 +77,28 @@ unsigned SoundManager::getSourceHandle()
 	return sourcePool.getNewHandle(source);
 }
 
-void SoundManager::setSourcePosition(unsigned handle, glm::vec3 position)
+void SoundManager::setSourcePosition(const SourceHandle& handle, glm::vec3 position)
 {
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
 	source.position = position;
 	source.dirty = true;
 }
 
-void SoundManager::setSourceVolume(unsigned handle, float volume)
+void SoundManager::setSourceVolume(const SourceHandle& handle, float volume)
 {
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
 	source.volume = volume;
 	source.dirty = true;
 }
 
-void SoundManager::setSourcePriority(unsigned handle, int priority)
+void SoundManager::setSourcePriority(const SourceHandle& handle, int priority)
 {
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
 	source.priority = priority;
 	source.dirty = true;
 }
 
-unsigned SoundManager::playClipAtSource(AudioClip clip, unsigned sourceHandle)
+SoundManager::ClipHandle SoundManager::playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle)
 {
 	LogicalSource& logicalSource = sourcePool.get(sourceHandle).value_or(invalidSource);
 
@@ -125,7 +125,7 @@ unsigned SoundManager::playClipAtSource(AudioClip clip, unsigned sourceHandle)
 	}
 
 	if (!sourceFound) {
-		return UINT_MAX;
+		return clipPool.invalidHandle;
 	}
 
 	Source& source = sources[sourceIndex];
@@ -168,9 +168,7 @@ void SoundManager::update()
 		alGetSourcei(alSource, AL_SOURCE_STATE, &sourceState);
 
 		if (sourceState == AL_STOPPED) {
-			source.playing = false;
-			freeSources.push_back(i);
-			clipPool.freeHandle(source.clipHandle);
+			freeSource(i);
 		}
 	}
 
@@ -187,21 +185,30 @@ void SoundManager::update()
 	alcProcessContext(context);
 }
 
-void SoundManager::stopClip(unsigned clipHandle)
+void SoundManager::stopClip(const ClipHandle& clipHandle)
 {
-	std::experimental::optional<std::reference_wrapper<size_t>> clipSourceOpt = clipPool.get(clipHandle);
-	if (clipSourceOpt) {
-		Source& source = sources[*clipSourceOpt];
-
+	size_t invalidClip = sources.size();
+	size_t clipSource = clipPool.get(clipHandle).value_or(invalidClip);
+	if (clipSource < sources.size()) {
+		Source& source = sources[clipSource];
 		alSourceStop(source.alSource);
-		source.playing = false;
-		freeSources.push_back(*clipSourceOpt);
-
-		clipPool.freeHandle(clipHandle);
+		freeSource(clipSource);
 	}
 }
 
-bool SoundManager::clipValid(unsigned clipHandle)
+void SoundManager::freeSource(unsigned sourceIndex)
+{
+	Source& source = sources[sourceIndex];
+	source.playing = false;
+	freeSources.push_back(sourceIndex);
+
+	// If anyone tries to stop this clip from playing in the future, noop it
+	*source.clipHandle = sources.size();
+	source.logicalSourceHandle = sourcePool.invalidHandle;
+	source.clipHandle = clipPool.invalidHandle;
+}
+
+bool SoundManager::clipValid(const ClipHandle& clipHandle)
 {
 	return (bool)clipPool.get(clipHandle);
 }

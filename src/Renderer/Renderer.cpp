@@ -47,12 +47,12 @@ bool Renderer::initialize()
 	return true;
 }
 
-unsigned Renderer::getModelHandle(const Model& model)
+Renderer::ModelHandle Renderer::getModelHandle(const Model& model)
 {
 	return modelPool.getNewHandle(model);
 }
 
-unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shader)
+Renderer::RenderableHandle Renderer::getRenderableHandle(const ModelHandle& modelHandle, const Shader& shader)
 {
 	auto shaderIter = shaderMap.find(shader.getID());
 	if (shaderIter == shaderMap.end()) {
@@ -62,23 +62,18 @@ unsigned Renderer::getRenderableHandle(unsigned modelHandle, const Shader& shade
 
 	std::experimental::optional<std::reference_wrapper<Model>> modelOpt = modelPool.get(modelHandle);
 	if (!modelOpt) {
-		return UINT_MAX;
+		return modelPool.invalidHandle;
 	}
 	Model& model = *modelOpt;
 
 	bool animatable = (model.animationData.animations.size() > 0);
 
 	// Index modelMap to initialize this so we don't depend on the passed reference
-	uint32_t handle = this->entityPool.getNewHandle(RendererEntity(shader, modelHandle, animatable));
+	RenderableHandle handle = this->entityPool.getNewHandle(RendererEntity(shader, modelHandle, animatable));
 	return handle;
 }
 
-void Renderer::freeRenderableHandle(uint32_t renderableHandle)
-{
-	entityPool.freeHandle(renderableHandle);
-}
-
-void Renderer::setRenderableTransform(unsigned handle, const Transform& transform)
+void Renderer::setRenderableTransform(const RenderableHandle& handle, const Transform& transform)
 {
 	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
 	if (renderableOpt) {
@@ -87,7 +82,7 @@ void Renderer::setRenderableTransform(unsigned handle, const Transform& transfor
 	}
 }
 
-void Renderer::setRenderableAnimation(unsigned handle, const std::string& animName, bool loop)
+void Renderer::setRenderableAnimation(const RenderableHandle& handle, const std::string& animName, bool loop)
 {
 	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
 	if (!renderableOpt) {
@@ -100,7 +95,7 @@ void Renderer::setRenderableAnimation(unsigned handle, const std::string& animNa
 	renderable.loopAnimation = loop;
 }
 
-void Renderer::setRenderableAnimationTime(unsigned handle, float time)
+void Renderer::setRenderableAnimationTime(const RenderableHandle& handle, float time)
 {
 	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
 	if (!renderableOpt) {
@@ -111,7 +106,7 @@ void Renderer::setRenderableAnimationTime(unsigned handle, float time)
 	renderable.time = time;
 }
 
-void Renderer::setRenderableRenderSpace(unsigned handle, RenderSpace space)
+void Renderer::setRenderableRenderSpace(const RenderableHandle& handle, RenderSpace space)
 {
 	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
 	if (!renderableOpt) {

@@ -11,40 +11,45 @@
 #include <al.h>
 #include <alc.h>
 
+struct LogicalSource
+{
+	glm::vec3 position;
+	float volume;
+	int priority;
+	bool dirty;
+};
+
 class SoundManager
 {
 public:
+	using SourceHandle = HandlePool<LogicalSource>::Handle;
+	using ClipHandle = HandlePool<size_t>::Handle;
+
 	SoundManager();
 	~SoundManager();
 
 	bool initialize();
-	unsigned getSourceHandle();
+	SourceHandle getSourceHandle();
 
 	void setListenerTransform(const Transform& transform);
 
-	void setSourcePosition(unsigned handle, glm::vec3 position);
-	void setSourceVolume(unsigned handle, float volume);
-	void setSourcePriority(unsigned handle, int priority);
+	void setSourcePosition(const SourceHandle& handle, glm::vec3 position);
+	void setSourceVolume(const SourceHandle& handle, float volume);
+	void setSourcePriority(const SourceHandle& handle, int priority);
 
-	unsigned playClipAtSource(AudioClip clip, unsigned sourceHandle);
-	void stopClip(unsigned clipHandle);
-	bool clipValid(unsigned clipHandle);
+	ClipHandle playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle);
+	void stopClip(const ClipHandle& clipHandle);
+	bool clipValid(const ClipHandle& clipHandle);
 
 	void update();
 private:
-	struct LogicalSource
-	{
-		glm::vec3 position;
-		float volume;
-		int priority;
-		bool dirty;
-	};
+	void freeSource(unsigned sourceIndex);
 
 	struct Source
 	{
 		ALuint alSource;
-		unsigned logicalSourceHandle;
-		unsigned clipHandle;
+		SourceHandle logicalSourceHandle;
+		ClipHandle clipHandle;
 		bool startPlaying;
 		bool playing;
 	};

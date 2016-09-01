@@ -45,8 +45,6 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
-static unsigned playerSourceHandle;
-
 Game::Game()
 {
 	running = false;
@@ -185,36 +183,36 @@ int Game::setup()
 
 	/* Health label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
-	healthLabel = std::make_shared<Label>(font);
-	healthLabel->setText("100");
-	healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	healthLabel->transform.setPosition(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f));
-	unsigned healthLabelHandle = uiRenderer.getEntityHandle(healthLabel, textShader);
+	gui.healthLabel = std::make_shared<Label>(font);
+	gui.healthLabel->setText("100");
+	gui.healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
+	gui.healthLabel->transform.setPosition(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f));
+	gui.healthLabelHandle = uiRenderer.getEntityHandle(gui.healthLabel, textShader);
 
 	/* Health image */
-	std::shared_ptr<UIQuad> healthImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
-	healthImage->transform.setPosition(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f));
-	unsigned healthImageHandle = uiRenderer.getEntityHandle(healthImage, imageShader);
+	gui.healthImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
+	gui.healthImage->transform.setPosition(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f));
+	gui.healthImageHandle = uiRenderer.getEntityHandle(gui.healthImage, imageShader);
 
 	/* Gem label */
-	gemLabel = std::make_shared<Label>(font);
-	gemLabel->setAlignment(Label::Alignment_right);
-	gemLabel->setText("0");
-	gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	gemLabel->transform.setPosition(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f));
-	unsigned gemLabelHandle = uiRenderer.getEntityHandle(gemLabel, textShader);
+	gui.gemLabel = std::make_shared<Label>(font);
+	gui.gemLabel->setAlignment(Label::Alignment_right);
+	gui.gemLabel->setText("0");
+	gui.gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
+	gui.gemLabel->transform.setPosition(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f));
+	gui.gemLabelHandle = uiRenderer.getEntityHandle(gui.gemLabel, textShader);
 
 	/* Gem image */
-	std::shared_ptr<UIQuad> gemImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
-	gemImage->transform.setPosition(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f));
-	unsigned gemImageHandle = uiRenderer.getEntityHandle(gemImage, imageShader);
+	gui.gemImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
+	gui.gemImage->transform.setPosition(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f));
+	gui.gemImageHandle = uiRenderer.getEntityHandle(gui.gemImage, imageShader);
 
 	/* Notification label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);
-	std::shared_ptr<Label> facingLabel = std::make_shared<Label>(font);
-	facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	facingLabel->transform.setPosition(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f));
-	unsigned facingLabelHandle = uiRenderer.getEntityHandle(facingLabel, textShader);
+	gui.facingLabel = std::make_shared<Label>(font);
+	gui.facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
+	gui.facingLabel->transform.setPosition(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f));
+	gui.facingLabelHandle = uiRenderer.getEntityHandle(gui.facingLabel, textShader);
 	font.reset();
 
 	/* Test Room */
@@ -228,9 +226,9 @@ int Game::setup()
 	roomData.meshBuilder.construct();
 
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
-	unsigned pedestalModelHandle = renderer.getModelHandle(pedestalModel);
+	Renderer::ModelHandle pedestalModelHandle = renderer.getModelHandle(pedestalModel);
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
-	unsigned gemModelHandle = renderer.getModelHandle(gemModel);
+	Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
 
 	// Put a light in the center room and the rooms that are farthest out
 	for (unsigned i = 0; i < 5; i++) {
@@ -259,10 +257,14 @@ int Game::setup()
 		light.specular = glm::vec3(1.0f);
 		renderer.setPointLight(i+1, light);
 
-		unsigned pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
-		renderer.setRenderableTransform(pedestalHandle, Transform(center));
+		Renderer::RenderableHandle pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
+		eid_t pedestalEntity = world.getNewEntity();
+		TransformComponent* pedestalTransformComponent = world.addComponent<TransformComponent>(pedestalEntity);
+		ModelRenderComponent* pedestalModelComponent = world.addComponent<ModelRenderComponent>(pedestalEntity);
+		pedestalTransformComponent->transform = Transform(center);
+		pedestalModelComponent->rendererHandle = pedestalHandle;
 
-		unsigned gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
+		Renderer::RenderableHandle gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
 
 		std::stringstream namestream;
 		namestream << "Gem " << i;
@@ -289,7 +291,6 @@ int Game::setup()
 		velocityComponent->rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
 
 		modelRenderComponent->rendererHandle = gemHandle;
-		modelRenderComponent->renderer = &renderer;
 	}
 
 	// Add the room to collision
@@ -301,15 +302,19 @@ int Game::setup()
 	Texture roomTexture(TextureType_diffuse, "assets/img/brick.png");
 	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ roomTexture });
 	roomModel.meshes[0].material.setProperty("shininess", MaterialProperty(FLT_MAX));
-	unsigned roomModelHandle = renderer.getModelHandle(roomModel);
-	unsigned roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
+	Renderer::ModelHandle roomModelHandle = renderer.getModelHandle(roomModel);
+	Renderer::RenderableHandle roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
 
 	// Make the room an entity so it registers in our Physics system
 	eid_t roomEntity = world.getNewEntity("Level");
 	CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(roomEntity);
+	ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(roomEntity);
+
 	collisionComponent->collisionObject = roomData.rigidBody;
 	collisionComponent->world = dynamicsWorld;
 	roomData.rigidBody->setUserPointer(new eid_t(roomEntity));
+
+	modelComponent->rendererHandle = roomRenderableHandle;
 
 	// Initialize the player
 	player = world.getNewEntity("Player");
@@ -390,11 +395,10 @@ int Game::setup()
 		followComponent->target = playerTransform;
 		rigidbodyMotorComponent->moveSpeed = 3.0f;
 
-		unsigned int spiderModelHandle = renderer.getModelHandle(spiderModel);
-		unsigned int spiderHandle = renderer.getRenderableHandle(spiderModelHandle, skinnedShader);
+		Renderer::ModelHandle spiderModelHandle = renderer.getModelHandle(spiderModel);
+		Renderer::RenderableHandle spiderHandle = renderer.getRenderableHandle(spiderModelHandle, skinnedShader);
 		renderer.setRenderableAnimation(spiderHandle, "AnimStack::idle");
 		renderer.setRenderableAnimationTime(spiderHandle, i / 10.0f);
-		modelComponent->renderer = &renderer;
 		modelComponent->rendererHandle = spiderHandle;
 
 		healthComponent->health = healthComponent->maxHealth = 100;
@@ -412,7 +416,7 @@ int Game::setup()
 	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 	velocitySystem = std::make_unique<VelocitySystem>(world);
-	playerFacingSystem = std::make_unique<PlayerFacingSystem>(world, dynamicsWorld, facingLabel);
+	playerFacingSystem = std::make_unique<PlayerFacingSystem>(world, dynamicsWorld, gui.facingLabel);
 
 	spiderSystem->debugShader = lightShader;
 
@@ -423,14 +427,14 @@ int Game::setup()
 	AudioClip shotClip("assets/sound/hvylas.wav");
 	playerSourceHandle = soundManager.getSourceHandle();
 	std::function<void(const ShotEvent& event)> shotCallback =
-		[world = &world, soundManager = &soundManager, shotClip](const ShotEvent& event) {
+		[world = &world, soundManager = &soundManager, playerSourceHandle = this->playerSourceHandle, shotClip](const ShotEvent& event) {
 			TransformComponent* transformComponent = world->getComponent<TransformComponent>(event.source);
 			soundManager->playClipAtSource(shotClip, playerSourceHandle);
 		};
 	eventManager->registerForEvent<ShotEvent>(shotCallback);
 
 	std::function<void(const HealthChangedEvent& event)> healthChangedCallback =
-		[world = &world, healthLabel = healthLabel](const HealthChangedEvent& event) {
+		[world = &world, healthLabel = gui.healthLabel](const HealthChangedEvent& event) {
 			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.entity);
 
 			std::stringstream sstream;
@@ -440,7 +444,7 @@ int Game::setup()
 	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback);
 
 	std::function<void(const GemCountChangedEvent& event)> gemCountChangedCallback =
-		[world = &world, gemLabel = gemLabel](const GemCountChangedEvent& event) {
+		[world = &world, gemLabel = gui.gemLabel](const GemCountChangedEvent& event) {
 			std::stringstream sstream;
 			sstream << event.newGemCount;
 			gemLabel->setText(sstream.str());
@@ -669,8 +673,8 @@ void Game::generateTestTerrain()
 		patchData.model = patchData.patch.toModel(glm::ivec2(), scale);
 		patchData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
 
-		unsigned terrainModelHandle = renderer.getModelHandle(patchData.model);
-		unsigned terrainHandle = renderer.getRenderableHandle(terrainModelHandle, shader);
+		Renderer::ModelHandle terrainModelHandle = renderer.getModelHandle(patchData.model);
+		Renderer::RenderableHandle terrainHandle = renderer.getRenderableHandle(terrainModelHandle, shader);
 		renderer.setRenderableTransform(terrainHandle, Transform(position));
 
 		patchData.collision = patchData.patch.getCollisionData(glm::ivec2(), scale);

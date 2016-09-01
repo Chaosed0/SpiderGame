@@ -9,7 +9,7 @@
 #include "Renderer/Material.h"
 #include "Renderer/RenderUtil.h"
 
-bool UIRenderer::UIRendererSortComparator::operator() (const std::pair<uint32_t, UIRendererEntity>& p1, const std::pair<uint32_t, UIRendererEntity>& p2)
+bool UIRenderer::UIRendererSortComparator::operator() (const std::pair<std::weak_ptr<uint32_t>, UIRendererEntity>& p1, const std::pair<std::weak_ptr<uint32_t>, UIRendererEntity>& p2)
 {
 	return p1.second.renderable->getTransform().getPosition().z < p2.second.renderable->getTransform().getPosition().z;
 }
@@ -22,7 +22,7 @@ void UIRenderer::setProjection(glm::mat4 projection)
 	this->projection = projection;
 }
 
-unsigned UIRenderer::getEntityHandle(const std::shared_ptr<Renderable2d>& renderable, const Shader& shader)
+UIRenderer::UIElementHandle UIRenderer::getEntityHandle(const std::shared_ptr<Renderable2d>& renderable, const Shader& shader)
 {
 	auto iter = shaderMap.find(shader.getID());
 	if (iter == shaderMap.end()) {
@@ -34,7 +34,7 @@ unsigned UIRenderer::getEntityHandle(const std::shared_ptr<Renderable2d>& render
 	entity.renderable = renderable;
 	entity.shaderHandle = shader.getID();
 
-	uint32_t handle = pool.getNewHandle(entity);
+	UIElementHandle handle = pool.getNewHandle(entity);
 	sortedEntities.push_back(std::make_pair(handle, entity));
 
 	return handle;
@@ -47,8 +47,14 @@ void UIRenderer::draw()
 	// of UI elements. Right now we don't have that many...
 	sortedEntities.sort(comparator);
 
-	for (auto iter = sortedEntities.begin(); iter != sortedEntities.end(); ++iter)
+	auto iter = sortedEntities.begin();
+	while (iter != sortedEntities.end())
 	{
+		if (iter->first.expired()) {
+			iter = sortedEntities.erase(iter);
+			continue;
+		}
+
 		UIRendererEntity& entity = iter->second;
 		assert(entity.renderable != NULL);
 
@@ -67,5 +73,7 @@ void UIRenderer::draw()
 		glDrawElements(material.drawType, renderable.getIndexCount(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 		glCheckError();
+
+		++iter;
 	}
 }

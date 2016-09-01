@@ -3,10 +3,10 @@
 #include "Framework/System.h"
 #include "Framework/EventManager.h"
 #include "Renderer/Shader.h"
+#include "Renderer/Renderer.h"
 
 class btDynamicsWorld;
 class Shader;
-class Renderer;
 
 class ShootingSystem : public System
 {
@@ -19,5 +19,5 @@ private:
 	EventManager& eventManager;
 	Shader lineShader;
 
-	unsigned bulletMeshHandle;
+	Renderer::ModelHandle bulletMeshHandle;
 };

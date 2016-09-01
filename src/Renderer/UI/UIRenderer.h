@@ -21,6 +21,8 @@ struct UIRendererEntity {
 class UIRenderer
 {
 public:
+	typedef HandlePool<UIRendererEntity>::Handle UIElementHandle;
+
 	/*!
 	 * \brief Default initializer.
 	 */
@@ -39,7 +41,7 @@ public:
 	 * \param shader The shader to use when rendering the element.
 	 * \return Handle which is used to refer to the element in subsequent calls.
 	 */
-	unsigned getEntityHandle(const std::shared_ptr<Renderable2d>& renderable, const Shader& shader);
+	 UIElementHandle getEntityHandle(const std::shared_ptr<Renderable2d>& renderable, const Shader& shader);
 
 	/*!
 	 * \brief Draws all entities which have been passed to the renderer.
@@ -53,7 +55,7 @@ private:
 	HandlePool<UIRendererEntity> pool;
 
 	/*! List of entities sorted by z position, used when drawing. */
-	std::list<std::pair<uint32_t, UIRendererEntity>> sortedEntities;
+	std::list<std::pair<std::weak_ptr<uint32_t>, UIRendererEntity>> sortedEntities;
 
 	/*! Projection to use when drawing elements. */
 	glm::mat4 projection;
@@ -62,7 +64,7 @@ private:
 	class UIRendererSortComparator
 	{
 	public:
-		bool operator() (const std::pair<uint32_t, UIRendererEntity>& p1, const std::pair<uint32_t, UIRendererEntity>& p2);
+		bool operator() (const std::pair<std::weak_ptr<uint32_t>, UIRendererEntity>& p1, const std::pair<std::weak_ptr<uint32_t>, UIRendererEntity>& p2);
 	};
 
 	/*! Instance of the comparator. */

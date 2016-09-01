@@ -90,10 +90,10 @@ enum RenderSpace
 	their own transforms. */
 struct RendererEntity
 {
-	RendererEntity(const ShaderCache& shaderCache, uint32_t modelHandle, bool animatable)
+	RendererEntity(const ShaderCache& shaderCache, HandlePool<Model>::Handle modelHandle, bool animatable)
 		: shaderCache(shaderCache), modelHandle(modelHandle), animatable(animatable), space(RenderSpace_World) { }
 
-	uint32_t modelHandle;
+	HandlePool<Model>::Handle modelHandle;
 	ShaderCache shaderCache;
 	Transform transform;
 	AnimationContext context;
@@ -117,6 +117,9 @@ struct RendererEntity
 class Renderer
 {
 public:
+	typedef HandlePool<Model>::Handle ModelHandle;
+	typedef HandlePool<RendererEntity>::Handle RenderableHandle;
+
 	Renderer();
 
 	/*!
@@ -154,40 +157,34 @@ public:
 	 * \brief Gets a handle to a model object, which can be passed to the getRenderableHandle method.
 	 * The model is copied and stored internally, so you can release the reference to it.
 	 */
-	uint32_t getModelHandle(const Model& model);
+	ModelHandle getModelHandle(const Model& model);
 
 	/*!
 	 * \brief Gets a handle to a renderable object.
 	 */
-	uint32_t getRenderableHandle(uint32_t modelHandle, const Shader& shader);
-
-	/*!
-	 * \brief Frees a renderable handle. The renderable will stop rendering and
-	 *		the handle will become unusable.
-	 */
-	void freeRenderableHandle(uint32_t renderableHandle);
+	RenderableHandle getRenderableHandle(const ModelHandle& modelHandle, const Shader& shader);
 
 	/*!
 	 * \brief Updates the transform of a renderable object.
 	 */
-	void setRenderableTransform(uint32_t handle, const Transform& transform);
+	void setRenderableTransform(const RenderableHandle& handle, const Transform& transform);
 
 	/*!
 	 * \brief Updates the animation of a renderable object.
 	 *		The animation will loop.
 	 */
-	void setRenderableAnimation(uint32_t handle, const std::string& animation, bool loop = true);
+	void setRenderableAnimation(const RenderableHandle& handle, const std::string& animation, bool loop = true);
 
 	/*! 
 	 * \brief Sets the time at which to start the currently playing
 	 *		animation for the given object.
 	 */
-	void setRenderableAnimationTime(uint32_t handle, float time);
+	void setRenderableAnimationTime(const RenderableHandle& handle, float time);
 
 	/*! 
 	 * \brief Sets the space in which the renderable will be rendered.
 	 */
-	void setRenderableRenderSpace(uint32_t handle, RenderSpace space);
+	void setRenderableRenderSpace(const RenderableHandle& handle, RenderSpace space);
 
 	/*!
 	 * \brief Draws all renderable objects that have been requested using getHandle()

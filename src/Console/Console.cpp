@@ -86,11 +86,11 @@ void Console::endLine()
 
 void Console::addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader textShader)
 {
-	uiRenderer.getEntityHandle(inputLabel, textShader);
+	UIHandles.push_back(uiRenderer.getEntityHandle(inputLabel, textShader));
 	for (unsigned i = 0; i < bufferLabels.size(); i++) {
-		uiRenderer.getEntityHandle(bufferLabels[i], textShader);
+		UIHandles.push_back(uiRenderer.getEntityHandle(bufferLabels[i], textShader));
 	}
-	uiRenderer.getEntityHandle(backQuad, backShader);
+	UIHandles.push_back(uiRenderer.getEntityHandle(backQuad, backShader));
 }
 
 void Console::setVisible(bool visible)

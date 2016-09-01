@@ -143,9 +143,8 @@ void SpiderSystem::createHurtbox(const Transform& transform, const glm::vec3& ha
 	if (debugShader.getID() != 0) {
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(hurtboxEntity);
 		Model model(std::vector<Mesh> { getDebugBoxMesh(halfExtents) });
-		unsigned debugModelHandle = renderer.getModelHandle(model);
-		unsigned renderableHandle = renderer.getRenderableHandle(debugModelHandle, debugShader);
+		Renderer::ModelHandle debugModelHandle = renderer.getModelHandle(model);
+		Renderer::RenderableHandle renderableHandle = renderer.getRenderableHandle(debugModelHandle, debugShader);
 		modelComponent->rendererHandle = renderableHandle;
-		modelComponent->renderer = &this->renderer;
 	}
 }

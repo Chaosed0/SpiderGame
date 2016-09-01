@@ -74,7 +74,6 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		transformComponent->transform.setPosition(cameraTransformComponent->transform.getPosition() + cameraTransformComponent->transform.getRotation() * Util::right * 0.1f);
 		transformComponent->transform.setRotation(cameraTransformComponent->transform.getRotation());
 		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(bulletMeshHandle, lineShader);
-		modelRenderComponent->renderer = &renderer;
 		expiresComponent->expiryTime = 0.2f;
 		velocityComponent->speed = 100.0f;
 

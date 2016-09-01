@@ -61,6 +61,21 @@ struct GameTerrainData
 	btCollisionObject* object;
 };
 
+struct GUI
+{
+	std::shared_ptr<Label> healthLabel;
+	std::shared_ptr<Label> gemLabel;
+	std::shared_ptr<UIQuad> healthImage;
+	std::shared_ptr<UIQuad> gemImage;
+	std::shared_ptr<Label> facingLabel;
+
+	UIRenderer::UIElementHandle healthLabelHandle;
+	UIRenderer::UIElementHandle healthImageHandle;
+	UIRenderer::UIElementHandle gemLabelHandle;
+	UIRenderer::UIElementHandle gemImageHandle;
+	UIRenderer::UIElementHandle facingLabelHandle;
+};
+
 class Game
 {
 public:
@@ -91,8 +106,9 @@ private:
 	ModelLoader modelLoader;
 
 	UIRenderer uiRenderer;
-	std::shared_ptr<Label> healthLabel;
-	std::shared_ptr<Label> gemLabel;
+	GUI gui;
+
+	SoundManager soundManager;
 
 	Shader shader;
 	Shader skinnedShader;
@@ -112,6 +128,7 @@ private:
 	eid_t player;
 	eid_t camera;
 	btRigidBody* playerBody;
+	SoundManager::SourceHandle playerSourceHandle;
 
 	World world;
 	std::unique_ptr<ShootingSystem> shootingSystem;
@@ -132,8 +149,6 @@ private:
 	std::shared_ptr<DamageEventResponder> damageEventResponder;
 	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
 	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
-
-	SoundManager soundManager;
 
 	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;
