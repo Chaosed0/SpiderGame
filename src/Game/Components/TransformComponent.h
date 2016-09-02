@@ -5,5 +5,7 @@
 
 struct TransformComponent : public Component
 {
-	Transform transform;
+	TransformComponent(const Transform& transform) : transform(new Transform(transform)) { }
+	TransformComponent() : transform(new Transform()) { }
+	std::shared_ptr<Transform> transform;
 };

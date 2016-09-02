@@ -31,10 +31,10 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 		return;
 	}
 
-	Transform& finalTarget = followComponent->target->transform;
+	std::shared_ptr<Transform> finalTarget = followComponent->target->transform;
 
-	glm::vec3 from = transformComponent->transform.getPosition();
-	glm::vec3 to = finalTarget.getPosition();
+	glm::vec3 from = transformComponent->transform->getPosition();
+	glm::vec3 to = finalTarget->getPosition();
 	btVector3 btStart(Util::glmToBt(from));
 	btVector3 btEnd(Util::glmToBt(to));
 	btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);

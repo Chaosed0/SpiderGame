@@ -3,6 +3,8 @@
 #include "Util.h"
 
 const Transform Transform::identity = Transform();
+const std::shared_ptr<Transform> Transform::identityPtr(new Transform());
+const glm::mat4 Transform::identityMat4 = glm::mat4();
 
 Transform::Transform()
 	: Transform(glm::vec3(0,0,0), glm::quat(), glm::vec3(1,1,1))
@@ -17,62 +19,59 @@ Transform::Transform(glm::vec3 position, glm::quat rotation)
 { }
 
 Transform::Transform(glm::vec3 position, glm::quat rotation, glm::vec3 scale)
+	: dirty(true)
 {
-	setPosition(position);
-	setRotation(rotation);
-	setScale(scale);
-
-	parent = nullptr;
-}
-
-Transform::~Transform()
-{
-	for (unsigned int i = 0; i < children.size(); i++) {
-		children[i]->setParent(nullptr);
-	}
-
-	if (parent != nullptr) {
-		parent->removeChild(this);
-	}
+	this->setPosition(position);
+	this->setRotation(rotation);
+	this->setScale(scale);
 }
 
 glm::vec3 Transform::getPosition() const
 {
-	if (parent != nullptr) {
-		return parent->getPosition() + position;
-	}
 	return position;
+}
+
+glm::vec3 Transform::getWorldPosition() const
+{
+	return this->getParentInternal()->getPosition() + this->position;
 }
 
 void Transform::setPosition(glm::vec3 newPosition)
 {
-	position = newPosition;
+	this->position = newPosition;
+	this->dirty = true;
 }
 
 glm::quat Transform::getRotation() const
 {
-	if (parent != nullptr) {
-		return parent->getRotation() * rotation;
-	}
-	return rotation;
+	return this->rotation;
+}
+
+glm::quat Transform::getWorldRotation() const
+{
+	return this->getParentInternal()->getRotation() * this->rotation;
 }
 
 void Transform::setRotation(glm::quat newRotation)
 {
-	rotation = glm::normalize(newRotation);
+	this->rotation = glm::normalize(newRotation);
+	this->dirty = true;
 }
 
 glm::vec3 Transform::getScale() const
 {
-	if (parent != nullptr) {
-		return parent->getScale() * scale;
-	}
 	return scale;
+}
+
+glm::vec3 Transform::getWorldScale() const
+{
+	return this->getParentInternal()->getScale() * this->scale;
 }
 
 void Transform::setScale(glm::vec3 newScale)
 {
-	scale = newScale;
+	this->scale = newScale;
+	this->dirty = true;
 }
 
 glm::vec3 Transform::getForward() const
@@ -80,29 +79,31 @@ glm::vec3 Transform::getForward() const
 	return rotation * Util::forward;
 }
 
-void Transform::addChild(Transform* child)
+void Transform::setParent(const std::shared_ptr<Transform>& parent)
 {
-	children.push_back(child);
-	child->setParent(this);
-}
-
-void Transform::removeChild(Transform* child)
-{
-	for (unsigned int i = 0; i < children.size(); i++) {
-		if (children[i] == child) {
-			children[i] = children[children.size()-1];
-			children.pop_back();
-		}
-	}
-}
-
-void Transform::setParent(Transform* parent)
-{
-	assert(parent != this);
-	this->parent = parent;
+	this->parent.emplace(std::weak_ptr<Transform>(parent));
 }
 
 glm::mat4 Transform::matrix() const
+{
+	if (!this->dirty) {
+		return this->cacheMatrix;
+	} else {
+		return this->toMat4();
+	}
+}
+
+glm::mat4 Transform::matrix()
+{
+	if (this->dirty) {
+		this->cacheMatrix = toMat4();
+		this->dirty = false;
+	}
+	
+	return this->cacheMatrix;
+}
+
+glm::mat4 Transform::toMat4() const
 {
 	glm::mat4 posMatrix = glm::mat4(
 		1.0f, 0.0f, 0.0f, 0.0f,
@@ -117,7 +118,24 @@ glm::mat4 Transform::matrix() const
 		0.0f, 0.0f, scale.z, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f
 		);
-	glm::mat4 parentMatrix = (this->parent == nullptr ? glm::mat4() : this->parent->matrix());
 
-	return parentMatrix * (posMatrix * rotMatrix * scaleMatrix);
+	return this->getParentMat4() * (posMatrix * rotMatrix * scaleMatrix);
+}
+
+glm::mat4 Transform::getParentMat4() const
+{
+	if (this->parent && !this->parent->expired()) {
+		return this->parent.value().lock()->matrix();
+	} else {
+		return identityMat4;
+	}
+}
+
+const std::shared_ptr<Transform> Transform::getParentInternal() const
+{
+	if (this->parent && !this->parent->expired()) {
+		return this->parent.value().lock();
+	} else {
+		return identityPtr;
+	}
 }

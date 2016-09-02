@@ -69,6 +69,3 @@ project "OpenGLTest"
 
     filter "files:src/Shaders"
         buildaction "Copy"
-
-    filter "action:vs*"
-        defines { "_ITERATOR_DEBUG_LEVEL=0" }

@@ -261,7 +261,7 @@ int Game::setup()
 		eid_t pedestalEntity = world.getNewEntity();
 		TransformComponent* pedestalTransformComponent = world.addComponent<TransformComponent>(pedestalEntity);
 		ModelRenderComponent* pedestalModelComponent = world.addComponent<ModelRenderComponent>(pedestalEntity);
-		pedestalTransformComponent->transform = Transform(center);
+		pedestalTransformComponent->transform->setPosition(center);
 		pedestalModelComponent->rendererHandle = pedestalHandle;
 
 		Renderer::RenderableHandle gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
@@ -281,7 +281,7 @@ int Game::setup()
 		gemCollisionObject->setUserPointer(new eid_t(gemEntity));
 		dynamicsWorld->addRigidBody(gemCollisionObject, CollisionGroupDefault, CollisionGroupAll);
 
-		transformComponent->transform = Transform(gemPosition);
+		transformComponent->transform->setPosition(gemPosition);
 
 		collisionComponent->collisionObject = gemCollisionObject;
 		collisionComponent->world = dynamicsWorld;
@@ -324,10 +324,10 @@ int Game::setup()
 	HealthComponent* playerHealthComponent = world.addComponent<HealthComponent>(player);
 	RigidbodyMotorComponent* playerRigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(player);
 
-	playerTransform->transform.setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+	playerTransform->transform->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 
-	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform.getScale().x, 0.7f * playerTransform->transform.getScale().y);
-	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(playerTransform->transform));
+	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform->getScale().x, 0.7f * playerTransform->transform->getScale().y);
+	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(*playerTransform->transform));
 	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
@@ -347,9 +347,9 @@ int Game::setup()
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
 	CameraComponent* cameraComponent = world.addComponent<CameraComponent>(camera);
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	cameraTransformComponent->transform.setPosition(glm::vec3(0.0f, 0.85f, 0.0f));
+	cameraTransformComponent->transform->setPosition(glm::vec3(0.0f, 0.85f, 0.0f));
 
-	playerTransform->transform.addChild(&cameraTransformComponent->transform);
+	cameraTransformComponent->transform->setParent(playerTransform->transform);
 	playerComponent->camera = camera;
 
 	renderer.setCamera(&cameraComponent->camera);
@@ -376,14 +376,14 @@ int Game::setup()
 		RoomBox box = roomData.room.boxes[roomRand(generator)];
 		std::uniform_int_distribution<int> xRand(box.left, box.right);
 		std::uniform_int_distribution<int> zRand(box.bottom, box.top);
-		transformComponent->transform.setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
-		transformComponent->transform.setScale(glm::vec3(scaleRand(generator)));
+		transformComponent->transform->setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
+		transformComponent->transform->setScale(glm::vec3(scaleRand(generator)));
 
 		glm::vec3 halfExtents(200.0f, 75.0f, 120.0f);
 		btCompoundShape* shape = new btCompoundShape();
-		btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents * transformComponent->transform.getScale().x));
-		shape->addChildShape(btTransform(btQuaternion(), btVector3(0.0f, halfExtents.y * 2.0f, 0.0f) * transformComponent->transform.getScale().x), boxShape);
-		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(transformComponent->transform));
+		btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents * transformComponent->transform->getScale().x));
+		shape->addChildShape(btTransform(btQuaternion(), btVector3(0.0f, halfExtents.y * 2.0f, 0.0f) * transformComponent->transform->getScale().x), boxShape);
+		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(*transformComponent->transform));
 		btRigidBody* spiderRigidBody = new btRigidBody(10.0f, playerMotionState, shape);
 		// This pointer is freed by the CollisionComponent destructor
 		spiderRigidBody->setUserPointer(new eid_t(spider));
@@ -511,16 +511,16 @@ void Game::update()
 	velocitySystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
 
-	Transform& cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
-	cameraTransform.setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(1.0f, 0.0f, 0.0f)));
+	std::shared_ptr<Transform> cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
+	cameraTransform->setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(1.0f, 0.0f, 0.0f)));
 
-	Transform& playerTransform = world.getComponent<TransformComponent>(player)->transform;
-	soundManager.setSourcePosition(playerSourceHandle, playerTransform.getPosition());
-	soundManager.setListenerTransform(playerTransform);
+	std::shared_ptr<Transform> playerTransform = world.getComponent<TransformComponent>(player)->transform;
+	soundManager.setSourcePosition(playerSourceHandle, playerTransform->getPosition());
+	soundManager.setListenerTransform(*playerTransform);
 	soundManager.update();
 
 	PointLight light;
-	light.position = playerTransform.getPosition();
+	light.position = playerTransform->getPosition();
 	light.constant = 2.0f;
 	light.linear = 0.2f;
 	light.quadratic = 0.5f;
@@ -675,7 +675,7 @@ void Game::generateTestTerrain()
 
 		Renderer::ModelHandle terrainModelHandle = renderer.getModelHandle(patchData.model);
 		Renderer::RenderableHandle terrainHandle = renderer.getRenderableHandle(terrainModelHandle, shader);
-		renderer.setRenderableTransform(terrainHandle, Transform(position));
+		renderer.setRenderableTransform(terrainHandle, glm::translate(glm::mat4(), position));
 
 		patchData.collision = patchData.patch.getCollisionData(glm::ivec2(), scale);
 		patchData.vertArray = new btTriangleIndexVertexArray(patchData.collision.indices.size() / 3, patchData.collision.indices.data(), 3 * sizeof(unsigned), patchData.collision.vertices.size(), patchData.collision.vertices.data(), 3 * sizeof(float));

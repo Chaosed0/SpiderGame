@@ -73,7 +73,7 @@ Renderer::RenderableHandle Renderer::getRenderableHandle(const ModelHandle& mode
 	return handle;
 }
 
-void Renderer::setRenderableTransform(const RenderableHandle& handle, const Transform& transform)
+void Renderer::setRenderableTransform(const RenderableHandle& handle, const glm::mat4& transform)
 {
 	std::experimental::optional<std::reference_wrapper<RendererEntity>> renderableOpt = entityPool.get(handle);
 	if (renderableOpt) {
@@ -216,9 +216,8 @@ void Renderer::drawInternal(RenderSpace space)
 
 		Model& model = *modelOpt;
 		ShaderCache& shaderCache = renderable.shaderCache;
-		Transform transform = renderable.transform;
+		glm::mat4 modelMatrix = renderable.transform;
 
-		glm::mat4 modelMatrix = transform.matrix();
 		if (renderable.space == RenderSpace_UI) {
 			modelMatrix = modelMatrix * this->uiModelTransform;
 		}

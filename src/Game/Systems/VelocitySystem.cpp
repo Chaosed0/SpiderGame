@@ -19,12 +19,12 @@ void VelocitySystem::updateEntity(float dt, eid_t entity)
 	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 	VelocityComponent* velocityComponent = world.getComponent<VelocityComponent>(entity);
 
-	Transform& transform = transformComponent->transform;
-	transform.setPosition(transform.getPosition() + transform.getRotation() * Util::forward * velocityComponent->speed * dt);
-	transform.setRotation(transform.getRotation() * glm::angleAxis(velocityComponent->angularSpeed * dt, velocityComponent->rotationAxis));
+	std::shared_ptr<Transform> transform = transformComponent->transform;
+	transform->setPosition(transform->getPosition() + transform->getForward() * velocityComponent->speed * dt);
+	transform->setRotation(transform->getRotation() * glm::angleAxis(velocityComponent->angularSpeed * dt, velocityComponent->rotationAxis));
 
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 	if (collisionComponent != nullptr && collisionComponent->controlsMovement == false) {
-		collisionComponent->collisionObject->setWorldTransform(btTransform(Util::glmToBt(transform.getRotation()), Util::glmToBt(transform.getPosition())));
+		collisionComponent->collisionObject->setWorldTransform(btTransform(Util::glmToBt(transform->getRotation()), Util::glmToBt(transform->getPosition())));
 	}
 }

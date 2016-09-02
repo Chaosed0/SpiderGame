@@ -57,7 +57,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 		newState = SPIDER_IDLE;
 	}
 
-	float distanceToAttackTarget = glm::length(followComponent->target->transform.getPosition() - transformComponent->transform.getPosition());
+	float distanceToAttackTarget = glm::length(followComponent->target->transform->getPosition() - transformComponent->transform->getPosition());
 	if (spiderComponent->attackTimer > 0.0f) {
 		spiderComponent->attackTimer -= dt;
 		newState = SPIDER_ATTACKING;

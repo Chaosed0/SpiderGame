@@ -54,7 +54,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	if (playerComponent->shooting &&
 		playerComponent->shotTimer >= playerComponent->shotCooldown)
 	{
-		Transform& transform = transformComponent->transform;
+		std::shared_ptr<Transform> transform = transformComponent->transform;
 		playerComponent->shotTimer = 0.0f;
 
 		/* Fire off an event to let people know we shot a bullet */
@@ -71,15 +71,15 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(line);
 		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(line);
 
-		transformComponent->transform.setPosition(cameraTransformComponent->transform.getPosition() + cameraTransformComponent->transform.getRotation() * Util::right * 0.1f);
-		transformComponent->transform.setRotation(cameraTransformComponent->transform.getRotation());
+		transformComponent->transform->setPosition(cameraTransformComponent->transform->getWorldPosition() + cameraTransformComponent->transform->getWorldRotation() * Util::right * 0.1f);
+		transformComponent->transform->setRotation(cameraTransformComponent->transform->getWorldRotation());
 		modelRenderComponent->rendererHandle = renderer.getRenderableHandle(bulletMeshHandle, lineShader);
 		expiresComponent->expiryTime = 0.2f;
 		velocityComponent->speed = 100.0f;
 
 		/* Do the raytrace to see if we hit anything */
-		glm::vec3 from = cameraTransformComponent->transform.getPosition();
-		glm::vec3 to = from + cameraTransformComponent->transform.getRotation() * (Util::forward * playerComponent->maxShotDistance);
+		glm::vec3 from = cameraTransformComponent->transform->getWorldPosition();
+		glm::vec3 to = from + cameraTransformComponent->transform->getWorldRotation() * (Util::forward * playerComponent->maxShotDistance);
 		eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
 
 		HealthComponent* enemyHealthComponent = world.getComponent<HealthComponent>(hitEntity);

@@ -95,7 +95,7 @@ struct RendererEntity
 
 	HandlePool<Model>::Handle modelHandle;
 	ShaderCache shaderCache;
-	Transform transform;
+	glm::mat4 transform;
 	AnimationContext context;
 
 	/*! Which space to render the renderable in. Defaults to RenderSpace_World. */
@@ -167,7 +167,7 @@ public:
 	/*!
 	 * \brief Updates the transform of a renderable object.
 	 */
-	void setRenderableTransform(const RenderableHandle& handle, const Transform& transform);
+	void setRenderableTransform(const RenderableHandle& handle, const glm::mat4& transform);
 
 	/*!
 	 * \brief Updates the animation of a renderable object.

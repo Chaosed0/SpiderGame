@@ -7,6 +7,8 @@
 #include <memory>
 #include <vector>
 
+#include "Optional.h"
+
 class Transform
 {
 public:
@@ -14,34 +16,42 @@ public:
 	Transform(glm::vec3 position);
 	Transform(glm::vec3 position, glm::quat rotation);
 	Transform(glm::vec3 position, glm::quat rotation, glm::vec3 scale);
-	~Transform();
 
 	glm::vec3 getPosition() const;
+	glm::vec3 getWorldPosition() const;
 	void setPosition(glm::vec3 newPosition);
 
 	glm::quat getRotation() const;
+	glm::quat getWorldRotation() const;
 	void setRotation(glm::quat newRotation);
 
 	glm::vec3 getScale() const;
+	glm::vec3 getWorldScale() const;
 	void setScale(glm::vec3 newScale);
-
-	void addChild(Transform* child);
-	void removeChild(Transform* child);
 
 	glm::vec3 getForward() const;
 
 	glm::mat4 matrix() const;
+	glm::mat4 matrix();
+
+	void setParent(const std::shared_ptr<Transform>& parent);
 
 	void* userData;
-
 	static const Transform identity;
 private:
+	glm::mat4 getParentMat4() const;
+	const std::shared_ptr<Transform> getParentInternal() const;
+
 	glm::vec3 position;
 	glm::quat rotation;
 	glm::vec3 scale;
 
-	Transform* parent;
-	std::vector<Transform*> children;
+	glm::mat4 cacheMatrix;
+	bool dirty;
 
-	void setParent(Transform* parent);
+	std::experimental::optional<std::weak_ptr<Transform>> parent;
+	glm::mat4 toMat4() const;
+
+	static const glm::mat4 identityMat4;
+	static const std::shared_ptr<Transform> identityPtr;
 };

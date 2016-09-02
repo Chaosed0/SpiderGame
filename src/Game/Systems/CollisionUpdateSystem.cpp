@@ -21,7 +21,7 @@ void CollisionUpdateSystem::updateEntity(float dt, eid_t entity)
 	if (collisionComponent->controlsMovement)
 	{
 		btTransform transform = collisionComponent->collisionObject->getWorldTransform();
-		transformComponent->transform.setPosition(Util::btToGlm(transform.getOrigin()));
-		transformComponent->transform.setRotation(Util::btToGlm(transform.getRotation()));
+		transformComponent->transform->setPosition(Util::btToGlm(transform.getOrigin()));
+		transformComponent->transform->setRotation(Util::btToGlm(transform.getRotation()));
 	}
 }
