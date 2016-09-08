@@ -89,7 +89,7 @@ void Game::setNoclip(bool on)
 
 int Game::setup()
 {
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC | SDL_INIT_JOYSTICK) < 0)
 	{
 		printf ("SDL could not initialize, error: %s\n", SDL_GetError());
 		return -1;
@@ -130,6 +130,24 @@ int Game::setup()
 	}
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+	/* Input */
+	input.initialize();
+	input.setDefaultMapping("Horizontal", KbmAxis_D, KbmAxis_A);
+	input.setDefaultMapping("Vertical", KbmAxis_W, KbmAxis_S);
+	input.setDefaultMapping("LookHorizontal", KbmAxis_MouseXPos, KbmAxis_MouseXNeg, AxisProps(0.1f, 0.2f, 0.3f));
+	input.setDefaultMapping("LookVertical", KbmAxis_MouseYPos, KbmAxis_MouseYNeg, AxisProps(0.1f, 0.2f, 0.3f));
+	input.setDefaultMapping("Jump", KbmAxis_Space, KbmAxis_None);
+	input.setDefaultMapping("Use", KbmAxis_E, KbmAxis_None);
+	input.setDefaultMapping("Fire", KbmAxis_MouseLeft, KbmAxis_None);
+
+	input.setDefaultMapping("Horizontal", ControllerAxis_LStickXPos, ControllerAxis_LStickXNeg);
+	input.setDefaultMapping("Vertical", ControllerAxis_LStickYPos, ControllerAxis_LStickYNeg);
+	input.setDefaultMapping("LookHorizontal", ControllerAxis_RStickXPos, ControllerAxis_RStickXNeg, AxisProps(3.0f, 0.2f, 0.3f));
+	input.setDefaultMapping("LookVertical", ControllerAxis_RStickYPos, ControllerAxis_RStickYNeg, AxisProps(3.0f, 0.2f, 0.3f));
+	input.setDefaultMapping("Jump", ControllerAxis_A, ControllerAxis_None);
+	input.setDefaultMapping("Use", ControllerAxis_X, ControllerAxis_None);
+	input.setDefaultMapping("Fire", ControllerAxis_RightTrigger, ControllerAxis_None);
 
 	/* Shaders */
 	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
@@ -407,7 +425,7 @@ int Game::setup()
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager);
-	playerInputSystem = std::make_unique<PlayerInputSystem>(world, *eventManager);
+	playerInputSystem = std::make_unique<PlayerInputSystem>(world, input, *eventManager);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
@@ -466,6 +484,8 @@ int Game::loop()
 	console->setVisible(true);
 	while (running)
 	{
+		input.update();
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			this->handleEvent(event);
@@ -552,12 +572,13 @@ void Game::update()
 
 void Game::handleEvent(SDL_Event& event)
 {
+	if (!this->console->isVisible()) {
+		input.handleEvent(event);
+	}
+
 	switch(event.type) {
 	case SDL_QUIT:
 		running = false;
-		break;
-	case SDL_MOUSEMOTION:
-		playerInputSystem->rotateCamera((float)event.motion.xrel, (float)event.motion.yrel);
 		break;
 	case SDL_TEXTINPUT:
 		if (console->isVisible()) {
@@ -600,55 +621,6 @@ void Game::handleEvent(SDL_Event& event)
 		case SDLK_ESCAPE:
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			break;
-		case SDLK_w:
-			playerInputSystem->startMoving(glm::vec2(1,0));
-			break;
-		case SDLK_s:
-			playerInputSystem->startMoving(glm::vec2(-1,0));
-			break;
-		case SDLK_d:
-			playerInputSystem->startMoving(glm::vec2(0,1));
-			break;
-		case SDLK_a:
-			playerInputSystem->startMoving(glm::vec2(0,-1));
-			break;
-		case SDLK_e:
-			playerInputSystem->activate();
-			break;
-		case SDLK_SPACE:
-			playerInputSystem->startJump();
-			break;
-		}
-		break;
-	case SDL_KEYUP:
-		if (console->isVisible()) {
-			break;
-		}
-
-		switch(event.key.keysym.sym) {
-		case SDLK_w:
-			playerInputSystem->stopMoving(glm::vec2(1,0));
-			break;
-		case SDLK_s:
-			playerInputSystem->stopMoving(glm::vec2(-1,0));
-			break;
-		case SDLK_d:
-			playerInputSystem->stopMoving(glm::vec2(0,1));
-			break;
-		case SDLK_a:
-			playerInputSystem->stopMoving(glm::vec2(0,-1));
-			break;
-		}
-		break;
-	case SDL_MOUSEBUTTONDOWN:
-		if (event.button.button == SDL_BUTTON_LEFT) {
-			SDL_SetRelativeMouseMode(SDL_TRUE);
-			playerInputSystem->setShooting(true);
-		}
-		break;
-	case SDL_MOUSEBUTTONUP:
-		if (event.button.button == SDL_BUTTON_LEFT) {
-			playerInputSystem->setShooting(false);
 		}
 		break;
 	}

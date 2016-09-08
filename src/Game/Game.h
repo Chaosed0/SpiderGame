@@ -44,6 +44,8 @@
 #include "Game/Responders/PlayerJumpResponder.h"
 #include "Game/Responders/HurtboxPlayerResponder.h"
 
+#include "Input/Input.h"
+
 struct RoomData
 {
 	Room room;
@@ -109,6 +111,8 @@ private:
 	GUI gui;
 
 	SoundManager soundManager;
+
+	Input input;
 
 	Shader shader;
 	Shader skinnedShader;

@@ -31,9 +31,13 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 	btRigidBody* body = (btRigidBody*)collisionComponent->collisionObject;
 	btVector3 velocity = body->getLinearVelocity();
 
-	glm::vec2 movement;
-	if (glm::length(rigidbodyMotorComponent->movement) > glm::epsilon<float>()) {
-		movement = glm::normalize(rigidbodyMotorComponent->movement) * rigidbodyMotorComponent->moveSpeed;
+	glm::vec2 movement(0.0f);
+	glm::vec2 moveDir = rigidbodyMotorComponent->movement;
+	if (glm::length(moveDir) > glm::epsilon<float>()) {
+		if (glm::length(moveDir) > 1.0f) {
+			moveDir = glm::normalize(moveDir);
+		}
+		movement = moveDir * rigidbodyMotorComponent->moveSpeed;
 	}
 
 	glm::vec3 facingVec = rigidbodyMotorComponent->facing * Util::forward;

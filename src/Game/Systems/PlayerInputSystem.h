@@ -4,38 +4,27 @@
 
 #include "Framework/System.h"
 #include "Framework/EventManager.h"
+#include "Input/Input.h"
 
 class PlayerComponent;
 
 class PlayerInputSystem : public System
 {
 public:
-	PlayerInputSystem(World& world, EventManager& eventManager);
+	PlayerInputSystem(World& world, Input& input, EventManager& eventManager);
 	void updateEntity(float dt, eid_t entity);
 
-	void startMoving(glm::vec2 movement);
-	void stopMoving(glm::vec2 movement);
-	void setShooting(bool shooting);
-	void startJump();
 	void setNoclip(bool noclip);
-	void activate();
 
-	void rotateCamera(float horizontal, float vertical);
 	float getCameraVertical();
 private:
-	bool forward, back, left, right;
-	bool jump;
 	bool noclip;
-	bool shooting;
-	bool activating;
-
-	float rotateHorizontal;
-	float rotateVertical;
 
 	float horizontalRad;
 	float verticalRad;
 
 	EventManager& eventManager;
+	Input& input;
 
 	void tryActivate(PlayerComponent* playerComponent);
 };
