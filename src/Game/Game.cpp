@@ -33,6 +33,9 @@
 #include "Game/Components/ExpiresComponent.h"
 #include "Game/Components/HurtboxComponent.h"
 #include "Game/Components/VelocityComponent.h"
+#include "Game/Components/AudioListenerComponent.h"
+#include "Game/Components/AudioSourceComponent.h"
+#include "Game/Components/PointLightComponent.h"
 
 #include "Game/Events/HealthChangedEvent.h"
 #include "Game/Events/GemCountChangedEvent.h"
@@ -79,12 +82,38 @@ void Game::setWireframe(bool on)
 
 void Game::setNoclip(bool on)
 {
+	eid_t player = world.getEntityWithName("Player");
+	if (player == World::NullEntity) {
+		return;
+	}
+
+	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(player);
+	if (collisionComponent == nullptr) {
+		return;
+	}
+
+	btRigidBody* rigidBody = (btRigidBody*)collisionComponent->collisionObject;
 	if (on) {
-		playerBody->setGravity(btVector3(0.0f, 0.0f, 0.0f));
+		rigidBody->setGravity(btVector3(0.0f, 0.0f, 0.0f));
 	} else {
-		playerBody->setGravity(dynamicsWorld->getGravity());
+		rigidBody->setGravity(dynamicsWorld->getGravity());
 	}
 	playerInputSystem->setNoclip(on);
+}
+
+void Game::setBulletDebugDraw(bool on)
+{
+	if (on) {
+		debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+	} else {
+		debugDrawer.setDebugMode(0);
+	}
+}
+
+void Game::refreshBulletDebugDraw()
+{
+	debugDrawer.reset();
+	dynamicsWorld->debugDrawWorld();
 }
 
 int Game::setup()
@@ -183,7 +212,6 @@ int Game::setup()
 
 	debugDrawer.initialize();
 	dynamicsWorld->setDebugDrawer(&debugDrawer);
-	//debugDrawer.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 
 	physics = std::make_unique<Physics>(dynamicsWorld, *eventManager);
 
@@ -310,6 +338,14 @@ int Game::setup()
 
 		modelRenderComponent->rendererHandle = gemHandle;
 	}
+	PointLight light;
+	light.constant = 2.0f;
+	light.linear = 0.2f;
+	light.quadratic = 0.5f;
+	light.ambient = glm::vec3(0.2f);
+	light.diffuse = glm::vec3(0.8f);
+	light.specular = glm::vec3(1.0f);
+	renderer.setPointLight(0, light);
 
 	// Add the room to collision
 	btCollisionShape* roomShape = roomData.meshBuilder.getCollisionMesh();
@@ -335,18 +371,20 @@ int Game::setup()
 	modelComponent->rendererHandle = roomRenderableHandle;
 
 	// Initialize the player
-	player = world.getNewEntity("Player");
+	eid_t player = world.getNewEntity("Player");
 	TransformComponent* playerTransform = world.addComponent<TransformComponent>(player);
 	CollisionComponent* playerCollisionComponent = world.addComponent<CollisionComponent>(player);
 	PlayerComponent* playerComponent = world.addComponent<PlayerComponent>(player);
 	HealthComponent* playerHealthComponent = world.addComponent<HealthComponent>(player);
 	RigidbodyMotorComponent* playerRigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(player);
+	AudioListenerComponent* playerAudioListenerComponent = world.addComponent<AudioListenerComponent>(player);
+	AudioSourceComponent* playerAudioSourceComponent = world.addComponent<AudioSourceComponent>(player);
 
 	playerTransform->transform->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 
 	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform->getScale().x, 0.7f * playerTransform->transform->getScale().y);
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(*playerTransform->transform));
-	playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+	btRigidBody* playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
 	// This pointer is freed by the CollisionComponent destructor
@@ -361,7 +399,7 @@ int Game::setup()
 	playerComponent->shotCooldown = 1.0f;
 	playerComponent->shotDamage = 100;
 
-	camera = world.getNewEntity("Camera");
+	eid_t camera = world.getNewEntity("Camera");
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
 	CameraComponent* cameraComponent = world.addComponent<CameraComponent>(camera);
 	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
@@ -370,8 +408,17 @@ int Game::setup()
 	cameraTransformComponent->transform->setParent(playerTransform->transform);
 	playerComponent->camera = camera;
 
+	SoundManager::SourceHandle playerSourceHandle = soundManager.getSourceHandle();
+	playerAudioSourceComponent->sourceHandle = playerSourceHandle;
+
 	renderer.setCamera(&cameraComponent->camera);
 	debugDrawer.setCamera(&cameraComponent->camera);
+
+	eid_t playerLight = world.getNewEntity("PlayerLight");
+	TransformComponent* lightTransform = world.addComponent<TransformComponent>(playerLight);
+	PointLightComponent* lightComponent = world.addComponent<PointLightComponent>(playerLight);
+	lightTransform->transform->setParent(playerTransform->transform);
+	lightComponent->pointLightIndex = 0;
 
 	// Load some mushrooms
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
@@ -435,6 +482,9 @@ int Game::setup()
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 	velocitySystem = std::make_unique<VelocitySystem>(world);
 	playerFacingSystem = std::make_unique<PlayerFacingSystem>(world, dynamicsWorld, gui.facingLabel);
+	audioListenerSystem = std::make_unique<AudioListenerSystem>(world, soundManager);
+	audioSourceSystem = std::make_unique<AudioSourceSystem>(world, soundManager);
+	pointLightSystem = std::make_unique<PointLightSystem>(world, renderer);
 
 	spiderSystem->debugShader = lightShader;
 
@@ -443,9 +493,8 @@ int Game::setup()
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
 
 	AudioClip shotClip("assets/sound/hvylas.wav");
-	playerSourceHandle = soundManager.getSourceHandle();
 	std::function<void(const ShotEvent& event)> shotCallback =
-		[world = &world, soundManager = &soundManager, playerSourceHandle = this->playerSourceHandle, shotClip](const ShotEvent& event) {
+		[world = &world, soundManager = &soundManager, playerSourceHandle, shotClip](const ShotEvent& event) {
 			TransformComponent* transformComponent = world->getComponent<TransformComponent>(event.source);
 			soundManager->playClipAtSource(shotClip, playerSourceHandle);
 		};
@@ -531,32 +580,7 @@ void Game::update()
 	velocitySystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
 
-	std::shared_ptr<Transform> cameraTransform = world.getComponent<TransformComponent>(camera)->transform;
-	cameraTransform->setRotation(glm::angleAxis(playerInputSystem->getCameraVertical(), glm::vec3(1.0f, 0.0f, 0.0f)));
-
-	std::shared_ptr<Transform> playerTransform = world.getComponent<TransformComponent>(player)->transform;
-	soundManager.setSourcePosition(playerSourceHandle, playerTransform->getPosition());
-	soundManager.setListenerTransform(*playerTransform);
-	soundManager.update();
-
-	PointLight light;
-	light.position = playerTransform->getPosition();
-	light.constant = 2.0f;
-	light.linear = 0.2f;
-	light.quadratic = 0.5f;
-	light.ambient = glm::vec3(0.2f);
-	light.diffuse = glm::vec3(0.8f);
-	light.specular = glm::vec3(1.0f);
-	renderer.setPointLight(0, light);
-
 	dynamicsWorld->stepSimulation(timeDelta);
-
-	static bool feh = true;
-	if (feh) {
-		debugDrawer.reset();
-		dynamicsWorld->debugDrawWorld();
-		feh = false;
-	}
 
 	spiderSystem->update(timeDelta);
 
@@ -564,10 +588,14 @@ void Game::update()
 	collisionUpdateSystem->update(timeDelta);
 	playerFacingSystem->update(timeDelta);
 	modelRenderSystem->update(timeDelta);
+	pointLightSystem->update(timeDelta);
+	audioSourceSystem->update(timeDelta);
+	audioListenerSystem->update(timeDelta);
 
 	expiresSystem->update(timeDelta);
 
 	world.cleanupEntities();
+	soundManager.update();
 }
 
 void Game::handleEvent(SDL_Event& event)

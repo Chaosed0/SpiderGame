@@ -109,6 +109,16 @@ World::eid_iterator World::getEidIterator(ComponentBitmask match)
 	return eid_iterator(entities.begin(), entities.end(), match);
 }
 
+eid_t World::getEntityWithName(const std::string& name)
+{
+	for (auto& pair : this->entities) {
+		if (pair.second.name.compare(name) == 0) {
+			return pair.first;
+		}
+	}
+	return World::NullEntity;
+}
+
 bool World::orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2)
 {
 	ComponentBitmask eb1 = this->getEntityBitmask(e1);

@@ -4,11 +4,13 @@
 #include <cassert>
 #include <al.h>
 
+#include "Util.h"
+
 const unsigned SoundManager::maxSources = 256;
 LogicalSource SoundManager::invalidSource = { glm::vec3(0.0f), 0.0f, INT_MIN, false };
 
 SoundManager::SoundManager()
-	: device(nullptr)
+	: device(nullptr), listenerVolume(1.0f)
 { }
 
 SoundManager::~SoundManager()
@@ -62,10 +64,10 @@ bool SoundManager::initialize()
 	return true;
 }
 
-void SoundManager::setListenerTransform(const Transform& transform)
+void SoundManager::setListenerTransform(const glm::vec3& position, const glm::quat& rotation)
 {
-	listenerTransform.setPosition(transform.getPosition());
-	listenerTransform.setRotation(transform.getRotation());
+	this->listenerPosition = position;
+	this->listenerRotation = rotation;
 }
 
 SoundManager::SourceHandle SoundManager::getSourceHandle()
@@ -96,6 +98,11 @@ void SoundManager::setSourcePriority(const SourceHandle& handle, int priority)
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
 	source.priority = priority;
 	source.dirty = true;
+}
+
+void SoundManager::setListenerVolume(float volume)
+{
+	this->listenerVolume = volume;
 }
 
 SoundManager::ClipHandle SoundManager::playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle)
@@ -176,11 +183,16 @@ void SoundManager::update()
 		iter->second.dirty = false;
 	}
 
-	alListener3f(AL_POSITION, listenerTransform.getPosition().x, listenerTransform.getPosition().y, listenerTransform.getPosition().z);
+	alListener3f(AL_POSITION, listenerPosition.x, listenerPosition.y, listenerPosition.z);
 
-	glm::vec3 at = listenerTransform.getForward();
+	glm::vec3 at = listenerRotation * Util::forward;
 	ALfloat orientation[6] = { at.x, at.y, at.z, 0.0f, 1.0f, 0.0f };
 	alListenerfv(AL_ORIENTATION, orientation);
+
+	if (listenerVolume != FLT_MAX) {
+		alListenerf(AL_GAIN, listenerVolume);
+		listenerVolume = FLT_MAX;
+	}
 
 	alcProcessContext(context);
 }

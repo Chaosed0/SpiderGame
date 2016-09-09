@@ -37,6 +37,9 @@
 #include "Game/Systems/ExpiresSystem.h"
 #include "Game/Systems/VelocitySystem.h"
 #include "Game/Systems/PlayerFacingSystem.h"
+#include "Game/Systems/AudioListenerSystem.h"
+#include "Game/Systems/AudioSourceSystem.h"
+#include "Game/Systems/PointLightSystem.h"
 
 #include "Framework/Physics.h"
 #include "Framework/EventManager.h"
@@ -129,11 +132,6 @@ private:
 	Model pointLightModel;
 	Model skyboxModel;
 
-	eid_t player;
-	eid_t camera;
-	btRigidBody* playerBody;
-	SoundManager::SourceHandle playerSourceHandle;
-
 	World world;
 	std::unique_ptr<ShootingSystem> shootingSystem;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
@@ -146,6 +144,9 @@ private:
 	std::unique_ptr<ExpiresSystem> expiresSystem;
 	std::unique_ptr<VelocitySystem> velocitySystem;
 	std::unique_ptr<PlayerFacingSystem> playerFacingSystem;
+	std::unique_ptr<AudioListenerSystem> audioListenerSystem;
+	std::unique_ptr<AudioSourceSystem> audioSourceSystem;
+	std::unique_ptr<PointLightSystem> pointLightSystem;
 
 	std::unique_ptr<Physics> physics;
 
@@ -164,4 +165,6 @@ private:
 	void exit();
 	void setWireframe(bool on);
 	void setNoclip(bool on);
+	void setBulletDebugDraw(bool on);
+	void refreshBulletDebugDraw();
 };

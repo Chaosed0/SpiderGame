@@ -146,7 +146,13 @@ public:
 	 * \brief Sets a point light.
 	 * \param index Must be less than maxPointLights().
 	 */
-	void setPointLight(unsigned int index, PointLight pointLight);
+	void setPointLight(unsigned int index, const PointLight& pointLight);
+
+	/*!
+	 * \brief Gets a point light.
+	 * \param index Must be less than maxPointLights().
+	 */
+	PointLight getPointLight(unsigned int index);
 
 	/*!
 	 * \ brief Gets the maximum point lights allowed by the renderer.

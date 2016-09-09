@@ -259,7 +259,15 @@ void Renderer::setDirLight(DirLight dirLight)
 	this->dirLight = dirLight;
 }
 
-void Renderer::setPointLight(unsigned int index, PointLight pointLight)
+PointLight Renderer::getPointLight(unsigned int index)
+{
+	if (index < pointLights.size()) {
+		return pointLights[index];
+	}
+	return PointLight();
+}
+
+void Renderer::setPointLight(unsigned int index, const PointLight& pointLight)
 {
 	if (index < pointLights.size()) {
 		pointLights[index] = pointLight;

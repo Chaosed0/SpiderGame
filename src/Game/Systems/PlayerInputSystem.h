@@ -15,8 +15,6 @@ public:
 	void updateEntity(float dt, eid_t entity);
 
 	void setNoclip(bool noclip);
-
-	float getCameraVertical();
 private:
 	bool noclip;
 

@@ -25,6 +25,8 @@ public:
 	std::string getEntityName(eid_t eid) const;
 	void cleanupEntities();
 
+	eid_t getEntityWithName(const std::string& name);
+
 	bool entityHasComponents(eid_t entity, const ComponentBitmask& bitmask);
 	bool orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2);
 

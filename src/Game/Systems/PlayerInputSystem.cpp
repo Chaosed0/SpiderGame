@@ -2,6 +2,7 @@
 #include "PlayerInputSystem.h"
 
 #include "Util.h"
+#include "Game/Components/TransformComponent.h"
 #include "Game/Components/RigidbodyMotorComponent.h"
 #include "Game/Components/PlayerComponent.h"
 #include "Game/Events/GemCountChangedEvent.h"
@@ -20,6 +21,8 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 
+	TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
+
 	float horizontal = input.getAxis("Horizontal", device);
 	float vertical = input.getAxis("Vertical", device);
 	float lookHorizontal = input.getAxis("LookHorizontal", device); 
@@ -28,6 +31,8 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	horizontalRad -= lookHorizontal * dt;
 	verticalRad += lookVertical * dt;
 	verticalRad = glm::clamp(verticalRad, -glm::half_pi<float>() + 0.01f, glm::half_pi<float>() - 0.01f);
+
+	cameraTransformComponent->transform->setRotation(glm::angleAxis(verticalRad, glm::vec3(1.0f, 0.0f, 0.0f)));
 
 	if (input.getButtonDown("Use", device)) {
 		this->tryActivate(playerComponent);
@@ -63,9 +68,4 @@ void PlayerInputSystem::tryActivate(PlayerComponent* playerComponent)
 void PlayerInputSystem::setNoclip(bool noclip)
 {
 	this->noclip = noclip;
-}
-
-float PlayerInputSystem::getCameraVertical()
-{
-	return this->verticalRad;
 }
