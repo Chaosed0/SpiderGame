@@ -22,15 +22,15 @@ void PlayerFacingSystem::updateEntity(float dt, eid_t entity)
 	TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
 	CameraComponent* cameraComponent = world.getComponent<CameraComponent>(playerComponent->camera);
 
-	glm::vec3 from = cameraTransformComponent->transform->getPosition();
-	glm::vec3 to = from + cameraTransformComponent->transform->getForward() * 1.5f;
+	glm::vec3 from = cameraTransformComponent->transform->getWorldPosition();
+	glm::vec3 to = from + cameraTransformComponent->transform->getWorldForward() * 1.5f;
 	eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
 	std::string text;
 
 	TransformComponent* hitEntityTransformComponent = world.getComponent<TransformComponent>(hitEntity);
 
 	if (hitEntityTransformComponent != nullptr) {
-		glm::vec2 screenPoint = cameraComponent->camera.worldToScreenPoint(hitEntityTransformComponent->transform->getPosition());
+		glm::vec2 screenPoint = cameraComponent->camera.worldToScreenPoint(hitEntityTransformComponent->transform->getWorldPosition());
 		label->transform.setPosition(glm::vec3(screenPoint + glm::vec2(20.0f, -20.0f), 0.0f));
 	}
 

@@ -30,6 +30,7 @@ public:
 	void setScale(glm::vec3 newScale);
 
 	glm::vec3 getForward() const;
+	glm::vec3 getWorldForward() const;
 
 	glm::mat4 matrix() const;
 	glm::mat4 matrix();

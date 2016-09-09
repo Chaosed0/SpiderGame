@@ -76,7 +76,12 @@ void Transform::setScale(glm::vec3 newScale)
 
 glm::vec3 Transform::getForward() const
 {
-	return rotation * Util::forward;
+	return getRotation() * Util::forward;
+}
+
+glm::vec3 Transform::getWorldForward() const
+{
+	return getWorldRotation() * Util::forward;
 }
 
 void Transform::setParent(const std::shared_ptr<Transform>& parent)
