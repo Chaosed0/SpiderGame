@@ -6,6 +6,7 @@
 class GemCountChangedEvent : public Event
 {
 public:
+	eid_t source;
 	unsigned oldGemCount;
 	unsigned newGemCount;
 };

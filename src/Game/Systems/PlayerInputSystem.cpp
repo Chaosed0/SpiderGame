@@ -35,7 +35,7 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	cameraTransformComponent->transform->setRotation(glm::angleAxis(verticalRad, glm::vec3(1.0f, 0.0f, 0.0f)));
 
 	if (input.getButtonDown("Use", device)) {
-		this->tryActivate(playerComponent);
+		this->tryActivate(entity, playerComponent);
 	}
 
 	rigidbodyMotorComponent->facing = Util::rotateHorizontalVertical(horizontalRad, verticalRad);
@@ -46,7 +46,7 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	playerComponent->shooting = input.getButton("Fire", device);
 }
 
-void PlayerInputSystem::tryActivate(PlayerComponent* playerComponent)
+void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerComponent)
 {
 	eid_t entity = playerComponent->lastFacedEntity;
 
@@ -59,6 +59,7 @@ void PlayerInputSystem::tryActivate(PlayerComponent* playerComponent)
 		world.removeEntity(entity);
 
 		GemCountChangedEvent event;
+		event.source = player;
 		event.newGemCount = playerComponent->gemCount;
 		event.oldGemCount = event.newGemCount - 1;
 		eventManager.sendEvent(event);

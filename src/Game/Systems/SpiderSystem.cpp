@@ -16,16 +16,21 @@
 #include "Game/Components/SpiderComponent.h"
 #include "Game/Components/FollowComponent.h"
 #include "Game/Components/RigidbodyMotorComponent.h"
+#include "Game/Components/AudioSourceComponent.h"
 
 #include "Game/Components/ExpiresComponent.h"
 #include "Game/Components/HurtboxComponent.h"
 
+#include "Sound/SoundManager.h"
+
 const float SpiderSystem::attackDistance = 3.0f;
 
-SpiderSystem::SpiderSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer)
+SpiderSystem::SpiderSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer, SoundManager& soundManager, std::default_random_engine& generator)
 	: System(world),
 	dynamicsWorld(dynamicsWorld),
-	renderer(renderer)
+	renderer(renderer),
+	soundManager(soundManager),
+	generator(generator)
 {
 	require<RigidbodyMotorComponent>();
 	require<TransformComponent>();
@@ -33,6 +38,7 @@ SpiderSystem::SpiderSystem(World& world, btDynamicsWorld* dynamicsWorld, Rendere
 	require<ModelRenderComponent>();
 	require<HealthComponent>();
 	require<FollowComponent>();
+	require<AudioSourceComponent>();
 	require<SpiderComponent>();
 }
 
@@ -45,6 +51,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	HealthComponent* healthComponent = world.getComponent<HealthComponent>(entity);
 	SpiderComponent* spiderComponent = world.getComponent<SpiderComponent>(entity);
 	FollowComponent* followComponent = world.getComponent<FollowComponent>(entity);
+	AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(entity);
 
 	assert(collisionComponent->collisionObject->getInternalType() == btCollisionObject::CO_RIGID_BODY);
 
@@ -87,7 +94,27 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 		Transform hurtboxTransform(Util::btToGlm(spiderTransform.getOrigin() + hurtboxOffset), Util::btToGlm(spiderRotation));
 		this->createHurtbox(hurtboxTransform, hurtboxHalfExtents);
 
+		spiderComponent->soundTimer = spiderComponent->soundTime;
+
 		spiderComponent->madeHurtbox = true;
+	}
+
+	spiderComponent->soundTimer += dt;
+	if (spiderComponent->soundTime > 0 &&
+		spiderComponent->sounds.size() > 0 &&
+		spiderComponent->soundTimer >= spiderComponent->soundTime)
+	{
+		spiderComponent->soundTimer = 0.0f;
+		std::uniform_int_distribution<int> soundRand(0, spiderComponent->sounds.size() - 1);
+		AudioClip& clip = spiderComponent->sounds[soundRand(generator)];
+		soundManager.playClipAtSource(clip, audioSourceComponent->sourceHandle);
+		spiderComponent->soundTime = -1.0f;
+	}
+
+	// Handles the case where it isn't initialized too
+	if (spiderComponent->soundTime < 0.0f) {
+		std::uniform_real_distribution<float> nextSoundTime(spiderComponent->soundTimeMin, spiderComponent->soundTimeMax);
+		spiderComponent->soundTime = nextSoundTime(generator);
 	}
 
 	if (newState != spiderComponent->animState) {
@@ -110,6 +137,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 			rigidbodyMotorComponent->canMove = false;
 			ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(entity);
 			expiresComponent->expiryTime = 2.0f;
+			soundManager.playClipAtSource(spiderComponent->deathSound, audioSourceComponent->sourceHandle);
 			break;
 		}
 

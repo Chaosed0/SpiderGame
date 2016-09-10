@@ -24,5 +24,5 @@ private:
 	EventManager& eventManager;
 	Input& input;
 
-	void tryActivate(PlayerComponent* playerComponent);
+	void tryActivate(eid_t player, PlayerComponent* playerComponent);
 };

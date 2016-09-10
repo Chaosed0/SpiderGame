@@ -2,6 +2,7 @@
 
 #include "Framework/Component.h"
 #include "Framework/World.h"
+#include "Sound/AudioClip.h"
 
 class PlayerComponent : public Component
 {
@@ -18,7 +19,11 @@ public:
 	float maxShotDistance;
 	unsigned shotDamage;
 	unsigned gemCount;
-	eid_t lastFacedEntity;
 
+	AudioClip shotClip;
+	AudioClip hurtClip;
+	AudioClip gemPickupClip;
+
+	eid_t lastFacedEntity;
 	eid_t camera;
 };

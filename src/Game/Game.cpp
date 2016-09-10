@@ -398,6 +398,9 @@ int Game::setup()
 
 	playerComponent->shotCooldown = 1.0f;
 	playerComponent->shotDamage = 100;
+	playerComponent->shotClip = AudioClip("assets/sound/hvylas.wav");
+	playerComponent->hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
+	playerComponent->gemPickupClip = AudioClip("assets/sound/pickup.wav");
 
 	eid_t camera = world.getNewEntity("Camera");
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
@@ -424,6 +427,14 @@ int Game::setup()
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
+	std::vector<AudioClip> spiderSounds = {
+		AudioClip("assets/sound/minecraft/spider/say1.ogg"),
+		AudioClip("assets/sound/minecraft/spider/say2.ogg"),
+		AudioClip("assets/sound/minecraft/spider/say3.ogg"),
+		AudioClip("assets/sound/minecraft/spider/say4.ogg")
+	};
+	AudioClip spiderDeathSound("assets/sound/minecraft/spider/death.ogg");
+
 	for (int i = 0; i < 10; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
@@ -435,6 +446,7 @@ int Game::setup()
 		FollowComponent* followComponent = world.addComponent<FollowComponent>(spider);
 		RigidbodyMotorComponent* rigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(spider);
 		HealthComponent* healthComponent = world.addComponent<HealthComponent>(spider);
+		AudioSourceComponent* audioSourceComponent = world.addComponent<AudioSourceComponent>(spider);
 		SpiderComponent* spiderComponent = world.addComponent<SpiderComponent>(spider);
 
 		// Stick it in a random room
@@ -457,6 +469,9 @@ int Game::setup()
 		collisionComponent->collisionObject = spiderRigidBody;
 		collisionComponent->world = dynamicsWorld;
 
+		audioSourceComponent->sourceHandle = soundManager.getSourceHandle();
+		soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->transform->getWorldPosition());
+
 		followComponent->target = playerTransform;
 		rigidbodyMotorComponent->moveSpeed = 3.0f;
 
@@ -469,6 +484,8 @@ int Game::setup()
 		healthComponent->health = healthComponent->maxHealth = 100;
 		spiderComponent->animState = SPIDER_IDLE;
 		spiderComponent->attackTime = 1.0f;
+		spiderComponent->sounds = spiderSounds;
+		spiderComponent->deathSound = spiderDeathSound;
 	}
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager);
@@ -478,7 +495,7 @@ int Game::setup()
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
 	cameraSystem = std::make_unique<CameraSystem>(world);
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
-	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer);
+	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer, soundManager, generator);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 	velocitySystem = std::make_unique<VelocitySystem>(world);
 	playerFacingSystem = std::make_unique<PlayerFacingSystem>(world, dynamicsWorld, gui.facingLabel);
@@ -492,29 +509,39 @@ int Game::setup()
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, *eventManager);
 
-	AudioClip shotClip("assets/sound/hvylas.wav");
 	std::function<void(const ShotEvent& event)> shotCallback =
-		[world = &world, soundManager = &soundManager, playerSourceHandle, shotClip](const ShotEvent& event) {
-			TransformComponent* transformComponent = world->getComponent<TransformComponent>(event.source);
-			soundManager->playClipAtSource(shotClip, playerSourceHandle);
+		[world = &world, soundManager = &soundManager](const ShotEvent& event) {
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
+			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
+			soundManager->playClipAtSource(playerComponent->shotClip, audioSourceComponent->sourceHandle);
 		};
 	eventManager->registerForEvent<ShotEvent>(shotCallback);
 
 	std::function<void(const HealthChangedEvent& event)> healthChangedCallback =
-		[world = &world, healthLabel = gui.healthLabel](const HealthChangedEvent& event) {
+		[world = &world, soundManager = &soundManager, healthLabel = gui.healthLabel](const HealthChangedEvent& event) {
 			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.entity);
 
 			std::stringstream sstream;
 			sstream << event.newHealth;
 			healthLabel->setText(sstream.str());
+
+			if (event.healthChange < 0) {
+				AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.entity);
+				soundManager->playClipAtSource(playerComponent->hurtClip, audioSourceComponent->sourceHandle);
+			}
 		};
 	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback);
 
 	std::function<void(const GemCountChangedEvent& event)> gemCountChangedCallback =
-		[world = &world, gemLabel = gui.gemLabel](const GemCountChangedEvent& event) {
+		[world = &world, soundManager = &soundManager, gemLabel = gui.gemLabel](const GemCountChangedEvent& event) {
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
+			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
+
 			std::stringstream sstream;
 			sstream << event.newGemCount;
 			gemLabel->setText(sstream.str());
+
+			soundManager->playClipAtSource(playerComponent->gemPickupClip, audioSourceComponent->sourceHandle);
 		};
 	eventManager->registerForEvent<GemCountChangedEvent>(gemCountChangedCallback);
 

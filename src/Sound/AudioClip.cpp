@@ -18,7 +18,11 @@ AudioClip::AudioClip(const std::string& fileName)
 {
 	SF_INFO finfo;
 	std::unique_ptr<SNDFILE, int(*)(SNDFILE*)> file(sf_open(fileName.c_str(), SFM_READ, &finfo), &sf_close);
-	assert(file != nullptr);
+
+	// TODO: This is pretty terrible (though effective!)
+	if (file == nullptr) {
+		throw "Audio file couldn't be loaded: " + fileName;
+	}
 
 	std::vector<uint16_t> data;
 	std::array<int16_t, 4096> readBuf;
