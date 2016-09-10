@@ -59,6 +59,8 @@ bool SoundManager::initialize()
 		sources[i].logicalSourceHandle = 0;
 		sources[i].playing = false;
 		sources[i].startPlaying = false;
+
+		alSourcef(alSources[i], AL_REFERENCE_DISTANCE, 5.0f);
 	}
 
 	return true;

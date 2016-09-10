@@ -100,7 +100,8 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	spiderComponent->soundTimer += dt;
-	if (spiderComponent->soundTime > 0 &&
+	if (newState != SPIDER_DEAD &&
+		spiderComponent->soundTime > 0 &&
 		spiderComponent->sounds.size() > 0 &&
 		spiderComponent->soundTimer >= spiderComponent->soundTime)
 	{
