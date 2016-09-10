@@ -42,6 +42,9 @@ void BulletDebugDrawer::setCamera(Camera* camera)
 void BulletDebugDrawer::reset()
 {
 	i = 0;
+	currentBufferSize = 0;
+	vertices.clear();
+	colors.clear();
 }
 
 void BulletDebugDrawer::draw()

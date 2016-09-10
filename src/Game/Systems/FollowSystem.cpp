@@ -33,8 +33,8 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 
 	std::shared_ptr<Transform> finalTarget = followComponent->target->transform;
 
-	glm::vec3 from = transformComponent->transform->getPosition();
-	glm::vec3 to = finalTarget->getPosition();
+	glm::vec3 from = transformComponent->transform->getWorldPosition() + followComponent->raycastStartOffset;
+	glm::vec3 to = finalTarget->getWorldPosition();
 	btVector3 btStart(Util::glmToBt(from));
 	btVector3 btEnd(Util::glmToBt(to));
 	btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);

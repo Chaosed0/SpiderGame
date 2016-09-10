@@ -196,6 +196,8 @@ int Game::setup()
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
 	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
+	console->addCallback("enableBulletDebugDraw", CallbackMap::defineCallback<bool>(std::bind(&Game::setBulletDebugDraw, this, std::placeholders::_1)));
+	console->addCallback("refreshBulletDebugDraw", CallbackMap::defineCallback(std::bind(&Game::refreshBulletDebugDraw, this)));
 	console->addToRenderer(uiRenderer, backShader, textShader);
 
 	/* Renderer */
@@ -456,10 +458,10 @@ int Game::setup()
 		transformComponent->transform->setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
 		transformComponent->transform->setScale(glm::vec3(scaleRand(generator)));
 
-		glm::vec3 halfExtents(200.0f, 75.0f, 120.0f);
+		glm::vec3 halfExtents = glm::vec3(200.0f, 75.0f, 120.0f) * transformComponent->transform->getScale().x;
 		btCompoundShape* shape = new btCompoundShape();
-		btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents * transformComponent->transform->getScale().x));
-		shape->addChildShape(btTransform(btQuaternion(), btVector3(0.0f, halfExtents.y * 2.0f, 0.0f) * transformComponent->transform->getScale().x), boxShape);
+		btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents));
+		shape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y * 1.0f, 0.0f)), boxShape);
 		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(*transformComponent->transform));
 		btRigidBody* spiderRigidBody = new btRigidBody(10.0f, playerMotionState, shape);
 		// This pointer is freed by the CollisionComponent destructor
@@ -473,6 +475,7 @@ int Game::setup()
 		soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->transform->getWorldPosition());
 
 		followComponent->target = playerTransform;
+		followComponent->raycastStartOffset = glm::vec3(0.0f, halfExtents.y, 0.0f);
 		rigidbodyMotorComponent->moveSpeed = 3.0f;
 
 		Renderer::ModelHandle spiderModelHandle = renderer.getModelHandle(spiderModel);
@@ -665,6 +668,10 @@ void Game::handleEvent(SDL_Event& event)
 				break;
 			case SDLK_BACKSPACE:
 				console->backspace();
+				break;
+			case SDLK_UP:
+			case SDLK_DOWN:
+				console->recallHistory(event.key.keysym.sym == SDLK_UP);
 				break;
 			}
 			break;

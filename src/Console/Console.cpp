@@ -21,7 +21,7 @@ Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
 	: size(size), font(font),
 	buffer(maxBufferLines), bufferEnd(0), numBufferedLines(0),
 	backQuad(std::make_shared<UIQuad>(size)), inputLabel(std::make_shared<Label>(font)),
-	bufferLabels(maxBufferLines)
+	bufferLabels(maxBufferLines), historyPointer(0)
 {
 	backQuad->material.setProperty("color", backColor);
 	lineHeight = 15.0f;
@@ -29,6 +29,7 @@ Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
 		bufferLabels[i] = std::make_shared<Label>(font);
 	}
 
+	this->history.push_back("");
 	this->repositionLabels();
 	this->updateInputLabel();
 	this->setVisible(false);
@@ -41,37 +42,41 @@ void Console::addCallback(const std::string& functionName, Callback callback)
 
 void Console::inputChar(char c)
 {
-	this->input.push_back(c);
+	this->history[historyPointer].push_back(c);
 	this->updateInputLabel();
 }
 
 void Console::backspace()
 {
-	if (!input.empty()) {
-		this->input.pop_back();
+	if (!history[historyPointer].empty()) {
+		this->history.back().pop_back();
 		this->updateInputLabel();
 	}
 }
 
 void Console::endLine()
 {
-	if (this->input.empty()) {
+	const std::string& command = this->history[historyPointer];
+	if (command.empty()) {
 		return;
 	}
 
-	this->print(this->input);
+	// Make it show up in the history
+	this->print(command);
 
-	size_t firstSpace = input.find_first_of(' ');
+	// Do a simple parse of the command
+	size_t firstSpace = command.find_first_of(' ');
 	std::string functionName;
 	std::string args;
 	if (firstSpace == std::string::npos) {
-		functionName = input;
+		functionName = command;
 		args = "";
 	} else {
-		functionName = input.substr(0, firstSpace);
-		args = input.substr(firstSpace);
+		functionName = command.substr(0, firstSpace);
+		args = command.substr(firstSpace);
 	}
 
+	// Execute the command
 	CallbackMap::Error error = callbackMap.call(functionName, args);
 
 	if (error == CallbackMap::CALLBACK_NOT_FOUND) {
@@ -80,7 +85,24 @@ void Console::endLine()
 		this->print("Error: Bad arguments passed to function " + functionName);
 	}
 
-	this->input.clear();
+	// If we're back in the history, update the latest command
+	if (historyPointer != this->history.size()-1) {
+		this->history.back() = command;
+	}
+
+	// Start anew
+	this->history.push_back("");
+	historyPointer = this->history.size() - 1;
+	this->updateInputLabel();
+}
+
+void Console::recallHistory(bool up)
+{
+	if (up && historyPointer > 0) {
+		--historyPointer;
+	} else if (!up) {
+		historyPointer = std::min(historyPointer+1, history.size()-1);
+	}
 	this->updateInputLabel();
 }
 
@@ -146,5 +168,5 @@ void Console::repositionLabels()
 
 void Console::updateInputLabel()
 {
-	this->inputLabel->setText("> " + input);
+	this->inputLabel->setText("> " + history[historyPointer]);
 }

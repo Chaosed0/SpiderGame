@@ -75,7 +75,7 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	if (velocity.length() > glm::epsilon<float>()) {
-		body->activate();
+		body->activate(true);
 	}
 	body->setLinearVelocity(velocity);
 }

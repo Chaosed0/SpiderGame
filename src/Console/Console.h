@@ -23,6 +23,8 @@ public:
 	void backspace();
 	void endLine();
 
+	void recallHistory(bool up);
+
 	void setVisible(bool visible);
 	bool isVisible();
 
@@ -30,9 +32,11 @@ public:
 
 	void print(const std::string& message);
 private:
-	std::string input;
 	std::vector<std::string> buffer;
 	unsigned int bufferEnd, numBufferedLines;
+
+	std::vector<std::string> history;
+	unsigned historyPointer;
 
 	std::shared_ptr<Font> font;
 	std::shared_ptr<Label> inputLabel;
