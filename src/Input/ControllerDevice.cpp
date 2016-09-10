@@ -30,6 +30,7 @@ void ControllerDevice::update()
 		ControllerAxis axis = iter->first;
 		AxisData& data = iter->second;
 		data.previousValue = data.currentValue;
+		data.currentValue = data.pendingValue;
 	}
 
 	// Read SDL axes
@@ -98,7 +99,7 @@ void ControllerDevice::handleEvent(const SDL_Event& event)
 	case SDL_CONTROLLERBUTTONUP: {
 		assert(event.cbutton.which == this->id);
 		ControllerAxis axis = axisFromSdl((SDL_GameControllerButton)event.cbutton.button);
-		axisDataMap[axis].currentValue = (event.cbutton.state == SDL_PRESSED) ? 1.0f: 0.0f;
+		axisDataMap[axis].pendingValue = (event.cbutton.state == SDL_PRESSED) ? 1.0f: 0.0f;
 		break;
 	}
 	default:

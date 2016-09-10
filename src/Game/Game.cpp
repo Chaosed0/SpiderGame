@@ -560,8 +560,6 @@ int Game::loop()
 	console->setVisible(true);
 	while (running)
 	{
-		input.update();
-
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			this->handleEvent(event);
@@ -599,6 +597,8 @@ void Game::draw()
 
 void Game::update()
 {
+	input.update();
+
 	renderer.update(timeDelta);
 
 	playerInputSystem->update(timeDelta);

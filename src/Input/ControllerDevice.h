@@ -59,6 +59,7 @@ private:
 
 	struct AxisData {
 		AxisData() : currentValue(0.0f), previousValue(0.0f) { }
+		float pendingValue;
 		float currentValue;
 		float previousValue;
 	};

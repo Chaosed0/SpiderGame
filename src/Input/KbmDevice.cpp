@@ -13,9 +13,10 @@ void KbmDevice::update()
 	for (auto iter = axisDataMap.begin(); iter != axisDataMap.end(); ++iter) {
 		AxisData& data = iter->second;
 		data.previousValue = data.currentValue;
+		data.currentValue = data.pendingValue;
 
 		if (iter->first >= KbmAxis_MouseXPos && iter->first <= KbmAxis_MouseScrollYNeg) {
-			data.currentValue = 0.0f;
+			data.pendingValue = 0.0f;
 		}
 	}
 }
@@ -27,11 +28,11 @@ void KbmDevice::handleEvent(const SDL_Event& event)
 	case SDL_KEYUP: {
 		KbmAxis axis = axisFromSdl(event.key.keysym.sym);
 		if (axis != KbmAxis_None) {
-			axisDataMap[axis].currentValue = (event.key.state == SDL_PRESSED ? 1.0f : 0.0f);
+			axisDataMap[axis].pendingValue = (event.key.state == SDL_PRESSED ? 1.0f : 0.0f);
 		}
 		axis = altAxisFromSdl(event.key.keysym.sym);
 		if (axis != KbmAxis_None) {
-			axisDataMap[axis].currentValue = (event.key.state == SDL_PRESSED ? 1.0f : 0.0f);
+			axisDataMap[axis].pendingValue = (event.key.state == SDL_PRESSED ? 1.0f : 0.0f);
 		}
 		break;
 	}
@@ -39,22 +40,22 @@ void KbmDevice::handleEvent(const SDL_Event& event)
 	case SDL_MOUSEBUTTONUP: {
 		KbmAxis axis = axisFromSdl(event.button.button);
 		if (axis != KbmAxis_None) {
-			axisDataMap[axis].currentValue = (event.button.state == SDL_PRESSED ? 1.0f : 0.0f);
+			axisDataMap[axis].pendingValue = (event.button.state == SDL_PRESSED ? 1.0f : 0.0f);
 		}
 		break;
 	}
 	case SDL_MOUSEMOTION:
 		// Invert the Y axis because down is positive, and we want up to be positive
-		axisDataMap[KbmAxis_MouseXPos].currentValue += (event.motion.xrel > 0.0f ? event.motion.xrel : 0.0f);
-		axisDataMap[KbmAxis_MouseXNeg].currentValue -= (event.motion.xrel < 0.0f ? event.motion.xrel : 0.0f);
-		axisDataMap[KbmAxis_MouseYPos].currentValue -= (event.motion.yrel < 0.0f ? event.motion.yrel : 0.0f);
-		axisDataMap[KbmAxis_MouseYNeg].currentValue += (event.motion.yrel > 0.0f ? event.motion.yrel : 0.0f);
+		axisDataMap[KbmAxis_MouseXPos].pendingValue += (event.motion.xrel > 0.0f ? event.motion.xrel : 0.0f);
+		axisDataMap[KbmAxis_MouseXNeg].pendingValue -= (event.motion.xrel < 0.0f ? event.motion.xrel : 0.0f);
+		axisDataMap[KbmAxis_MouseYPos].pendingValue -= (event.motion.yrel < 0.0f ? event.motion.yrel : 0.0f);
+		axisDataMap[KbmAxis_MouseYNeg].pendingValue += (event.motion.yrel > 0.0f ? event.motion.yrel : 0.0f);
 		break;
 	case SDL_MOUSEWHEEL:
-		axisDataMap[KbmAxis_MouseScrollXPos].currentValue += (event.wheel.x > 0.0f ? event.wheel.x : 0.0f);
-		axisDataMap[KbmAxis_MouseScrollXNeg].currentValue -= (event.wheel.x < 0.0f ? event.wheel.x : 0.0f);
-		axisDataMap[KbmAxis_MouseScrollYPos].currentValue += (event.wheel.y > 0.0f ? event.wheel.y : 0.0f);
-		axisDataMap[KbmAxis_MouseScrollYNeg].currentValue -= (event.wheel.y < 0.0f ? event.wheel.y : 0.0f);
+		axisDataMap[KbmAxis_MouseScrollXPos].pendingValue += (event.wheel.x > 0.0f ? event.wheel.x : 0.0f);
+		axisDataMap[KbmAxis_MouseScrollXNeg].pendingValue -= (event.wheel.x < 0.0f ? event.wheel.x : 0.0f);
+		axisDataMap[KbmAxis_MouseScrollYPos].pendingValue += (event.wheel.y > 0.0f ? event.wheel.y : 0.0f);
+		axisDataMap[KbmAxis_MouseScrollYNeg].pendingValue -= (event.wheel.y < 0.0f ? event.wheel.y : 0.0f);
 		break;
 	}
 }
