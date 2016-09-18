@@ -17,7 +17,7 @@ PlayerInputSystem::PlayerInputSystem(World& world, Input& input, EventManager& e
 
 void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 {
-	Device device = Device_Controller0;
+	Device device = Device_Kbm;
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 

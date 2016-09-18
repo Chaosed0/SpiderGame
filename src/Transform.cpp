@@ -92,9 +92,9 @@ void Transform::setParent(const std::shared_ptr<Transform>& parent)
 glm::mat4 Transform::matrix() const
 {
 	if (!this->dirty) {
-		return this->cacheMatrix;
+		return this->getParentMat4() * this->cacheMatrix;
 	} else {
-		return this->toMat4();
+		return this->getParentMat4() * this->toMat4();
 	}
 }
 
@@ -105,7 +105,7 @@ glm::mat4 Transform::matrix()
 		this->dirty = false;
 	}
 	
-	return this->cacheMatrix;
+	return this->getParentMat4() * this->cacheMatrix;
 }
 
 glm::mat4 Transform::toMat4() const
@@ -124,7 +124,7 @@ glm::mat4 Transform::toMat4() const
 		0.0f, 0.0f, 0.0f, 1.0f
 		);
 
-	return this->getParentMat4() * (posMatrix * rotMatrix * scaleMatrix);
+	return posMatrix * rotMatrix * scaleMatrix;
 }
 
 glm::mat4 Transform::getParentMat4() const

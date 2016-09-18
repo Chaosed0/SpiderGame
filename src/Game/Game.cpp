@@ -48,6 +48,9 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
+const static int gemCount = 5;
+const static int spiderCount = 0;
+
 Game::Game()
 {
 	running = false;
@@ -279,7 +282,7 @@ int Game::setup()
 	Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
 
 	// Put a light in the center room and the rooms that are farthest out
-	for (unsigned i = 0; i < 5; i++) {
+	for (unsigned i = 0; i < gemCount; i++) {
 		RoomBox box;
 		if (i == 0) {
 			box = room.boxes[room.leftmostBox];
@@ -425,6 +428,18 @@ int Game::setup()
 	lightTransform->transform->setParent(playerTransform->transform);
 	lightComponent->pointLightIndex = 0;
 
+	eid_t playerGun = world.getNewEntity("PlayerGun");
+	TransformComponent* gunTransform = world.addComponent<TransformComponent>(playerGun);
+	ModelRenderComponent* gunModelComponent = world.addComponent<ModelRenderComponent>(playerGun);
+
+	gunTransform->transform->setPosition(glm::vec3(0.2f, -0.3f, -0.2f));
+	gunTransform->transform->setParent(cameraTransformComponent->transform);
+
+	Model gunModel = modelLoader.loadModelFromPath("assets/models/gun.fbx");
+	auto gunModelHandle = renderer.getModelHandle(gunModel);
+	auto gunRenderableHandle = renderer.getRenderableHandle(gunModelHandle, shader);
+	gunModelComponent->rendererHandle = gunRenderableHandle;
+
 	// Load some mushrooms
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
@@ -437,7 +452,7 @@ int Game::setup()
 	};
 	AudioClip spiderDeathSound("assets/sound/minecraft/spider/death.ogg");
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < spiderCount; i++) {
 		std::stringstream namestream;
 		namestream << "Spider " << i;
 
@@ -602,30 +617,34 @@ void Game::update()
 {
 	input.update();
 
-	renderer.update(timeDelta);
-
+	/* AI/Input */
 	playerInputSystem->update(timeDelta);
 	followSystem->update(timeDelta);
+	spiderSystem->update(timeDelta);
+
+	/* Physics */
 	rigidbodyMotorSystem->update(timeDelta);
 	velocitySystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
 
 	dynamicsWorld->stepSimulation(timeDelta);
 
-	spiderSystem->update(timeDelta);
-
-	cameraSystem->update(timeDelta);
-	collisionUpdateSystem->update(timeDelta);
+	/* Display */
 	playerFacingSystem->update(timeDelta);
+	collisionUpdateSystem->update(timeDelta);
+	cameraSystem->update(timeDelta);
 	modelRenderSystem->update(timeDelta);
 	pointLightSystem->update(timeDelta);
 	audioSourceSystem->update(timeDelta);
 	audioListenerSystem->update(timeDelta);
 
+	renderer.update(timeDelta);
+	soundManager.update();
+
+	/* Cleanup */
 	expiresSystem->update(timeDelta);
 
 	world.cleanupEntities();
-	soundManager.update();
 }
 
 void Game::handleEvent(SDL_Event& event)

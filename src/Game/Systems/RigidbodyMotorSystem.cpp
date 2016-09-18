@@ -24,7 +24,8 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
 	if (!rigidbodyMotorComponent->canMove ||
-		collisionComponent->collisionObject->getInternalType() != btCollisionObject::CO_RIGID_BODY) {
+		collisionComponent->collisionObject->getInternalType() != btCollisionObject::CO_RIGID_BODY)
+	{
 		return;
 	}
 
