@@ -119,7 +119,6 @@ SoundManager::ClipHandle SoundManager::playClipAtSource(const AudioClip& clip, c
 		sourceFound = true;
 		sourceIndex = freeSources.back();
 		freeSources.pop_back();
-		printf("Using free source %ud\n", sourceIndex);
 	} else {
 		// No free sources, see if we can override one
 		for (unsigned i = 0; i <= sources.size(); i++) {

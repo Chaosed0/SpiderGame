@@ -49,7 +49,7 @@ const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
 const static int gemCount = 5;
-const static int spiderCount = 0;
+const static int spiderCount = 10;
 
 Game::Game()
 {
@@ -403,7 +403,7 @@ int Game::setup()
 
 	playerComponent->shotCooldown = 1.0f;
 	playerComponent->shotDamage = 100;
-	playerComponent->shotClip = AudioClip("assets/sound/hvylas.wav");
+	playerComponent->shotClip = AudioClip("assets/sound/shot.wav");
 	playerComponent->hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
 	playerComponent->gemPickupClip = AudioClip("assets/sound/pickup.wav");
 
@@ -432,7 +432,7 @@ int Game::setup()
 	TransformComponent* gunTransform = world.addComponent<TransformComponent>(playerGun);
 	ModelRenderComponent* gunModelComponent = world.addComponent<ModelRenderComponent>(playerGun);
 
-	gunTransform->transform->setPosition(glm::vec3(0.2f, -0.3f, -0.2f));
+	gunTransform->transform->setPosition(glm::vec3(0.2f, -0.3f, -0.15f));
 	gunTransform->transform->setParent(cameraTransformComponent->transform);
 
 	Model gunModel = modelLoader.loadModelFromPath("assets/models/gun.fbx");
@@ -440,7 +440,30 @@ int Game::setup()
 	auto gunRenderableHandle = renderer.getRenderableHandle(gunModelHandle, shader);
 	gunModelComponent->rendererHandle = gunRenderableHandle;
 
-	// Load some mushrooms
+	// This was gotten from blender - isn't my game engine awesome
+	glm::vec3 gunBarrelEnd(0.0f, 0.19f, -0.665f);
+	playerComponent->gun = playerGun;
+	playerComponent->gunBarrelOffset = gunBarrelEnd;
+
+	// Create gunFX
+	Vertex fromVert;
+	fromVert.position = glm::vec3(0.0f);
+	Vertex toVert;
+	toVert.position = Util::forward * 3.0f;
+	Mesh lineMesh(std::vector<Vertex>{fromVert, toVert}, std::vector<unsigned>{0,1}, std::vector<Texture>{});
+	lineMesh.material.drawType = GL_LINES;
+	lineMesh.material.setProperty("color", MaterialProperty(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f)));
+	auto bulletMeshHandle = renderer.getModelHandle(std::vector<Mesh>{ lineMesh });
+	playerComponent->shotTracerModelHandle = bulletMeshHandle;
+	playerComponent->tracerShader = lightShader;
+
+	Texture muzzleFlashTexture = Texture(TextureType_diffuse, "assets/img/flash.png");
+	Mesh muzzleFlashPlane = getPlane(std::vector<Texture> { muzzleFlashTexture }, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.3f, 0.3f));
+	auto muzzleFlashModelHandle = renderer.getModelHandle(Model(std::vector<Mesh> { muzzleFlashPlane }));
+	playerComponent->muzzleFlashModelHandle = muzzleFlashModelHandle;
+	playerComponent->flashShader = shader;
+
+	// Load some spiders
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
@@ -506,7 +529,7 @@ int Game::setup()
 		spiderComponent->deathSound = spiderDeathSound;
 	}
 
-	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager);
+	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager, generator);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world, input, *eventManager);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);

@@ -52,6 +52,7 @@ private:
 
 	std::experimental::optional<std::weak_ptr<Transform>> parent;
 	glm::mat4 toMat4() const;
+	bool hasParent() const;
 
 	static const glm::mat4 identityMat4;
 	static const std::shared_ptr<Transform> identityPtr;

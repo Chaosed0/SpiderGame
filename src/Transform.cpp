@@ -33,7 +33,12 @@ glm::vec3 Transform::getPosition() const
 
 glm::vec3 Transform::getWorldPosition() const
 {
-	return this->getParentInternal()->getPosition() + this->position;
+	if (this->hasParent()) {
+		const std::shared_ptr<Transform> parent = this->getParentInternal();
+		return parent->getWorldPosition() + parent->getWorldRotation() * (parent->getWorldScale() * this->position);
+	} else {
+		return this->position;
+	}
 }
 
 void Transform::setPosition(glm::vec3 newPosition)
@@ -49,7 +54,11 @@ glm::quat Transform::getRotation() const
 
 glm::quat Transform::getWorldRotation() const
 {
-	return this->getParentInternal()->getRotation() * this->rotation;
+	if (this->hasParent()) {
+		return this->getParentInternal()->getWorldRotation() * this->rotation;
+	} else {
+		return this->rotation;
+	}
 }
 
 void Transform::setRotation(glm::quat newRotation)
@@ -65,7 +74,11 @@ glm::vec3 Transform::getScale() const
 
 glm::vec3 Transform::getWorldScale() const
 {
-	return this->getParentInternal()->getScale() * this->scale;
+	if (this->hasParent()) {
+		return this->getParentInternal()->getWorldScale() * this->scale;
+	} else {
+		return this->scale;
+	}
 }
 
 void Transform::setScale(glm::vec3 newScale)
@@ -127,9 +140,14 @@ glm::mat4 Transform::toMat4() const
 	return posMatrix * rotMatrix * scaleMatrix;
 }
 
+bool Transform::hasParent() const
+{
+	return this->parent && !this->parent->expired();
+}
+
 glm::mat4 Transform::getParentMat4() const
 {
-	if (this->parent && !this->parent->expired()) {
+	if (this->hasParent()) {
 		return this->parent.value().lock()->matrix();
 	} else {
 		return identityMat4;
@@ -138,7 +156,7 @@ glm::mat4 Transform::getParentMat4() const
 
 const std::shared_ptr<Transform> Transform::getParentInternal() const
 {
-	if (this->parent && !this->parent->expired()) {
+	if (this->hasParent()) {
 		return this->parent.value().lock();
 	} else {
 		return identityPtr;

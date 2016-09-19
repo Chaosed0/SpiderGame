@@ -134,15 +134,12 @@ Mesh getSkybox(const std::vector<std::string>& skyboxTextures)
 	return Mesh(vertices, indexes, textures);
 }
 
-Mesh getPlane(const std::vector<Texture>& textures, glm::quat basis, glm::vec2 dimensions, glm::vec2 textureOffset, glm::vec2 textureScale)
+Mesh getPlane(const std::vector<Texture>& textures, glm::vec3 ubasis, glm::vec3 vbasis, glm::vec2 dimensions, glm::vec2 textureOffset, glm::vec2 textureScale)
 {
-	glm::vec3 ubasis = basis * glm::vec3(0.0f, 0.0f, 1.0f);
-	glm::vec3 vbasis = basis * glm::vec3(1.0f, 0.0f, 0.0f);
-
 	float ltc = textureOffset.x;
-	float rtc = textureOffset.x + dimensions.x * textureScale.x;
+	float rtc = textureOffset.x + textureScale.x;
 	float btc = textureOffset.y;
-	float ttc = textureOffset.y + dimensions.y * textureScale.y;
+	float ttc = textureOffset.y + textureScale.y;
 
 	std::vector<Vertex> vertices(4);
 	vertices[0].position = (-ubasis * dimensions.x - vbasis * dimensions.y) * 0.5f;
