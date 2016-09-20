@@ -327,7 +327,7 @@ int Game::setup()
 
 		glm::vec3 gemPosition = center + glm::vec3(0.0f, 1.5f, 0.0f);
 		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
-		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion(), Util::glmToBt(gemPosition))), gemCollisionShape);
+		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), Util::glmToBt(gemPosition))), gemCollisionShape);
 		btRigidBody* gemCollisionObject = new btRigidBody(info);
 		gemCollisionObject->setUserPointer(new eid_t(gemEntity));
 		dynamicsWorld->addRigidBody(gemCollisionObject, CollisionGroupDefault, CollisionGroupAll);
@@ -351,6 +351,39 @@ int Game::setup()
 	light.diffuse = glm::vec3(0.8f);
 	light.specular = glm::vec3(1.0f);
 	renderer.setPointLight(0, light);
+
+	// Clutter
+	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(modelLoader.loadModelFromPath("assets/models/barrel.fbx"));
+	std::uniform_real_distribution<float> barrelRand(0.0f, 1.0f);
+	for (unsigned i = 0; i < room.boxes.size(); i++) {
+		RoomBox& box = room.boxes[i];
+		for (int x = box.left; x < box.right; x++) {
+			for (int y = box.bottom; y < box.top; y++) {
+				float rand = barrelRand(generator);
+				if (rand < 0.01f) {
+					eid_t entity = world.getNewEntity("Barrel");
+					TransformComponent* transformComponent = world.addComponent<TransformComponent>(entity);
+					CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(entity);
+					ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(entity);
+
+					Renderer::RenderableHandle barrelHandle = renderer.getRenderableHandle(barrelModelHandle, shader);
+					modelRenderComponent->rendererHandle = barrelHandle;
+
+					btVector3 halfExtents(0.5f, 0.75f, 0.5f);
+					btCollisionShape* collisionShape = new btBoxShape(halfExtents);
+					btCompoundShape* compoundShape = new btCompoundShape();
+					compoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y(), 0.0f)), collisionShape);
+					btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), btVector3((float)x, 0, (float)y))), compoundShape);
+					btRigidBody* collisionObject = new btRigidBody(info);
+					collisionObject->setUserPointer(new eid_t(entity));
+					dynamicsWorld->addRigidBody(collisionObject, CollisionGroupDefault, CollisionGroupAll);
+
+					collisionComponent->collisionObject = collisionObject;
+					collisionComponent->world = dynamicsWorld;
+				}
+			}
+		}
+	}
 
 	// Add the room to collision
 	btCollisionShape* roomShape = roomData.meshBuilder.getCollisionMesh();
