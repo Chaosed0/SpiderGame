@@ -70,14 +70,18 @@ struct GUI
 {
 	std::shared_ptr<Label> healthLabel;
 	std::shared_ptr<Label> gemLabel;
+	std::shared_ptr<Label> bulletLabel;
 	std::shared_ptr<UIQuad> healthImage;
 	std::shared_ptr<UIQuad> gemImage;
+	std::shared_ptr<UIQuad> bulletImage;
 	std::shared_ptr<Label> facingLabel;
 
 	UIRenderer::UIElementHandle healthLabelHandle;
 	UIRenderer::UIElementHandle healthImageHandle;
 	UIRenderer::UIElementHandle gemLabelHandle;
 	UIRenderer::UIElementHandle gemImageHandle;
+	UIRenderer::UIElementHandle bulletLabelHandle;
+	UIRenderer::UIElementHandle bulletImageHandle;
 	UIRenderer::UIElementHandle facingLabelHandle;
 };
 

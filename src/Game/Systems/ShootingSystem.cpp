@@ -22,6 +22,7 @@
 #include "Game/Components/VelocityComponent.h"
 
 #include "Game/Events/ShotEvent.h"
+#include "Game/Events/BulletCountChangedEvent.h"
 
 ShootingSystem::ShootingSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer, EventManager& eventManager, std::default_random_engine& generator)
 	: System(world),
@@ -53,6 +54,8 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			lerp = playerComponent->gunRecoilTimer / playerComponent->gunKickTime;
 		} else if (playerComponent->gunRecoilTimer <= playerComponent->gunReturnTime) {
 			lerp = (playerComponent->gunReturnTime - playerComponent->gunRecoilTimer) / (playerComponent->gunReturnTime - playerComponent->gunKickTime);
+			// apply some easing (in)
+			lerp = lerp*lerp;
 		} else {
 			playerComponent->gunRecoiling = false;
 		}
@@ -62,35 +65,46 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	// Do the shot if shooting
-	if (playerComponent->shooting &&
-		playerComponent->shotTimer >= playerComponent->shotCooldown)
+	if (playerComponent->shooting)
 	{
-		std::shared_ptr<Transform> transform = transformComponent->transform;
-		playerComponent->shotTimer = 0.0f;
-		playerComponent->gunRecoilTimer = 0.0f;
-		playerComponent->gunRecoiling = true;
+		if (playerComponent->bulletCount <= 0) {
+			// Can't shoot
+		} else if (playerComponent->shotTimer >= playerComponent->shotCooldown) {
+			std::shared_ptr<Transform> transform = transformComponent->transform;
+			playerComponent->shotTimer = 0.0f;
+			playerComponent->gunRecoilTimer = 0.0f;
+			playerComponent->gunRecoiling = true;
 
-		/* Fire off an event to let people know we shot a bullet */
-		ShotEvent event;
-		event.source = entity;
-		eventManager.sendEvent(event);
+			/* Fire off an event to let people know we shot a bullet */
+			ShotEvent event;
+			event.source = entity;
+			eventManager.sendEvent(event);
 
-		/* Create shot FX */
-		this->createTracer(playerComponent, 0.2f, 75.0f);
-		this->createMuzzleFlash(playerComponent, 0.05f);
+			/* Decrement the player's bullet count */
+			--playerComponent->bulletCount;
+			BulletCountChangedEvent bulletCountEvent;
+			bulletCountEvent.source = entity;
+			bulletCountEvent.oldBulletCount = playerComponent->bulletCount + 1;
+			bulletCountEvent.newBulletCount = playerComponent->bulletCount;
+			eventManager.sendEvent(bulletCountEvent);
 
-		/* Do the raytrace to see if we hit anything */
-		TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
-		glm::vec3 from = cameraTransformComponent->transform->getWorldPosition();
-		glm::vec3 to = from + cameraTransformComponent->transform->getWorldRotation() * (Util::forward * playerComponent->maxShotDistance);
-		eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
+			/* Create shot FX */
+			this->createTracer(playerComponent, 0.2f, 75.0f);
+			this->createMuzzleFlash(playerComponent, 0.05f);
 
-		HealthComponent* enemyHealthComponent = world.getComponent<HealthComponent>(hitEntity);
-		if (enemyHealthComponent == nullptr) {
-			return;
+			/* Do the raytrace to see if we hit anything */
+			TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
+			glm::vec3 from = cameraTransformComponent->transform->getWorldPosition();
+			glm::vec3 to = from + cameraTransformComponent->transform->getWorldRotation() * (Util::forward * playerComponent->maxShotDistance);
+			eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
+
+			HealthComponent* enemyHealthComponent = world.getComponent<HealthComponent>(hitEntity);
+			if (enemyHealthComponent == nullptr) {
+				return;
+			}
+
+			enemyHealthComponent->health -= playerComponent->shotDamage;
 		}
-
-		enemyHealthComponent->health -= playerComponent->shotDamage;
 	}
 }
 

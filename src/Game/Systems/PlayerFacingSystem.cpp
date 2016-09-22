@@ -23,7 +23,7 @@ void PlayerFacingSystem::updateEntity(float dt, eid_t entity)
 	CameraComponent* cameraComponent = world.getComponent<CameraComponent>(playerComponent->camera);
 
 	glm::vec3 from = cameraTransformComponent->transform->getWorldPosition();
-	glm::vec3 to = from + cameraTransformComponent->transform->getWorldForward() * 1.5f;
+	glm::vec3 to = from + cameraTransformComponent->transform->getWorldForward() * 2.0f;
 	eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
 	std::string text;
 
@@ -39,10 +39,14 @@ void PlayerFacingSystem::updateEntity(float dt, eid_t entity)
 	}
 	playerComponent->lastFacedEntity = hitEntity;
 
-	if (hitEntity == World::NullEntity || world.getEntityName(hitEntity).compare(0, 3, "Gem") != 0) {
-		text = "";
-	} else {
+	std::string hitEntityName = (hitEntity == World::NullEntity ? "" : world.getEntityName(hitEntity));
+	printf("%s\n", hitEntityName.c_str());
+	if (hitEntityName.compare(0, 3, "Gem") == 0) {
 		text = "[e] to pick up gem";
+	} else if (hitEntityName.compare(0, 6, "Bullet") == 0) {
+		text = "[e] to pick up bullet";
+	} else {
+		text = "";
 	}
 
 	label->setText(text);

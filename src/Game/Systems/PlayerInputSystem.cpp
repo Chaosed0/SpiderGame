@@ -6,6 +6,7 @@
 #include "Game/Components/RigidbodyMotorComponent.h"
 #include "Game/Components/PlayerComponent.h"
 #include "Game/Events/GemCountChangedEvent.h"
+#include "Game/Events/BulletCountChangedEvent.h"
 
 PlayerInputSystem::PlayerInputSystem(World& world, Input& input, EventManager& eventManager)
 	: System(world), input(input), eventManager(eventManager),
@@ -54,7 +55,8 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		return;
 	}
 
-	if (world.getEntityName(entity).compare(0, 3, "Gem") == 0) {
+	std::string name = world.getEntityName(entity);
+	if (name.compare(0, 3, "Gem") == 0) {
 		playerComponent->gemCount++;
 		world.removeEntity(entity);
 
@@ -62,6 +64,15 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		event.source = player;
 		event.newGemCount = playerComponent->gemCount;
 		event.oldGemCount = event.newGemCount - 1;
+		eventManager.sendEvent(event);
+	} else if (name.compare(0, 6, "Bullet") == 0) {
+		playerComponent->bulletCount++;
+		world.removeEntity(entity);
+
+		BulletCountChangedEvent event;
+		event.source = player;
+		event.newBulletCount = playerComponent->bulletCount;
+		event.oldBulletCount = event.newBulletCount - 1;
 		eventManager.sendEvent(event);
 	}
 }

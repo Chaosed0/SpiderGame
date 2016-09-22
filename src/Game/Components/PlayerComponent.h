@@ -11,8 +11,8 @@ public:
 	PlayerComponent()
 		: shooting(false),
 		maxShotDistance(100.0f), shotCooldown(1/30.0f), shotTimer(0.0f), shotDamage(10),
-		gunBarrelOffset(0.0f), gunKickTime(0.05f), gunReturnTime(0.3f), gunKickAngle(glm::quarter_pi<float>()), gunRecoilTimer(0.0f),
-		gemCount(0), gunRecoiling(false),
+		gunBarrelOffset(0.0f), gunKickTime(0.025f), gunReturnTime(0.3f), gunKickAngle(glm::radians(70.0f)), gunRecoilTimer(0.0f),
+		gemCount(0), gunRecoiling(false), bulletCount(0),
 		lastFacedEntity(World::NullEntity), camera(World::NullEntity) { }
 
 	bool shooting;
@@ -33,6 +33,7 @@ public:
 	float gunKickAngle;
 	float gunRecoilTimer;
 	bool gunRecoiling;
+	unsigned bulletCount;
 
 	AudioClip shotClip;
 	AudioClip hurtClip;
