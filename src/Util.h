@@ -32,9 +32,9 @@ public:
 
 	static glm::quat rotateHorizontalVertical(float horizontal, float vertical);
 
-	static eid_t raycast(btDynamicsWorld* dynamicsWorld, const glm::vec3& from, const glm::vec3& to);
+	static eid_t raycast(btDynamicsWorld* dynamicsWorld, const glm::vec3& from, const glm::vec3& to, short int collisionGroup = CollisionGroupAll);
 
-	static eid_t raycast(btDynamicsWorld* dynamicsWorld, const btVector3& from, const btVector3& to);
+	static eid_t raycast(btDynamicsWorld* dynamicsWorld, const btVector3& from, const btVector3& to, short int collisionGroup = CollisionGroupAll);
 
 	static const glm::vec3 up;
 	static const glm::vec3 right;

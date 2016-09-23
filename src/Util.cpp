@@ -57,14 +57,15 @@ glm::quat Util::rotateHorizontalVertical(float horizontal, float vertical)
 	return glm::quat(glm::vec3(vertical, horizontal, 0.0f));
 }
 
-eid_t Util::raycast(btDynamicsWorld* dynamicsWorld, const glm::vec3& from, const glm::vec3& to)
+eid_t Util::raycast(btDynamicsWorld* dynamicsWorld, const glm::vec3& from, const glm::vec3& to, short int collisionMask)
 {
 	return Util::raycast(dynamicsWorld, Util::glmToBt(from), Util::glmToBt(to));
 }
 
-eid_t Util::raycast(btDynamicsWorld* dynamicsWorld, const btVector3& from, const btVector3& to)
+eid_t Util::raycast(btDynamicsWorld* dynamicsWorld, const btVector3& from, const btVector3& to, short int collisionMask)
 {
 	btCollisionWorld::ClosestRayResultCallback rayCallback(from, to);
+	rayCallback.m_collisionFilterMask = collisionMask;
 	dynamicsWorld->rayTest(from, to, rayCallback);
 
 	if (!rayCallback.hasHit()) {

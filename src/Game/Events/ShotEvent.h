@@ -5,4 +5,5 @@ class ShotEvent : public Event
 {
 public:
 	eid_t source;
+	bool actuallyShot;
 };

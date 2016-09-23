@@ -44,7 +44,7 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	rigidbodyMotorComponent->jump = input.getButtonDown("Jump", device);
 	rigidbodyMotorComponent->noclip = noclip;
 
-	playerComponent->shooting = input.getButton("Fire", device);
+	playerComponent->shooting = input.getButtonDown("Fire", device);
 }
 
 void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerComponent)
@@ -66,7 +66,7 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		event.oldGemCount = event.newGemCount - 1;
 		eventManager.sendEvent(event);
 	} else if (name.compare(0, 6, "Bullet") == 0) {
-		playerComponent->bulletCount++;
+		playerComponent->bulletCount += 6;
 		world.removeEntity(entity);
 
 		BulletCountChangedEvent event;

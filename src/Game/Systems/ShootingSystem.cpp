@@ -68,7 +68,10 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	if (playerComponent->shooting)
 	{
 		if (playerComponent->bulletCount <= 0) {
-			// Can't shoot
+			ShotEvent event;
+			event.source = entity;
+			event.actuallyShot = false;
+			eventManager.sendEvent(event);
 		} else if (playerComponent->shotTimer >= playerComponent->shotCooldown) {
 			std::shared_ptr<Transform> transform = transformComponent->transform;
 			playerComponent->shotTimer = 0.0f;
@@ -78,6 +81,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			/* Fire off an event to let people know we shot a bullet */
 			ShotEvent event;
 			event.source = entity;
+			event.actuallyShot = true;
 			eventManager.sendEvent(event);
 
 			/* Decrement the player's bullet count */
@@ -105,6 +109,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 
 			enemyHealthComponent->health -= playerComponent->shotDamage;
 		}
+		playerComponent->shooting = false;
 	}
 }
 

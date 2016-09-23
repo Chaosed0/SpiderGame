@@ -1,5 +1,4 @@
-flash.png: Muzzle Flares From
- PixelVFX 
-tinyurl.com/PixelVFX
+flash.png: Muzzle Flares From PixelVFX tinyurl.com/PixelVFX
 
 shot.wav: http://freesound.org/people/tehlordoswag420/sounds/240377/
+dryfire.wav: http://freesound.org/people/Nanashi/sounds/104412/

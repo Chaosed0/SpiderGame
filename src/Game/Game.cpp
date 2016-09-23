@@ -50,7 +50,7 @@ const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
 const static int gemCount = 4;
-const static int spiderCount = 0;
+const static int spiderCount = 6;
 
 Game::Game()
 {
@@ -449,22 +449,25 @@ int Game::setup()
 
 	tableModelComponent->rendererHandle = tableHandle;
 
-	glm::vec3 bulletDimensions(0.1f, 0.02f, 0.1f);
-	Model bulletModel = modelLoader.loadModelFromPath("assets/models/bullet.fbx");
+	glm::vec3 bulletDimensions(0.13f, 0.07f, 0.1f);
+	Model bulletModel = modelLoader.loadModelFromPath("assets/models/bullets.fbx");
 	Renderer::ModelHandle bulletModelHandle = renderer.getModelHandle(bulletModel);
 	std::uniform_real_distribution<float> randBulletX(-tableDimensions.x / 4.0f, tableDimensions.x / 4.0f);
 	std::uniform_real_distribution<float> randBulletZ(-tableDimensions.y / 4.0f, tableDimensions.z / 4.0f);
-	for (int i = 0; i < 10; i++) {
-		glm::vec3 bulletPosition(spawnCenter + glm::vec3(randBulletX(generator), tableDimensions.y + bulletDimensions.y/2.0f, randBulletZ(generator)));
 
-		eid_t bullet = world.getNewEntity("Bullet");
+	{
+		glm::vec3 bulletPosition(spawnCenter + glm::vec3(randBulletX(generator), tableDimensions.y + bulletDimensions.y / 2.0f, randBulletZ(generator))); 
+		eid_t bullet = world.getNewEntity("Bullets");
 		TransformComponent* bulletTransformComponent = world.addComponent<TransformComponent>(bullet);
 		CollisionComponent* bulletCollisionComponent = world.addComponent<CollisionComponent>(bullet);
 		ModelRenderComponent* bulletModelComponent = world.addComponent<ModelRenderComponent>(bullet);
 
+		std::uniform_real_distribution<float> angleRand(-glm::half_pi<float>(), glm::half_pi<float>());
 		btCollisionShape* collisionShape = new btBoxShape(Util::glmToBt(bulletDimensions / 2.0f));
 		btCompoundShape* compoundShape = new btCompoundShape();
-		compoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)), collisionShape);
+		compoundShape->addChildShape(btTransform(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), angleRand(generator)),
+			btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)),
+			collisionShape);
 		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), Util::glmToBt(bulletPosition))), compoundShape);
 		btRigidBody* collisionObject = new btRigidBody(info);
 		collisionObject->setUserPointer(new eid_t(bullet));
@@ -505,9 +508,10 @@ int Game::setup()
 	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
 	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
 
-	playerComponent->shotCooldown = 1.0f;
+	playerComponent->shotCooldown = 0.3f;
 	playerComponent->shotDamage = 100;
 	playerComponent->shotClip = AudioClip("assets/sound/shot.wav");
+	playerComponent->dryFireClip = AudioClip("assets/sound/dryfire.wav");
 	playerComponent->hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
 	playerComponent->gemPickupClip = AudioClip("assets/sound/pickup.wav");
 
@@ -569,7 +573,7 @@ int Game::setup()
 
 	// Load some spiders
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
-	std::uniform_real_distribution<float> scaleRand(0.005f, 0.010f);
+	std::uniform_real_distribution<float> scaleRand(0.004f, 0.006f);
 	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
 	std::vector<AudioClip> spiderSounds = {
 		AudioClip("assets/sound/minecraft/spider/say1.ogg"),
@@ -658,7 +662,13 @@ int Game::setup()
 		[world = &world, soundManager = &soundManager](const ShotEvent& event) {
 			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
 			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
-			soundManager->playClipAtSource(playerComponent->shotClip, audioSourceComponent->sourceHandle);
+			AudioClip clip;
+			if (event.actuallyShot) {
+				clip = playerComponent->shotClip;
+			} else {
+				clip = playerComponent->dryFireClip;
+			}
+			soundManager->playClipAtSource(clip, audioSourceComponent->sourceHandle);
 		};
 	eventManager->registerForEvent<ShotEvent>(shotCallback);
 
