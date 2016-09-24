@@ -75,6 +75,7 @@ struct GUI
 	std::shared_ptr<UIQuad> gemImage;
 	std::shared_ptr<UIQuad> bulletImage;
 	std::shared_ptr<Label> facingLabel;
+	std::shared_ptr<UIQuad> reticleImage;
 
 	UIRenderer::UIElementHandle healthLabelHandle;
 	UIRenderer::UIElementHandle healthImageHandle;
@@ -83,6 +84,7 @@ struct GUI
 	UIRenderer::UIElementHandle bulletLabelHandle;
 	UIRenderer::UIElementHandle bulletImageHandle;
 	UIRenderer::UIElementHandle facingLabelHandle;
+	UIRenderer::UIElementHandle reticleHandle;
 };
 
 class Game

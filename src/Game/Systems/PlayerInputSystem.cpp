@@ -65,7 +65,7 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		event.newGemCount = playerComponent->gemCount;
 		event.oldGemCount = event.newGemCount - 1;
 		eventManager.sendEvent(event);
-	} else if (name.compare(0, 6, "Bullet") == 0) {
+	} else if (name.compare(0, 7, "Bullets") == 0) {
 		playerComponent->bulletCount += 6;
 		world.removeEntity(entity);
 

@@ -49,8 +49,10 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
-const static int gemCount = 4;
+const static int gemCount = 3;
 const static int spiderCount = 6;
+
+glm::vec3 roomBoxCenter(const RoomBox& box);
 
 Game::Game()
 {
@@ -279,14 +281,19 @@ int Game::setup()
 	gui.facingLabelHandle = uiRenderer.getEntityHandle(gui.facingLabel, textShader);
 	font.reset();
 
+	/* Aiming reticle*/
+	gui.reticleImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/reticle.png"), glm::vec2(32.0f, 32.0f));
+	gui.reticleImage->transform.setPosition(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f));
+	gui.reticleHandle = uiRenderer.getEntityHandle(gui.reticleImage, imageShader);
+
 	/* Test Room */
 	std::uniform_int_distribution<int> seedRand(INT_MIN, INT_MAX);
 	roomGenerator = RoomGenerator(seedRand(generator));
 	Room room = roomGenerator.generate();
-	const unsigned height = 6;
+	const unsigned roomHeight = 6;
 
 	roomData.room = room;
-	roomData.meshBuilder.addRoom(room, (float)height);
+	roomData.meshBuilder.addRoom(room, (float)roomHeight);
 	roomData.meshBuilder.construct();
 
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
@@ -294,36 +301,37 @@ int Game::setup()
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
 	Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
 
-	// Put a light in the center room and the rooms that are farthest out
-	for (unsigned i = 0; i < gemCount; i++) {
-		RoomBox box;
-		if (i == 0) {
-			box = room.boxes[room.leftmostBox];
-		} else if (i == 1) {
-			box = room.boxes[room.rightmostBox];
-		} else if (i == 2) {
-			box = room.boxes[room.bottommostBox];
-		} else {
-			box = room.boxes[0];
-		}
+	const RoomBox& centerRoomBox = room.boxes[0];
+	const RoomBox& topmostRoomBox = room.boxes[room.topmostBox];
+	const RoomBox& bottommostRoomBox = room.boxes[room.bottommostBox];
+	const RoomBox& rightmostRoomBox = room.boxes[room.rightmostBox];
+	const RoomBox& leftmostRoomBox = room.boxes[room.leftmostBox];
 
-		glm::vec3 center = glm::vec3(box.left + (box.right - box.left) / 2.0f, 0.0f, box.bottom + (box.top - box.bottom) / 2.0f);
+	std::vector<glm::vec3> gemFloorPositions = {
+		roomBoxCenter(leftmostRoomBox),
+		roomBoxCenter(rightmostRoomBox),
+		roomBoxCenter(bottommostRoomBox)
+	};
+
+	// Put a light in the center room and the rooms that are farthest out
+	for (unsigned i = 0; i < gemFloorPositions.size(); i++) {
+		glm::vec3 floorPosition = gemFloorPositions[i];
 
 		PointLight light;
-		light.position = center + glm::vec3(0.0f, height / 2.0f, 0.0f);
+		light.position = floorPosition + glm::vec3(0.0f, roomHeight / 2.0f, 0.0f);
 		light.constant = 1.0f;
 		light.linear = 0.18f;
 		light.quadratic = 0.064f;
-		light.ambient = glm::vec3(0.0f);
-		light.diffuse = glm::vec3(0.4f);
-		light.specular = glm::vec3(1.0f);
+		light.ambient = glm::vec3(0.0f, 0.0f, 0.1f);
+		light.diffuse = glm::vec3(0.1f, 0.1f, 0.4f);
+		light.specular = glm::vec3(0.1f, 0.1f, 1.0f);
 		renderer.setPointLight(i+1, light);
 
 		Renderer::RenderableHandle pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
 		eid_t pedestalEntity = world.getNewEntity();
 		TransformComponent* pedestalTransformComponent = world.addComponent<TransformComponent>(pedestalEntity);
 		ModelRenderComponent* pedestalModelComponent = world.addComponent<ModelRenderComponent>(pedestalEntity);
-		pedestalTransformComponent->transform->setPosition(center);
+		pedestalTransformComponent->transform->setPosition(floorPosition);
 		pedestalModelComponent->rendererHandle = pedestalHandle;
 
 		Renderer::RenderableHandle gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
@@ -336,7 +344,7 @@ int Game::setup()
 		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(gemEntity);
 		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(gemEntity);
 
-		glm::vec3 gemPosition = center + glm::vec3(0.0f, 1.5f, 0.0f);
+		glm::vec3 gemPosition = floorPosition + glm::vec3(0.0f, 1.5f, 0.0f);
 		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
 		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), Util::glmToBt(gemPosition))), gemCollisionShape);
 		btRigidBody* gemCollisionObject = new btRigidBody(info);
@@ -368,6 +376,23 @@ int Game::setup()
 	std::uniform_real_distribution<float> barrelRand(0.0f, 1.0f);
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide& side = room.sides[i];
+
+		// Don't clutter the extreme rooms, we want to put other things there
+		std::vector<RoomBox> extremeRooms = { leftmostRoomBox, rightmostRoomBox, topmostRoomBox, bottommostRoomBox };
+		bool skip = false;
+		for (int i = 0; i < extremeRooms.size(); i++) {
+			if (side.x1 <= extremeRooms[i].right && side.x0 >= extremeRooms[i].left &&
+				side.y1 <= extremeRooms[i].top && side.y0 >= extremeRooms[i].bottom)
+			{
+				skip = true;
+				break;
+			}
+		}
+
+		if (skip) {
+			continue;
+		}
+
 		bool horizontal = (side.y0 == side.y1);
 		int min = horizontal ? side.x0 : side.y0;
 		int max = horizontal ? side.x1 : side.y1;
@@ -422,58 +447,65 @@ int Game::setup()
 
 	modelComponent->rendererHandle = roomRenderableHandle;
 
-	RoomBox& spawnBox = room.boxes[room.topmostBox];
-	glm::vec3 spawnCenter = glm::vec3((spawnBox.left + spawnBox.right) / 2.0f, 0.0f, (spawnBox.bottom + spawnBox.top) / 2.0f);
-
 	// Put down a table with bullets
 	glm::vec3 tableDimensions(2.0f, 1.0f, 0.785f);
 	Model tableModel = modelLoader.loadModelFromPath("assets/models/table.fbx");
 	Renderer::ModelHandle tableModelHandle = renderer.getModelHandle(tableModel);
-	Renderer::RenderableHandle tableHandle = renderer.getRenderableHandle(tableModelHandle, shader);
 
-	eid_t table = world.getNewEntity("Table");
-	TransformComponent* tableTransformComponent = world.addComponent<TransformComponent>(table);
-	CollisionComponent* tableCollisionComponent = world.addComponent<CollisionComponent>(table);
-	ModelRenderComponent* tableModelComponent = world.addComponent<ModelRenderComponent>(table);
-
-	btCollisionShape* collisionShape = new btBoxShape(Util::glmToBt(tableDimensions / 2.0f));
-	btCompoundShape* compoundShape = new btCompoundShape();
-	compoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, tableDimensions.y / 2.0f, 0.0f)), collisionShape);
-	btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), Util::glmToBt(spawnCenter))), compoundShape);
-	btRigidBody* collisionObject = new btRigidBody(info);
-	collisionObject->setUserPointer(new eid_t(table));
-	dynamicsWorld->addRigidBody(collisionObject, CollisionGroupDefault, CollisionGroupAll);
-
-	tableCollisionComponent->collisionObject = collisionObject;
-	tableCollisionComponent->world = dynamicsWorld;
-
-	tableModelComponent->rendererHandle = tableHandle;
-
-	glm::vec3 bulletDimensions(0.13f, 0.07f, 0.1f);
+	glm::vec3 bulletDimensions(0.2f, 0.07f, 0.2f);
 	Model bulletModel = modelLoader.loadModelFromPath("assets/models/bullets.fbx");
 	Renderer::ModelHandle bulletModelHandle = renderer.getModelHandle(bulletModel);
-	std::uniform_real_distribution<float> randBulletX(-tableDimensions.x / 4.0f, tableDimensions.x / 4.0f);
-	std::uniform_real_distribution<float> randBulletZ(-tableDimensions.y / 4.0f, tableDimensions.z / 4.0f);
 
-	{
-		glm::vec3 bulletPosition(spawnCenter + glm::vec3(randBulletX(generator), tableDimensions.y + bulletDimensions.y / 2.0f, randBulletZ(generator))); 
+	std::vector<Transform> bulletSpawnLocations = {
+		Transform(roomBoxCenter(topmostRoomBox)),
+		Transform(glm::vec3(leftmostRoomBox.left + 2.0f, 0.0f, (leftmostRoomBox.bottom + leftmostRoomBox.top) / 2.0f), glm::angleAxis(glm::half_pi<float>(), Util::up)),
+		Transform(glm::vec3((bottommostRoomBox.left + bottommostRoomBox.right) / 2.0f, 0.0f, bottommostRoomBox.bottom + 2.0f)),
+		Transform(glm::vec3(rightmostRoomBox.right - 2.0f, 0.0f, (rightmostRoomBox.bottom + rightmostRoomBox.top) / 2.0f), glm::angleAxis(glm::half_pi<float>(), Util::up)),
+	};
+
+	for (unsigned i = 0; i < bulletSpawnLocations.size(); i++) {
+		Transform initialTransform = bulletSpawnLocations[i];
+
+		// Table
+		eid_t table = world.getNewEntity("Table");
+		TransformComponent* tableTransformComponent = world.addComponent<TransformComponent>(table);
+		CollisionComponent* tableCollisionComponent = world.addComponent<CollisionComponent>(table);
+		ModelRenderComponent* tableModelComponent = world.addComponent<ModelRenderComponent>(table);
+
+		btCollisionShape* tableCollisionShape = new btBoxShape(Util::glmToBt(tableDimensions / 2.0f));
+		btCompoundShape* tableCompoundShape = new btCompoundShape();
+		tableCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, tableDimensions.y / 2.0f, 0.0f)), tableCollisionShape);
+
+		btRigidBody::btRigidBodyConstructionInfo tableInfo(0.0f, new btDefaultMotionState(Util::gameToBt(initialTransform)), tableCompoundShape);
+		btRigidBody* tableCollisionObject = new btRigidBody(tableInfo);
+		tableCollisionObject->setUserPointer(new eid_t(table));
+		dynamicsWorld->addRigidBody(tableCollisionObject, CollisionGroupDefault, CollisionGroupAll);
+
+		tableCollisionComponent->collisionObject = tableCollisionObject;
+		tableCollisionComponent->world = dynamicsWorld;
+
+		Renderer::RenderableHandle tableHandle = renderer.getRenderableHandle(tableModelHandle, shader);
+		tableModelComponent->rendererHandle = tableHandle;
+
+		// Bullet
+		glm::vec3 bulletPosition(initialTransform.getPosition() + glm::vec3(0.0f, tableDimensions.y + bulletDimensions.y / 2.0f, 0.0f));
 		eid_t bullet = world.getNewEntity("Bullets");
 		TransformComponent* bulletTransformComponent = world.addComponent<TransformComponent>(bullet);
 		CollisionComponent* bulletCollisionComponent = world.addComponent<CollisionComponent>(bullet);
 		ModelRenderComponent* bulletModelComponent = world.addComponent<ModelRenderComponent>(bullet);
 
 		std::uniform_real_distribution<float> angleRand(-glm::half_pi<float>(), glm::half_pi<float>());
-		btCollisionShape* collisionShape = new btBoxShape(Util::glmToBt(bulletDimensions / 2.0f));
-		btCompoundShape* compoundShape = new btCompoundShape();
-		compoundShape->addChildShape(btTransform(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), angleRand(generator)),
-			btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)),
-			collisionShape);
-		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), Util::glmToBt(bulletPosition))), compoundShape);
-		btRigidBody* collisionObject = new btRigidBody(info);
-		collisionObject->setUserPointer(new eid_t(bullet));
-		dynamicsWorld->addRigidBody(collisionObject, CollisionGroupDefault, CollisionGroupAll);
+		btCollisionShape* bulletCollisionShape = new btBoxShape(Util::glmToBt(bulletDimensions / 2.0f));
+		btCompoundShape* bulletCompoundShape = new btCompoundShape();
+		bulletCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)), bulletCollisionShape);
 
-		bulletCollisionComponent->collisionObject = collisionObject;
+		btTransform bulletTransform(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), angleRand(generator)), Util::glmToBt(bulletPosition));
+		btRigidBody::btRigidBodyConstructionInfo bulletInfo(0.0f, new btDefaultMotionState(bulletTransform), bulletCompoundShape);
+		btRigidBody* bulletCollisionObject = new btRigidBody(bulletInfo);
+		bulletCollisionObject->setUserPointer(new eid_t(bullet));
+		dynamicsWorld->addRigidBody(bulletCollisionObject, CollisionGroupDefault, CollisionGroupAll);
+
+		bulletCollisionComponent->collisionObject = bulletCollisionObject;
 		bulletCollisionComponent->world = dynamicsWorld;
 
 		Renderer::RenderableHandle bulletHandle = renderer.getRenderableHandle(bulletModelHandle, shader);
@@ -481,7 +513,7 @@ int Game::setup()
 	}
 
 	// Initialize the player
-	glm::vec3 playerSpawn = glm::vec3(spawnBox.left + (spawnBox.right - spawnBox.left) / 2.0f, 0.5f, spawnBox.top - 1.0f);
+	glm::vec3 playerSpawn = glm::vec3((topmostRoomBox.left + topmostRoomBox.right) / 2.0f, 0.5f, topmostRoomBox.top - 1.0f);
 
 	eid_t player = world.getNewEntity("Player");
 	TransformComponent* playerTransform = world.addComponent<TransformComponent>(player);
@@ -886,4 +918,9 @@ void Game::generateTestTerrain()
 		patchData.object->setWorldTransform(btTransform(Util::glmToBt(glm::quat()), Util::glmToBt(position)));
 		dynamicsWorld->addCollisionObject(patchData.object);
 	}
+}
+
+glm::vec3 roomBoxCenter(const RoomBox& box)
+{
+	return glm::vec3((box.left + box.right) / 2.0f, 0.0f, (box.bottom + box.top) / 2.0f);
 }
