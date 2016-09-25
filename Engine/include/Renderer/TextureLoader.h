@@ -10,7 +10,9 @@ struct TextureImpl;
 struct Texture
 {
 	Texture();
+	~Texture();
 	Texture(const Texture& texture);
+	void operator=(const Texture& texture);
 	std::unique_ptr<TextureImpl> impl;
 };
 

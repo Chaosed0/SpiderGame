@@ -25,10 +25,16 @@ Mesh::~Mesh()
 { }
 
 Mesh::Mesh(const Mesh& mesh)
-	: impl(new Impl(mesh.impl))
+	: impl(new Impl(*mesh.impl))
 { }
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<VertexBoneData> vertexBoneData, std::vector<BoneData> boneData)
+void Mesh::operator=(const Mesh& mesh)
+{
+	this->impl = std::unique_ptr<Impl>(new Impl(*mesh.impl));
+}
+
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned> indices, std::vector<VertexBoneData> vertexBoneData, std::vector<BoneData> boneData)
+	: Mesh()
 {
 	impl->boneData = boneData;
 	impl->boneTransforms.resize(impl->boneData.size());
@@ -87,54 +93,9 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vecto
 	glCheckError();
 }
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned> indices)
 	: Mesh(vertices, indices, std::vector<VertexBoneData>(), std::vector<BoneData>())
 { }
-
-glm::vec3 interpolate(glm::vec3 a, glm::vec3 b, float lerp)
-{
-	return glm::mix(a, b, lerp);
-}
-
-glm::quat interpolate(glm::quat a, glm::quat b, float lerp)
-{
-	return glm::slerp(a, b, lerp);
-}
-
-template <class ValType, class KeyType>
-ValType interpolateKeyframes(const std::vector<KeyType>& keys, float time, unsigned& keyCache)
-{
-	unsigned keysSize = keys.size();
-	unsigned keyIndex = keysSize-1;
-
-	if (time <= keys[0].time) {
-		keyIndex = 0;
-	} else if (time >= keys[keysSize-1].time) {
-		keyIndex = keysSize-1;
-	} else {
-		for (unsigned int i = keyCache; i < keyCache + keysSize-1; i++) {
-			const KeyType& ka = keys[i%keysSize];
-			const KeyType& kb = (i+1 != keysSize ? keys[(i+1)%keysSize] : ka);
-			if (ka.time <= time && time <= kb.time) {
-				keyIndex = i%keysSize;
-				break;
-			}
-		}
-	}
-
-	keyCache = keyIndex;
-	float t1 = keys[keyIndex].time;
-	float t2 = (keyIndex + 1 < keysSize ? keys[keyIndex+1].time : t1);
-	const ValType& p1 = keys[keyIndex].value;
-	const ValType& p2 = (keyIndex + 1 < keysSize ? keys[keyIndex+1].value : p1);
-
-	float lerp = (time - t1) / (t2 - t1);
-	if (t2 == t1) {
-		lerp = 1.0f;
-	}
-
-	return interpolate(p1, p2, lerp);
-}
 
 std::vector<glm::mat4> Mesh::getBoneTransforms(const std::vector<glm::mat4>& nodeTransforms)
 {

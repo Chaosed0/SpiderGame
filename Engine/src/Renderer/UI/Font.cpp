@@ -12,6 +12,7 @@
 #include <SDL.h>
 
 #include "Renderer/Texture.h"
+#include "Renderer/TexturePacker.h"
 
 struct Font::Impl
 {
@@ -36,6 +37,10 @@ struct Font::Impl
 };
 
 Font::Font()
+	: impl(new Impl())
+{ }
+
+Font::~Font()
 { }
 
 Font::Font(const std::string& fontPath, int height)
@@ -43,9 +48,6 @@ Font::Font(const std::string& fontPath, int height)
 {
 	this->loadCharacters(fontPath, height);
 }
-
-Font::~Font()
-{ }
 
 void Font::loadCharacters(const std::string& fontPath, int height)
 {

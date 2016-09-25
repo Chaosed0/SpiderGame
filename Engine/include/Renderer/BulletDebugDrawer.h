@@ -13,7 +13,7 @@ class BulletDebugDrawer : public btIDebugDraw
 {
 public:
 	BulletDebugDrawer();
-	virtual ~BulletDebugDrawer();
+	~BulletDebugDrawer();
 
 	void initialize();
 	void reset();

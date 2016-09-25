@@ -8,6 +8,10 @@ class ShaderImpl;
 struct Shader
 {
 	Shader();
+	Shader(const Shader& shader);
+	~Shader();
+	void operator=(const Shader& shader);
+	bool isValid();
 	std::unique_ptr<ShaderImpl> impl;
 };
 

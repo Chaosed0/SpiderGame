@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Framework/System.h"
-#include "Renderer/Shader.h"
+#include "Renderer/ShaderLoader.h"
 
 #include <glm/glm.hpp>
 

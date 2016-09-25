@@ -5,8 +5,8 @@
 #include <functional>
 #include <sstream>
 
-#include "Renderer/Shader.h"
-#include "Callbacks.h"
+#include "Renderer/ShaderLoader.h"
+#include "Console/Callbacks.h"
 #include "Renderer/UI/Font.h"
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/UIQuad.h"

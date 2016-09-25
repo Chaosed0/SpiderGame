@@ -4,8 +4,8 @@
 
 #include <cassert>
 
-#include "Shader.h"
-#include "Texture.h"
+#include "Renderer/Shader.h"
+#include "Renderer/Texture.h"
 
 union MaterialProperty::MaterialPropertyValue
 {
@@ -23,7 +23,11 @@ union MaterialProperty::MaterialPropertyValue
 
 MaterialProperty::MaterialProperty() : type(MaterialPropertyType_invalid) { }
 MaterialProperty::~MaterialProperty() { }
-MaterialProperty::MaterialProperty(const MaterialProperty& property) : type(property.type), value(new MaterialPropertyValue(*property.value)) { }
+MaterialProperty::MaterialProperty(const MaterialProperty& property)
+	: type(property.type),
+	value(new MaterialPropertyValue(*property.value)),
+	propertyId(property.propertyId)
+{ }
 MaterialProperty::MaterialProperty(glm::vec3 vec3) : type(MaterialPropertyType_vec3), value(new MaterialPropertyValue(vec3)) { }
 MaterialProperty::MaterialProperty(glm::vec4 vec4) : type(MaterialPropertyType_vec4), value(new MaterialPropertyValue(vec4)) { }
 MaterialProperty::MaterialProperty(float flt) : type(MaterialPropertyType_float), value(new MaterialPropertyValue(flt)) { }
@@ -45,11 +49,11 @@ void Material::setProperty(const std::string& key, const MaterialProperty& prope
 		iter->second.type = property.type;
 		iter->second.value = std::make_unique<MaterialProperty::MaterialPropertyValue>(*property.value);
 	} else {
-		MaterialProperty copyProp;;
+		MaterialProperty copyProp;
 		copyProp.propertyId = nextId++;
 		copyProp.type = property.type;
 		copyProp.value = std::make_unique<MaterialProperty::MaterialPropertyValue>(*property.value);
-		properties.emplace(key, copyProp);
+		properties.insert(std::make_pair(key, copyProp));
 	}
 }
 

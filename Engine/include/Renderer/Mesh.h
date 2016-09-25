@@ -5,10 +5,6 @@
 #include <vector>
 #include <memory>
 
-#include <GL/glew.h>
-
-#include "Renderer/Texture.h"
-
 #define MAX_BONES_PER_VERTEX 4
 
 /*! Vertex structure common to every mesh. */
@@ -62,18 +58,19 @@ struct Mesh
 	Mesh();
 	~Mesh();
 	Mesh(const Mesh& mesh);
+	void operator=(const Mesh& mesh);
 
 	/*!
 	 * \brief Initializes a mesh with no bone data.
 	 */
-	Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices);
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned> indices);
 
 	/*!
 	 * \brief Initializes a mesh with bone data.
 	 * \param vertexBoneData Vertex weights. The boneIds member of each VertexBoneData struct points
 	 *		to the indices of bones in boneData.
 	 */
-	Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<VertexBoneData> vertexBoneData, std::vector<BoneData> boneData);
+	Mesh(std::vector<Vertex> vertices, std::vector<unsigned> indices, std::vector<VertexBoneData> vertexBoneData, std::vector<BoneData> boneData);
 
 	/*!
 	 * \brief Gets the transforms of each bone in boneData given the position

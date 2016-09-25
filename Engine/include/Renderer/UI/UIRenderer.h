@@ -26,6 +26,7 @@ public:
 	 * \brief Default initializer.
 	 */
 	UIRenderer();
+	~UIRenderer();
 
 	/*!
 	 * \brief Sets the projection matrix to use.

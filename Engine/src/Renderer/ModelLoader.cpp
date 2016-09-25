@@ -58,6 +58,7 @@ struct ModelLoader::Impl
 };
 
 ModelLoader::ModelLoader()
+	: impl(new Impl())
 {
 	impl->modelIdCache.emplace(std::make_pair("error", Model()));
 }
@@ -293,8 +294,8 @@ std::vector<Texture> ModelLoader::Impl::loadMaterialTextures(const std::string& 
 		Texture texture;
 		auto cacheIter = this->textureCache.find(path);
 		if (cacheIter == this->textureCache.end()) {
-			TextureType type = (type == aiTextureType_DIFFUSE ? TextureType_diffuse : TextureType_specular);
-			Texture texture = textureLoader.loadFromFile(type, path);
+			TextureType newType = (type == aiTextureType_DIFFUSE ? TextureType_diffuse : TextureType_specular);
+			texture = textureLoader.loadFromFile(newType, path);
 			this->textureCache.emplace(std::make_pair(path, *texture.impl));
 		} else {
 			texture.impl = std::make_unique<TextureImpl>(cacheIter->second);

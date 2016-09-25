@@ -7,6 +7,16 @@
 #include <vector>
 
 Shader::Shader() : impl(new ShaderImpl()) { }
+Shader::Shader(const Shader& shader) : impl(new ShaderImpl(*shader.impl)) { }
+Shader::~Shader() { }
+void Shader::operator=(const Shader& shader)
+{
+	this->impl = std::make_unique<ShaderImpl>(*shader.impl);
+}
+bool Shader::isValid()
+{
+	return impl->getID() != 0;
+}
 
 Shader ShaderLoader::compileAndLink(const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
 {

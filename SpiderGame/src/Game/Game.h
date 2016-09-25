@@ -9,7 +9,7 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/BulletDebugDrawer.h"
-#include "Renderer/Shader.h"
+#include "Renderer/ShaderLoader.h"
 #include "Renderer/ModelLoader.h"
 #include "Renderer/Box.h"
 #include "Renderer/Model.h"

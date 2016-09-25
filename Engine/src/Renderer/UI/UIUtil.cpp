@@ -19,11 +19,11 @@ UIUtilQuad UIUtil::generateQuad(const glm::vec2& size)
 
 	std::vector<unsigned> indices;
 	indices.push_back(0);
+	indices.push_back(3);
 	indices.push_back(2);
-	indices.push_back(3);
 	indices.push_back(0);
-	indices.push_back(3);
 	indices.push_back(1);
+	indices.push_back(3);
 
 	glGenVertexArrays(1, &quad.vao);
 	glGenBuffers(1, &quad.vbo);

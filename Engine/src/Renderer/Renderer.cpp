@@ -13,6 +13,9 @@
 #include <sstream>
 #include <ctime>
 
+static const unsigned int maxPointLights = 64;
+static const unsigned int maxBones = 100;
+
 /*! Shader cache. Stores a shader along with its uniform locations. */
 struct Renderer::ShaderCache
 {
@@ -75,9 +78,6 @@ struct Renderer::Entity
 	bool loopAnimation;
 };
 
-static const unsigned int maxPointLights = 64;
-static const unsigned int maxBones = 100;
-
 Renderer::Renderer()
 	: pointLights(maxPointLights),
 	camera(nullptr),
@@ -88,7 +88,8 @@ Renderer::Renderer()
 	this->uiModelTransform[1][1] = -1.0f;
 }
 
-Renderer::~Renderer() { }
+Renderer::~Renderer()
+{ }
 
 void Renderer::setDebugLogCallback(const DebugLogCallback& callback)
 {
@@ -227,6 +228,7 @@ void Renderer::draw()
 {
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -235,7 +237,6 @@ void Renderer::draw()
 	this->drawInternal(RenderSpace_World);
 
 	glDisable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	this->drawInternal(RenderSpace_UI);
 }
 
@@ -253,6 +254,7 @@ void Renderer::drawInternal(RenderSpace space)
 			shaderCache.shader.setViewMatrix(this->camera->getViewMatrixOrtho());
 			continue;
 		}
+		glCheckError();
 
 		for (unsigned int i = 0; i < pointLights.size(); i++) {
 			PointLight light = pointLights[i];

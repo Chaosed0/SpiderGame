@@ -2,6 +2,7 @@
 #include "Renderer/Box.h"
 
 #include "Renderer/Mesh.h"
+#include "Renderer/TextureLoader.h"
 
 #include <GL/glew.h>
 
@@ -65,9 +66,12 @@ Model getBox(const std::vector<Texture>& textures, glm::vec3 scale)
 	}
 
 	Mesh mesh(vertices, indexes);
+	Material material;
+	material.setTextures(textures);
+	return Model(mesh, material);
 }
 
-Mesh getBox(const std::vector<Texture>& textures)
+Model getBox(const std::vector<Texture>& textures)
 {
 	return getBox(textures, glm::vec3(1.0f));
 }
@@ -117,7 +121,7 @@ GLfloat skybox_verts[] = {
 	1.0f, -1.0f,  1.0f
 };
 
-Mesh getSkybox(const std::vector<std::string>& skyboxTextures)
+Model getSkybox(const std::vector<std::string>& skyboxTextures)
 { 
 	std::vector<Vertex> vertices(36);
 	for (unsigned int i = 0; i < vertices.size(); i++) {
@@ -130,15 +134,17 @@ Mesh getSkybox(const std::vector<std::string>& skyboxTextures)
 	}
 
 	std::vector<Texture> textures;
-	Texture texture;
-	texture.loadCubemap(skyboxTextures);
-	texture.type = TextureType_cubemap;
+	TextureLoader textureLoader;
+	Texture texture = textureLoader.loadCubemap(skyboxTextures);
 	textures.push_back(texture);
 
-	return Mesh(vertices, indexes, textures);
+	Mesh mesh(vertices, indexes);
+	Material material;
+	material.setTextures(textures);
+	return Model(mesh, material);
 }
 
-Mesh getPlane(const std::vector<Texture>& textures, glm::vec3 ubasis, glm::vec3 vbasis, glm::vec2 dimensions, glm::vec2 textureOffset, glm::vec2 textureScale)
+Model getPlane(const std::vector<Texture>& textures, glm::vec3 ubasis, glm::vec3 vbasis, glm::vec2 dimensions, glm::vec2 textureOffset, glm::vec2 textureScale)
 {
 	float ltc = textureOffset.x;
 	float rtc = textureOffset.x + textureScale.x;
@@ -164,10 +170,13 @@ Mesh getPlane(const std::vector<Texture>& textures, glm::vec3 ubasis, glm::vec3 
 	indices.push_back(3);
 	indices.push_back(2);
 
-	return Mesh(vertices, indices, textures);
+	Mesh mesh(vertices, indices);
+	Material material;
+	material.setTextures(textures);
+	return Model(mesh, material);
 }
 
-Mesh getDebugBoxMesh(const glm::vec3& halfExtents)
+Model getDebugBoxMesh(const glm::vec3& halfExtents)
 {
 	static unsigned topRightFronti = 0;
 	static unsigned topLeftFronti = 1;
@@ -218,7 +227,8 @@ Mesh getDebugBoxMesh(const glm::vec3& halfExtents)
 	indices.push_back(topRightBacki);
 	indices.push_back(botRightBacki);
 
-	Mesh mesh(vertices, indices, std::vector<Texture> { });
-	mesh.material.drawType = MaterialDrawType_Lines;
-	return mesh;
+	Mesh mesh(vertices, indices);
+	Material material;
+	material.drawType = MaterialDrawType_Lines;
+	return Model(mesh, material);
 }

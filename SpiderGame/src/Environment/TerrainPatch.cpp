@@ -88,10 +88,12 @@ Model TerrainPatch::toModel(glm::vec2 origin, glm::vec3 scale)
 	}
 
 	std::vector<Texture> textures(1);
-	textures[0].loadFromFile("assets/img/terrain_shading.png");
-	textures[0].type = TextureType_diffuse;
+	TextureLoader textureLoader;
+	textures[0] = textureLoader.loadFromFile(TextureType_diffuse, "assets/img/terrain_shading.png");
+	Material material;
+	material.setTextures(textures);
 
-	return Model(std::vector<Mesh> { Mesh(vertices, indices, textures) });
+	return Model(Mesh(vertices, indices), material);
 }
 
 TerrainPatchCollision TerrainPatch::getCollisionData(glm::vec2 origin, glm::vec3 scale)

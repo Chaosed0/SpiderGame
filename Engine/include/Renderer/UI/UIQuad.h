@@ -2,7 +2,7 @@
 
 #include "Font.h"
 #include "Renderable2d.h"
-#include "Renderer/Texture.h"
+#include "Renderer/TextureLoader.h"
 #include "Renderer/UI/UIUtil.h"
 
 #include <memory>

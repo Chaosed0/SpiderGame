@@ -2,14 +2,12 @@
 
 #include "Framework/System.h"
 #include "Framework/EventManager.h"
-#include "Renderer/Shader.h"
 #include "Renderer/Renderer.h"
 #include "Game/Components/PlayerComponent.h"
 
 #include <random>
 
 class btDynamicsWorld;
-class Shader;
 
 class ShootingSystem : public System
 {

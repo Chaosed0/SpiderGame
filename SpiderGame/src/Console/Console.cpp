@@ -19,10 +19,9 @@ const glm::vec4 Console::backColor = glm::vec4(0.0f, 0.7f, 0.2f, 0.5f);
 Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
 	: size(size), font(font),
 	buffer(maxBufferLines), bufferEnd(0), numBufferedLines(0),
-	backQuad(std::make_shared<UIQuad>(size)), inputLabel(std::make_shared<Label>(font)),
+	backQuad(std::make_shared<UIQuad>(backColor, size)), inputLabel(std::make_shared<Label>(font)),
 	bufferLabels(maxBufferLines), historyPointer(0)
 {
-	backQuad->material.setProperty("color", backColor);
 	lineHeight = 15.0f;
 	for (unsigned i = 0; i < bufferLabels.size(); i++) {
 		bufferLabels[i] = std::make_shared<Label>(font);
@@ -107,11 +106,11 @@ void Console::recallHistory(bool up)
 
 void Console::addToRenderer(UIRenderer& uiRenderer, Shader backShader, Shader textShader)
 {
+	UIHandles.push_back(uiRenderer.getEntityHandle(backQuad, backShader));
 	UIHandles.push_back(uiRenderer.getEntityHandle(inputLabel, textShader));
 	for (unsigned i = 0; i < bufferLabels.size(); i++) {
 		UIHandles.push_back(uiRenderer.getEntityHandle(bufferLabels[i], textShader));
 	}
-	UIHandles.push_back(uiRenderer.getEntityHandle(backQuad, backShader));
 }
 
 void Console::setVisible(bool visible)

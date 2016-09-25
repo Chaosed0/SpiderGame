@@ -60,10 +60,10 @@ void BulletDebugDrawer::reset()
 
 void BulletDebugDrawer::draw()
 {
-	shader.use();
-	shader.setModelMatrix(glm::mat4());
-	shader.setProjectionMatrix(camera->getProjectionMatrix());
-	shader.setViewMatrix(camera->getViewMatrix());
+	impl->shader.use();
+	impl->shader.setModelMatrix(glm::mat4());
+	impl->shader.setProjectionMatrix(camera->getProjectionMatrix());
+	impl->shader.setViewMatrix(camera->getViewMatrix());
 
 	glBindVertexArray(impl->VAO);
 

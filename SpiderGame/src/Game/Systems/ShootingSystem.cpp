@@ -8,7 +8,6 @@
 
 #include "Renderer/Renderer.h"
 #include "Renderer/Model.h"
-#include "Renderer/Shader.h"
 #include "Renderer/Box.h"
 
 #include "Game/Components/PlayerComponent.h"

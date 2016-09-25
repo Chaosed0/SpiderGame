@@ -5,7 +5,6 @@
 #include <vector>
 #include <memory>
 
-#include "Renderer/TexturePacker.h"
 #include "Renderer/Model.h"
 
 struct Character {

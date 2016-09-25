@@ -10,6 +10,7 @@
 #include <cstdio>
 
 Texture::Texture() : impl(new TextureImpl()) { }
+Texture::~Texture() { }
 Texture::Texture(const Texture& texture) : impl(new TextureImpl(*texture.impl)) { }
 
 unsigned int imageColorMode(SDL_PixelFormat* format)
@@ -67,7 +68,7 @@ Texture TextureLoader::loadCubemap(const std::vector<std::string>& images)
 {
 	Texture texture;
 	texture.impl = std::make_unique<TextureImpl>();
-	texture.impl->type = TextureType_diffuse;
+	texture.impl->type = TextureType_cubemap;
 
 	GLuint id;
 	glGenTextures(1, &id);
@@ -102,4 +103,10 @@ Texture TextureLoader::loadCubemap(const std::vector<std::string>& images)
 
 	texture.impl->id = id;
 	return texture;
+}
+
+void Texture::operator=(const Texture& texture)
+{
+	std::unique_ptr<TextureImpl> impl(new TextureImpl(*texture.impl));
+	this->impl.swap(impl);
 }

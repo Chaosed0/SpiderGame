@@ -39,6 +39,10 @@ struct UIRenderer::Impl
 };
 
 UIRenderer::UIRenderer()
+	: impl(new Impl())
+{ }
+
+UIRenderer::~UIRenderer()
 { }
 
 void UIRenderer::setProjection(glm::mat4 projection)

@@ -19,18 +19,12 @@
 Model::Model()
 { }
 
-Model(const Mesh& mesh, const Material& material, const AnimationData& animationData)
-	: mesh(new Mesh(mesh)), material(material), animationData(animationData)
+Model::Model(const Mesh& mesh, const Material& material, const AnimationData& animationData)
+	: mesh(mesh), material(material), animationData(animationData)
 { }
 
-Model::~Model()
-{ }
-
-Model::Model(const Model& model)
-	: material(model.material),
-	animationData(model.animationData),
-	nodeTransforms(model.nodeTransforms),
-	mesh(new Mesh(*model.mesh))
+Model::Model(const Mesh& mesh, const Material& material)
+	: mesh(mesh), material(material)
 { }
 
 glm::vec3 interpolate(glm::vec3 a, glm::vec3 b, float lerp)
@@ -83,6 +77,10 @@ std::vector<glm::mat4> Model::getNodeTransforms(const std::string& animName, flo
 	auto iter = animationData.animations.find(animName);
 	if (iter == animationData.animations.end()) {
 		return nodeTransforms;
+	}
+
+	if (nodeTransforms.size() < animationData.nodes.size()) {
+		nodeTransforms.resize(animationData.nodes.size());
 	}
 
 	const Animation& animation = iter->second;

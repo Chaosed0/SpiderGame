@@ -136,8 +136,7 @@ struct Model
 	std::vector<glm::mat4> nodeTransforms;
 
 	Model();
-	~Model();
-	Model(const Model& model);
+	Model(const Mesh& mesh, const Material& material);
 	Model(const Mesh& mesh, const Material& material, const AnimationData& animationData);
 
 	/*!

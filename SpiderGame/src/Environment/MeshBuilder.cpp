@@ -109,7 +109,10 @@ Model MeshBuilder::getModel(std::vector<Texture>& textures) {
 	for (unsigned i = 0; i < indices.size(); i++) {
 		modelIndices[i] = indices[i];
 	}
-	return Model(std::vector<Mesh>{ Mesh(verts, modelIndices, textures) });
+
+	Material material;
+	material.setTextures(textures);
+	return Model(Mesh(verts, modelIndices), material);
 }
 
 btBvhTriangleMeshShape* MeshBuilder::getCollisionMesh()

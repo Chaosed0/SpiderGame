@@ -180,13 +180,16 @@ int Game::setup()
 	input.setDefaultMapping("Fire", ControllerAxis_RightTrigger, ControllerAxis_None);
 
 	/* Shaders */
-	shader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
-	skinnedShader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
-	lightShader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
-	skyboxShader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
-	textShader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
-	imageShader.compileAndLink("Shaders/basic2d.vert", "Shaders/texture2d.frag");
-	backShader.compileAndLink("Shaders/basic2d.vert", "Shaders/singlecolor.frag");
+	ShaderLoader shaderLoader;
+	shader = shaderLoader.compileAndLink("Shaders/basic.vert", "Shaders/lightcolor.frag");
+	skinnedShader = shaderLoader.compileAndLink("Shaders/skinned.vert", "Shaders/lightcolor.frag");
+	lightShader = shaderLoader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
+	skyboxShader = shaderLoader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
+	textShader = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
+	imageShader = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/texture2d.frag");
+	backShader = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/singlecolor.frag");
+
+	TextureLoader textureLoader;
 
 	/*! Event Manager */
 	eventManager = std::make_unique<EventManager>(world);
@@ -239,7 +242,7 @@ int Game::setup()
 	gui.healthLabelHandle = uiRenderer.getEntityHandle(gui.healthLabel, textShader);
 
 	/* Health image */
-	gui.healthImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
+	gui.healthImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
 	gui.healthImage->transform = Transform(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f)).matrix();
 	gui.healthImageHandle = uiRenderer.getEntityHandle(gui.healthImage, imageShader);
 
@@ -252,7 +255,7 @@ int Game::setup()
 	gui.gemLabelHandle = uiRenderer.getEntityHandle(gui.gemLabel, textShader);
 
 	/* Gem image */
-	gui.gemImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
+	gui.gemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
 	gui.gemImage->transform = Transform(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f)).matrix();
 	gui.gemImageHandle = uiRenderer.getEntityHandle(gui.gemImage, imageShader);
 
@@ -264,7 +267,7 @@ int Game::setup()
 	gui.bulletLabelHandle = uiRenderer.getEntityHandle(gui.bulletLabel, textShader);
 
 	/* Bullet image */
-	gui.bulletImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/bullet.png"), glm::vec2(32.0f, 32.0f));
+	gui.bulletImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/bullet.png"), glm::vec2(32.0f, 32.0f));
 	gui.bulletImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 40.0f, windowHeight - 42.0f, 0.0f)).matrix();
 	gui.bulletImageHandle = uiRenderer.getEntityHandle(gui.bulletImage, imageShader);
 
@@ -277,7 +280,7 @@ int Game::setup()
 	font.reset();
 
 	/* Aiming reticle*/
-	gui.reticleImage = std::make_shared<UIQuad>(Texture(TextureType_diffuse, "assets/img/reticle.png"), glm::vec2(32.0f, 32.0f));
+	gui.reticleImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/reticle.png"), glm::vec2(32.0f, 32.0f));
 	gui.reticleImage->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f)).matrix();
 	gui.reticleHandle = uiRenderer.getEntityHandle(gui.reticleImage, imageShader);
 
@@ -425,9 +428,9 @@ int Game::setup()
 	dynamicsWorld->addRigidBody(roomData.rigidBody, CollisionGroupWall, CollisionGroupAll);
 
 	// Render the room
-	Texture roomTexture(TextureType_diffuse, "assets/img/brick.png");
+	Texture roomTexture(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/brick.png"));
 	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ roomTexture });
-	roomModel.meshes[0].material.setProperty("shininess", MaterialProperty(FLT_MAX));
+	roomModel.material.setProperty("shininess", MaterialProperty(FLT_MAX));
 	Renderer::ModelHandle roomModelHandle = renderer.getModelHandle(roomModel);
 	Renderer::RenderableHandle roomRenderableHandle = renderer.getRenderableHandle(roomModelHandle, shader);
 
@@ -585,16 +588,17 @@ int Game::setup()
 	fromVert.position = glm::vec3(0.0f);
 	Vertex toVert;
 	toVert.position = Util::forward * 3.0f;
-	Mesh lineMesh(std::vector<Vertex>{fromVert, toVert}, std::vector<unsigned>{0,1}, std::vector<Texture>{});
-	lineMesh.material.drawType = MaterialDrawType_Lines;
-	lineMesh.material.setProperty("color", MaterialProperty(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f)));
-	auto bulletMeshHandle = renderer.getModelHandle(std::vector<Mesh>{ lineMesh });
+	Mesh lineMesh(std::vector<Vertex>{fromVert, toVert}, std::vector<unsigned>{0,1});
+	Material material;
+	material.drawType = MaterialDrawType_Lines;
+	material.setProperty("color", MaterialProperty(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f)));
+	auto bulletMeshHandle = renderer.getModelHandle(Model(lineMesh, material));
 	playerComponent->shotTracerModelHandle = bulletMeshHandle;
 	playerComponent->tracerShader = lightShader;
 
-	Texture muzzleFlashTexture = Texture(TextureType_diffuse, "assets/img/flash.png");
-	Mesh muzzleFlashPlane = getPlane(std::vector<Texture> { muzzleFlashTexture }, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.3f, 0.3f));
-	auto muzzleFlashModelHandle = renderer.getModelHandle(Model(std::vector<Mesh> { muzzleFlashPlane }));
+	Texture muzzleFlashTexture(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/flash.png"));
+	Model muzzleFlashPlane = getPlane(std::vector<Texture> { muzzleFlashTexture }, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.3f, 0.3f));
+	auto muzzleFlashModelHandle = renderer.getModelHandle(muzzleFlashPlane);
 	playerComponent->muzzleFlashModelHandle = muzzleFlashModelHandle;
 	playerComponent->flashShader = shader;
 
@@ -897,7 +901,7 @@ void Game::generateTestTerrain()
 
 		patchData.patch = terrain.generatePatch(origin.x, origin.y);
 		patchData.model = patchData.patch.toModel(glm::ivec2(), scale);
-		patchData.model.meshes[0].material.setProperty("shininess", MaterialProperty(1000000.0f));
+		patchData.model.material.setProperty("shininess", MaterialProperty(1000000.0f));
 
 		Renderer::ModelHandle terrainModelHandle = renderer.getModelHandle(patchData.model);
 		Renderer::RenderableHandle terrainHandle = renderer.getRenderableHandle(terrainModelHandle, shader);

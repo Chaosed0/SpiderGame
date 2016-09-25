@@ -2,6 +2,8 @@
 
 #include "Renderer/Mesh.h"
 
+#include <GL/glew.h>
+
 struct Mesh::Impl
 {
 	Impl() : VAO(0), VBO(0), VBO_bone(0), EBO(0), nVertices(0), nIndices(0) { }
