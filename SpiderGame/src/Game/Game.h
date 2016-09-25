@@ -47,6 +47,8 @@
 #include "Game/Responders/PlayerJumpResponder.h"
 #include "Game/Responders/HurtboxPlayerResponder.h"
 
+#include "Game/Extra/SpiderSpawner.h"
+
 #include "Input/Input.h"
 
 struct RoomData
@@ -152,6 +154,8 @@ private:
 	std::unique_ptr<AudioListenerSystem> audioListenerSystem;
 	std::unique_ptr<AudioSourceSystem> audioSourceSystem;
 	std::unique_ptr<PointLightSystem> pointLightSystem;
+
+	std::unique_ptr<SpiderSpawner> spiderSpawner;
 
 	std::unique_ptr<Physics> physics;
 

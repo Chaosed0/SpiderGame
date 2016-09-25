@@ -602,72 +602,6 @@ int Game::setup()
 	playerComponent->muzzleFlashModelHandle = muzzleFlashModelHandle;
 	playerComponent->flashShader = shader;
 
-	// Load some spiders
-	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
-	std::uniform_real_distribution<float> scaleRand(0.004f, 0.006f);
-	std::uniform_int_distribution<int> roomRand(0, roomData.room.boxes.size()-1);
-	std::vector<AudioClip> spiderSounds = {
-		AudioClip("assets/sound/minecraft/spider/say1.ogg"),
-		AudioClip("assets/sound/minecraft/spider/say2.ogg"),
-		AudioClip("assets/sound/minecraft/spider/say3.ogg"),
-		AudioClip("assets/sound/minecraft/spider/say4.ogg")
-	};
-	AudioClip spiderDeathSound("assets/sound/minecraft/spider/death.ogg");
-
-	for (int i = 0; i < spiderCount; i++) {
-		std::stringstream namestream;
-		namestream << "Spider " << i;
-
-		eid_t spider = world.getNewEntity(namestream.str());
-		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(spider);
-		TransformComponent* transformComponent = world.addComponent<TransformComponent>(spider);
-		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(spider);
-		FollowComponent* followComponent = world.addComponent<FollowComponent>(spider);
-		RigidbodyMotorComponent* rigidbodyMotorComponent = world.addComponent<RigidbodyMotorComponent>(spider);
-		HealthComponent* healthComponent = world.addComponent<HealthComponent>(spider);
-		AudioSourceComponent* audioSourceComponent = world.addComponent<AudioSourceComponent>(spider);
-		SpiderComponent* spiderComponent = world.addComponent<SpiderComponent>(spider);
-
-		// Stick it in a random room
-		RoomBox box = roomData.room.boxes[roomRand(generator)];
-		std::uniform_int_distribution<int> xRand(box.left, box.right);
-		std::uniform_int_distribution<int> zRand(box.bottom, box.top);
-		transformComponent->transform->setPosition(glm::vec3(xRand(generator), 1.0f, zRand(generator)));
-		transformComponent->transform->setScale(glm::vec3(scaleRand(generator)));
-
-		glm::vec3 halfExtents = glm::vec3(200.0f, 75.0f, 120.0f) * transformComponent->transform->getScale().x;
-		btCompoundShape* shape = new btCompoundShape();
-		btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents));
-		shape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y * 1.0f, 0.0f)), boxShape);
-		btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(*transformComponent->transform));
-		btRigidBody* spiderRigidBody = new btRigidBody(10.0f, playerMotionState, shape);
-		// This pointer is freed by the CollisionComponent destructor
-		spiderRigidBody->setUserPointer(new eid_t(spider));
-		dynamicsWorld->addRigidBody(spiderRigidBody, CollisionGroupEnemy, CollisionGroupAll);
-
-		collisionComponent->collisionObject = spiderRigidBody;
-		collisionComponent->world = dynamicsWorld;
-
-		audioSourceComponent->sourceHandle = soundManager.getSourceHandle();
-		soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->transform->getWorldPosition());
-
-		followComponent->target = playerTransform;
-		followComponent->raycastStartOffset = glm::vec3(0.0f, halfExtents.y, 0.0f);
-		rigidbodyMotorComponent->moveSpeed = 3.0f;
-
-		Renderer::ModelHandle spiderModelHandle = renderer.getModelHandle(spiderModel);
-		Renderer::RenderableHandle spiderHandle = renderer.getRenderableHandle(spiderModelHandle, skinnedShader);
-		renderer.setRenderableAnimation(spiderHandle, "AnimStack::idle");
-		renderer.setRenderableAnimationTime(spiderHandle, i / 10.0f);
-		modelComponent->rendererHandle = spiderHandle;
-
-		healthComponent->health = healthComponent->maxHealth = 100;
-		spiderComponent->animState = SPIDER_IDLE;
-		spiderComponent->attackTime = 1.0f;
-		spiderComponent->sounds = spiderSounds;
-		spiderComponent->deathSound = spiderDeathSound;
-	}
-
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager, generator);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world, input, *eventManager);
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
@@ -684,6 +618,8 @@ int Game::setup()
 	pointLightSystem = std::make_unique<PointLightSystem>(world, renderer);
 
 	spiderSystem->debugShader = lightShader;
+
+	spiderSpawner = std::make_unique<SpiderSpawner>(renderer, soundManager, world, dynamicsWorld, modelLoader, generator, skinnedShader, roomData.room, player);
 
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, *eventManager);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);
@@ -793,6 +729,8 @@ void Game::draw()
 void Game::update()
 {
 	input.update();
+
+	spiderSpawner->update(timeDelta);
 
 	/* AI/Input */
 	playerInputSystem->update(timeDelta);

@@ -39,6 +39,9 @@ public:
 	template <class T>
 	cid_t getComponentId();
 
+	template <class T>
+	std::vector<eid_t> getEntitiesWithComponent();
+
 	struct Entity {
 		Entity(const std::string& name, ComponentBitmask components)
 			: name(name), components(components), markedForDeletion(false) { }
@@ -135,4 +138,18 @@ T* World::getComponent(eid_t entity, bool insert)
 	}
 
 	return static_cast<T*>(iter->second.get());
+}
+
+template <class T>
+std::vector<eid_t> World::getEntitiesWithComponent()
+{
+	cid_t cid = getComponentId<T>();
+	ComponentPool& componentPool = this->entityComponentMaps[cid];
+	std::vector<eid_t> entities;
+
+	for (auto iter = componentPool.begin(); iter != componentPool.end(); ++iter) {
+		entities.push_back(iter->first);
+	}
+	
+	return entities;
 }
