@@ -107,7 +107,7 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 	transformComponent->transform->setPosition(position);
 	transformComponent->transform->setScale(glm::vec3(scaleRand(generator)));
 
-	glm::vec3 halfExtents = glm::vec3(200.0f, 75.0f, 120.0f) * transformComponent->transform->getScale().x;
+	glm::vec3 halfExtents = glm::vec3(125.0f, 75.0f, 120.0f) * transformComponent->transform->getScale().x;
 	btCompoundShape* shape = new btCompoundShape();
 	btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents));
 	shape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y * 1.0f, 0.0f)), boxShape);
@@ -123,7 +123,7 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 	audioSourceComponent->sourceHandle = soundManager.getSourceHandle();
 	soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->transform->getWorldPosition());
 
-	followComponent->target = playerTransformComponent;
+	followComponent->target = playerTransformComponent->transform;
 	followComponent->raycastStartOffset = glm::vec3(0.0f, halfExtents.y, 0.0f);
 	rigidbodyMotorComponent->moveSpeed = 3.0f;
 

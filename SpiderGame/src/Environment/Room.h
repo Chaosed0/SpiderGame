@@ -19,16 +19,20 @@ struct RoomBox
 	int top;
 	int left;
 	int bottom;
+	glm::ivec2 getCenter();
 };
 
 struct Room
 {
 	std::vector<RoomSide> sides;
 	std::vector<RoomBox> boxes;
+	std::vector<std::vector<int>> boxAdjacencyList;
 	int minX, minY;
 	int maxX, maxY;
 	int rightmostBox, leftmostBox;
 	int topmostBox, bottommostBox;
+
+	int boxForCoordinate(glm::vec2 coord);
 	SDL_Surface* saveToSurface();
 };
 
@@ -39,7 +43,13 @@ public:
 	RoomGenerator(int seed);
 	Room generate();
 
+	std::normal_distribution<float> boxSizeRand;
+
 	unsigned minimumArea;
 private:
 	std::default_random_engine generator;
+	unsigned getBoxSize();
+
+	unsigned minBoxSize;
+	unsigned approxMaxBoxSize;
 };

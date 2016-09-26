@@ -8,8 +8,12 @@
 static Room boxesToRoom(std::vector<RoomBox> boxes);
 
 RoomGenerator::RoomGenerator()
-	: minimumArea(2500)
-{ }
+	: minimumArea(3000),
+	minBoxSize(7),
+	approxMaxBoxSize(20)
+{
+	boxSizeRand = std::normal_distribution<float>((float)minBoxSize, (approxMaxBoxSize-minBoxSize)/2.0f);
+}
 
 RoomGenerator::RoomGenerator(int seed)
 	: RoomGenerator()
@@ -17,13 +21,21 @@ RoomGenerator::RoomGenerator(int seed)
 	generator.seed(seed);
 }
 
+unsigned RoomGenerator::getBoxSize()
+{
+	int size = (int)std::round(boxSizeRand(generator));
+	int retSize;
+	if (size < (int)minBoxSize) {
+		retSize = (int)minBoxSize + ((int)minBoxSize - size);
+	} else {
+		retSize = size;
+	}
+	return (unsigned)retSize;
+}
+
 Room RoomGenerator::generate()
 {
-	const int minBoxSize = 5;
-	const int maxBoxSize = 15;
-
 	unsigned currentArea = 0;
-	std::uniform_int_distribution<int> boxSizeRand(minBoxSize, maxBoxSize);
 
 	// Right-pointing-down, right-pointing-up, left-pointing-down, left-pointing-up,
 	// bot-pointing-right, bot-pointing-left, top-pointing-right, top-pointing-left
@@ -34,9 +46,10 @@ Room RoomGenerator::generate()
 	unsigned maxBoti = 0;
 	unsigned maxTopi = 0;
 	std::vector<RoomBox> boxes;
+	std::vector<std::vector<int>> boxAdjacencyList;
 
 	// Generate the root box
-	glm::ivec2 size(boxSizeRand(this->generator), boxSizeRand(this->generator));
+	glm::ivec2 size(getBoxSize(), getBoxSize());
 	currentArea += size.x * size.y;
 	boxes.push_back(RoomBox());
 	boxes[0].right = (int)std::ceil(size.x / 2.0f);
@@ -44,32 +57,39 @@ Room RoomGenerator::generate()
 	boxes[0].left = (int)-std::floor(size.x / 2.0f);
 	boxes[0].bottom = (int)-std::floor(size.y / 2.0f);
 
+	boxAdjacencyList.emplace_back();
+
 	int i = 0;
 	while (currentArea < minimumArea) {
 		RoomBox newBox;
-		glm::ivec2 size(boxSizeRand(this->generator), boxSizeRand(this->generator));
+		glm::ivec2 size(getBoxSize(), getBoxSize());
 		currentArea += size.x * size.y;
 
 		unsigned direction = dirRand(this->generator);
+		int matchingBoxi = -1;
 		RoomBox matchingBox;
 		if (direction < 2) {
 			// Match left to right
-			matchingBox = boxes[maxRighti];
+			matchingBoxi = maxRighti;
+			matchingBox = boxes[matchingBoxi];
 			newBox.left = matchingBox.right;
 			newBox.right = newBox.left + size.x;
 		} else if (direction < 4) {
 			// Match right to left
-			matchingBox = boxes[maxLefti];
+			matchingBoxi = maxLefti;
+			matchingBox = boxes[matchingBoxi];
 			newBox.right = matchingBox.left;
 			newBox.left = newBox.right - size.x;
 		} else if (direction < 6) {
 			// Match top to bottom
-			matchingBox = boxes[maxBoti];
+			matchingBoxi = maxBoti;
+			matchingBox = boxes[matchingBoxi];
 			newBox.top = matchingBox.bottom;
 			newBox.bottom = newBox.top - size.y;
 		} else {
 			// Match bottom to top
-			matchingBox = boxes[maxTopi];
+			matchingBoxi = maxTopi;
+			matchingBox = boxes[matchingBoxi];
 			newBox.bottom = matchingBox.top;
 			newBox.top = newBox.bottom + size.y;
 		}
@@ -109,6 +129,8 @@ Room RoomGenerator::generate()
 			maxTopi = boxes.size();
 		}
 
+		boxAdjacencyList.push_back({ matchingBoxi });
+		boxAdjacencyList[matchingBoxi].push_back(boxes.size());
 		boxes.push_back(newBox);
 	}
 
@@ -117,6 +139,7 @@ Room RoomGenerator::generate()
 	room.leftmostBox = maxLefti;
 	room.topmostBox = maxTopi;
 	room.bottommostBox = maxBoti;
+	room.boxAdjacencyList = boxAdjacencyList;
 	return room;
 }
 
@@ -284,4 +307,23 @@ static Room boxesToRoom(std::vector<RoomBox> boxes)
 	}), room.sides.end());
 
 	return room;
+}
+
+int Room::boxForCoordinate(glm::vec2 coord)
+{
+	for (unsigned i = 0; i < boxes.size(); i++) {
+		RoomBox& box = boxes[i];
+		if (box.left <= coord.x && coord.x <= box.right &&
+			box.bottom <= coord.y && coord.y <= box.top)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+glm::ivec2 RoomBox::getCenter()
+{
+	return glm::ivec2((left + right) / 2.0f, (top + bottom) / 2.0f);
 }

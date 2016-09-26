@@ -91,18 +91,18 @@ vec4 CalcDirLight(DirLight light, vec3 normal, vec3 fragPos)
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     // Combine
-    vec3 ambient  = light.ambient  * vec3(texture(material.texture_diffuse, textureCoord));
-    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.texture_diffuse, textureCoord));
-    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular, textureCoord));
+    vec3 ambient  = light.ambient  * vec3(diffuseTex);
+    vec3 diffuse  = light.diffuse  * diff * vec3(diffuseTex);
+    vec3 specular = light.specular * spec * vec3(specularTex);
 
-    return vec4(ambient, diffuseTex.w) + (diffuse, diffuseTex.w) + vec4(specular, specularTex.w);
+    return vec4(ambient, diffuseTex.w) + vec4(diffuse, diffuseTex.w) + vec4(specular, specularTex.w);
 }  
 
 void main()
 {
 	vec3 normal_n = normalize(normal);
 
-	//vec3 result = CalcDirLight(dirLight, normal_n, fragPos);
+	//vec4 result = CalcDirLight(dirLight, normal_n, fragPos);
 	vec4 result = vec4(0.0f);
 	for (int i = 0; i < min(MAX_POINT_LIGHTS, pointLightCount); i++) {
 		result += CalcPointLight(pointLight[i], normal_n, fragPos);

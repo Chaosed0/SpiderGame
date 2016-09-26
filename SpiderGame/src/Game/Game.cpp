@@ -608,7 +608,7 @@ int Game::setup()
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
 	cameraSystem = std::make_unique<CameraSystem>(world);
-	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
+	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld, roomData.room);
 	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer, soundManager, generator);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 	velocitySystem = std::make_unique<VelocitySystem>(world);
