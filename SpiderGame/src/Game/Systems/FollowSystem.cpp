@@ -44,15 +44,22 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	glm::vec3 to = finalTarget->getWorldPosition();
 	btVector3 btStart(Util::glmToBt(from));
 	btVector3 btEnd(Util::glmToBt(to));
-	btCollisionWorld::ClosestRayResultCallback rayCallback(btStart, btEnd);
-	rayCallback.m_collisionFilterMask = CollisionGroupAll ^ (CollisionGroupPlayer | CollisionGroupEnemy);
-	this->dynamicsWorld->rayTest(btStart, btEnd, rayCallback);
 
-	float closestObject = (rayCallback.m_hitPointWorld - btStart).length();
 	float distanceToTarget = (btEnd - btStart).length();
+	float distanceToHit = FLT_MAX;
+
+	btConvexShape* convexShape = new btBoxShape(btVector3(0.65f, 0.2f, 0.5f));
+
+	btQuaternion rotation = Util::glmToBt(transformComponent->transform->getWorldRotation()); 
+	btTransform btTStart(rotation, btStart);
+	btTransform btTEnd(rotation, btEnd);
+	btCollisionWorld::ClosestConvexResultCallback sweepTestCallback(btStart, btEnd);
+	sweepTestCallback.m_collisionFilterMask = CollisionGroupAll ^ (CollisionGroupPlayer | CollisionGroupEnemy);
+	this->dynamicsWorld->convexSweepTest(convexShape, btTStart, btTEnd, sweepTestCallback);
+	distanceToHit = (sweepTestCallback.m_hitPointWorld - btStart).length();
 
 	// Bullet reports the hit point as very far away if no contact is found
-	if (closestObject >= distanceToTarget) {
+	if (distanceToHit >= distanceToTarget - 0.1f) {
 		localTarget = to;
 		pathFound = true;
 	} else {
@@ -83,6 +90,17 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	}
 }
 
+RoomPortal FollowSystem::getPortal(const RoomBox& box, int otherBoxIndex)
+{
+	for (unsigned i = 0; i < box.portals.size(); i++) {
+		if (box.portals[i].otherBox == otherBoxIndex) {
+			return box.portals[i];
+		}
+	}
+	assert(false);
+	return RoomPortal();
+}
+
 bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget, std::vector<glm::vec3>& path)
 {
 	// Figure out where we are
@@ -110,10 +128,10 @@ bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget
 		}
 
 		visitedBoxes.insert(current);
-		std::vector<int>& adjacencyList = room.boxAdjacencyList[current];
+		std::vector<RoomPortal>& portals = room.boxes[current].portals;
 
-		for (unsigned i = 0; i < adjacencyList.size(); i++) {
-			int next = adjacencyList[i];
+		for (unsigned i = 0; i < portals.size(); i++) {
+			int next = portals[i].otherBox;
 			if (visitedBoxes.find(next) != visitedBoxes.end()) {
 				continue;
 			}
@@ -129,11 +147,13 @@ bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget
 
 	int current = finishBox;
 	RoomBox currentBox = room.boxes[current];
-	path.push_back(glm::vec3((currentBox.left + currentBox.right) / 2.0f, 0.0f, (currentBox.bottom + currentBox.top) / 2.0f));
 	while (current != startBox) {
-		current = prevBox[current];
+		int previous = prevBox[current];
+		RoomPortal portal = this->getPortal(currentBox, previous);
+		path.push_back(glm::vec3((portal.x0 + portal.x1) / 2.0f, 0.0f, (portal.y0 + portal.y1) / 2.0f));
+
+		current = previous;
 		currentBox = room.boxes[current];
-		path.push_back(glm::vec3((currentBox.left + currentBox.right) / 2.0f, 0.0f, (currentBox.bottom + currentBox.top) / 2.0f));
 	}
 
 	std::reverse(path.begin(), path.end());

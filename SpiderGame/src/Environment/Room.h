@@ -13,6 +13,12 @@ struct RoomSide
 	glm::ivec2 normal;
 };
 
+struct RoomPortal
+{
+	int x0, y0, x1, y1;
+	int otherBox;
+};
+
 struct RoomBox
 {
 	int right;
@@ -20,13 +26,13 @@ struct RoomBox
 	int left;
 	int bottom;
 	glm::ivec2 getCenter();
+	std::vector<RoomPortal> portals;
 };
 
 struct Room
 {
 	std::vector<RoomSide> sides;
 	std::vector<RoomBox> boxes;
-	std::vector<std::vector<int>> boxAdjacencyList;
 	int minX, minY;
 	int maxX, maxY;
 	int rightmostBox, leftmostBox;

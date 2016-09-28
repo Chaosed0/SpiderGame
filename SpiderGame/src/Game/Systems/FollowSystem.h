@@ -15,5 +15,6 @@ private:
 	btDynamicsWorld* dynamicsWorld;
 	Room room;
 
+	RoomPortal getPortal(const RoomBox& box, int otherBoxIndex);
 	bool findPath(const glm::vec3& start, const glm::vec3& finalTarget, std::vector<glm::vec3>& path);
 };

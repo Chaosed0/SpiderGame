@@ -57,8 +57,6 @@ Room RoomGenerator::generate()
 	boxes[0].left = (int)-std::floor(size.x / 2.0f);
 	boxes[0].bottom = (int)-std::floor(size.y / 2.0f);
 
-	boxAdjacencyList.emplace_back();
-
 	int i = 0;
 	while (currentArea < minimumArea) {
 		RoomBox newBox;
@@ -68,30 +66,35 @@ Room RoomGenerator::generate()
 		unsigned direction = dirRand(this->generator);
 		int matchingBoxi = -1;
 		RoomBox matchingBox;
+		RoomPortal portal;
 		if (direction < 2) {
 			// Match left to right
 			matchingBoxi = maxRighti;
 			matchingBox = boxes[matchingBoxi];
 			newBox.left = matchingBox.right;
 			newBox.right = newBox.left + size.x;
+			portal.x0 = portal.x1 = newBox.left;
 		} else if (direction < 4) {
 			// Match right to left
 			matchingBoxi = maxLefti;
 			matchingBox = boxes[matchingBoxi];
 			newBox.right = matchingBox.left;
 			newBox.left = newBox.right - size.x;
+			portal.x0 = portal.x1 = newBox.right;
 		} else if (direction < 6) {
 			// Match top to bottom
 			matchingBoxi = maxBoti;
 			matchingBox = boxes[matchingBoxi];
 			newBox.top = matchingBox.bottom;
 			newBox.bottom = newBox.top - size.y;
+			portal.y0 = portal.y1 = newBox.top;
 		} else {
 			// Match bottom to top
 			matchingBoxi = maxTopi;
 			matchingBox = boxes[matchingBoxi];
 			newBox.bottom = matchingBox.top;
 			newBox.top = newBox.bottom + size.y;
+			portal.y0 = portal.y1 = newBox.bottom;
 		}
 
 		if (direction < 4) {
@@ -104,6 +107,8 @@ Room RoomGenerator::generate()
 				newBox.bottom = matchingBox.bottom;
 				newBox.top = newBox.bottom + size.y;
 			}
+			portal.y0 = (std::max)(newBox.bottom, matchingBox.bottom);
+			portal.y1 = (std::min)(newBox.top, matchingBox.top);
 		} else {
 			if (direction % 2 == 0) {
 				// Match left to left
@@ -114,6 +119,8 @@ Room RoomGenerator::generate()
 				newBox.right = matchingBox.right;
 				newBox.left = newBox.right - size.x;
 			}
+			portal.x0 = (std::max)(newBox.left, matchingBox.left);
+			portal.x1 = (std::min)(newBox.right, matchingBox.right);
 		}
 
 		if (newBox.right > boxes[maxRighti].right) {
@@ -129,8 +136,10 @@ Room RoomGenerator::generate()
 			maxTopi = boxes.size();
 		}
 
-		boxAdjacencyList.push_back({ matchingBoxi });
-		boxAdjacencyList[matchingBoxi].push_back(boxes.size());
+		portal.otherBox = boxes.size();
+		boxes[matchingBoxi].portals.push_back(portal);
+		portal.otherBox = matchingBoxi;
+		newBox.portals.push_back(portal);
 		boxes.push_back(newBox);
 	}
 
@@ -139,7 +148,6 @@ Room RoomGenerator::generate()
 	room.leftmostBox = maxLefti;
 	room.topmostBox = maxTopi;
 	room.bottommostBox = maxBoti;
-	room.boxAdjacencyList = boxAdjacencyList;
 	return room;
 }
 
