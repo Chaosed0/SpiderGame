@@ -11,7 +11,8 @@ enum CollisionGroup {
 	CollisionGroupEnemy = 1 << 1,
 	CollisionGroupPlayer = 1 << 2,
 	CollisionGroupWall = 1 << 3,
-	CollisionGroupAll = CollisionGroupDefault | CollisionGroupEnemy | CollisionGroupPlayer | CollisionGroupWall
+	CollisionGroupHurtbox = 1 << 4,
+	CollisionGroupAll = CollisionGroupDefault | CollisionGroupEnemy | CollisionGroupPlayer | CollisionGroupWall | CollisionGroupHurtbox
 };
 
 class Util

@@ -36,10 +36,10 @@ protected:
 
 	/*! The world which this system operates on. */
 	World& world;
-private:
+
 	/*! The bitmask of component IDs which is generated from calls to require. */
 	ComponentBitmask requiredComponents;
-
+private:
 	/*! Iterator we use to get entities to update. */
 	World::eid_iterator entityIterator;
 };

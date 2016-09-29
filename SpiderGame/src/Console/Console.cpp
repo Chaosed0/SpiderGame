@@ -47,7 +47,7 @@ void Console::inputChar(char c)
 void Console::backspace()
 {
 	if (!history[historyPointer].empty()) {
-		this->history.back().pop_back();
+		this->history[historyPointer].pop_back();
 		this->updateInputLabel();
 	}
 }

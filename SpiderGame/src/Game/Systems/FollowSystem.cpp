@@ -30,7 +30,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
-	if (followComponent->target == nullptr) {
+	if (followComponent->target == nullptr || !followComponent->enabled) {
 		return;
 	}
 

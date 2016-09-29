@@ -49,10 +49,8 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 	if (rigidbodyMotorComponent->noclip) {
 		body->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
 		if (glm::length(movement) > glm::epsilon<float>()) {
-			// TODO: There's something wrong with the vertical component of facing
 			velocity = Util::glmToBt(rigidbodyMotorComponent->facing * glm::vec3(movement.y, 0.0f, -movement.x) * 10.0f);
-		}
-		else {
+		} else {
 			velocity = btVector3(0.0f, 0.0f, 0.0f);
 		}
 	} else {

@@ -56,7 +56,7 @@ void SpiderSpawner::update(float dt)
 			std::uniform_int_distribution<int> xRand(box.left + 1, box.right - 1);
 			std::uniform_int_distribution<int> zRand(box.bottom + 1, box.top - 1);
 
-			glm::vec3 candidatePosition(xRand(generator), 1.0f, zRand(generator));
+			glm::vec3 candidatePosition(xRand(generator), 0.5f, zRand(generator));
 			glm::vec3 playerPosition = playerTransformComponent->transform->getWorldPosition();
 
 			// distance check
@@ -109,10 +109,11 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 
 	glm::vec3 halfExtents = glm::vec3(125.0f, 75.0f, 120.0f) * transformComponent->transform->getScale().x;
 	btCompoundShape* shape = new btCompoundShape();
-	btBoxShape* boxShape = new btBoxShape(Util::glmToBt(halfExtents));
-	shape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y * 1.0f, 0.0f)), boxShape);
+	btCapsuleShapeZ* capsuleShape = new btCapsuleShapeZ(halfExtents.y, halfExtents.x);
+	shape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y, 0.0f)), capsuleShape);
 	btDefaultMotionState* playerMotionState = new btDefaultMotionState(Util::gameToBt(*transformComponent->transform));
-	btRigidBody* spiderRigidBody = new btRigidBody(10.0f, playerMotionState, shape);
+	btRigidBody* spiderRigidBody = new btRigidBody(5.0f, playerMotionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+	spiderRigidBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	// This pointer is freed by the CollisionComponent destructor
 	spiderRigidBody->setUserPointer(new eid_t(spider));
 	dynamicsWorld->addRigidBody(spiderRigidBody, CollisionGroupEnemy, CollisionGroupAll);
@@ -125,7 +126,10 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 
 	followComponent->target = playerTransformComponent->transform;
 	followComponent->raycastStartOffset = glm::vec3(0.0f, halfExtents.y, 0.0f);
-	rigidbodyMotorComponent->moveSpeed = 3.0f;
+
+	spiderComponent->normalMoveSpeed = 3.0f;
+	rigidbodyMotorComponent->moveSpeed = spiderComponent->normalMoveSpeed;
+	rigidbodyMotorComponent->jumpSpeed = 3.5f;
 
 	Renderer::RenderableHandle spiderHandle = renderer.getRenderableHandle(spiderModelHandle, spiderShader);
 	renderer.setRenderableAnimation(spiderHandle, "AnimStack::idle");
@@ -133,7 +137,7 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 
 	healthComponent->health = healthComponent->maxHealth = 100;
 	spiderComponent->animState = SPIDER_IDLE;
-	spiderComponent->attackTime = 1.0f;
+	spiderComponent->attackTime = 0.5f;
 	spiderComponent->sounds = spiderSounds;
 	spiderComponent->deathSound = spiderDeathSound;
 

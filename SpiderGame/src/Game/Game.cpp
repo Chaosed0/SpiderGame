@@ -362,8 +362,8 @@ int Game::setup()
 	}
 	PointLight light;
 	light.constant = 1.0f;
-	light.linear = 0.2f;
-	light.quadratic = 0.5f;
+	light.linear = 0.1f;
+	light.quadratic = 0.25f;
 	light.ambient = glm::vec3(0.2f);
 	light.diffuse = glm::vec3(0.8f);
 	light.specular = glm::vec3(1.0f);
@@ -526,7 +526,8 @@ int Game::setup()
 
 	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform->getScale().x, 0.7f * playerTransform->transform->getScale().y);
 	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(*playerTransform->transform));
-	btRigidBody* playerBody = new btRigidBody(1.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+	btRigidBody* playerBody = new btRigidBody(5.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
+	playerBody->setContactProcessingThreshold(0.0f);
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setActivationState(DISABLE_DEACTIVATION);
 	// This pointer is freed by the CollisionComponent destructor
@@ -609,7 +610,7 @@ int Game::setup()
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
 	cameraSystem = std::make_unique<CameraSystem>(world);
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld, roomData.room);
-	spiderSystem = std::make_unique<SpiderSystem>(world, dynamicsWorld, renderer, soundManager, generator);
+	spiderSystem = std::make_unique<SpiderSystem>(world, *eventManager, dynamicsWorld, renderer, soundManager, generator);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);
 	velocitySystem = std::make_unique<VelocitySystem>(world);
 	playerFacingSystem = std::make_unique<PlayerFacingSystem>(world, dynamicsWorld, gui.facingLabel);

@@ -6,6 +6,8 @@
 
 #include "Framework/CollisionEvent.h"
 
+#include "BulletCollision/CollisionDispatch/btInternalEdgeUtility.h"
+
 const unsigned Physics::framesBeforeUncaching = 60 * 30;
 
 static void bulletTickCallback(btDynamicsWorld* world, btScalar timeStep)

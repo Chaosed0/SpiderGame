@@ -3,6 +3,9 @@
 
 #include <algorithm>
 
+#include <btBulletDynamicsCommon.h>
+#include "BulletCollision/CollisionDispatch/btInternalEdgeUtility.h"
+
 MeshBuilder::MeshBuilder()
 {
 	ivArray = nullptr;

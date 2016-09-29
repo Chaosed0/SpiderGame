@@ -7,8 +7,9 @@
 class FollowComponent : public Component
 {
 public:
-	FollowComponent() : target(nullptr), repathTime(3.0f), repathTimer(repathTime), raycastStartOffset(0.0f), pathNode(0) { }
+	FollowComponent() : target(nullptr), repathTime(3.0f), repathTimer(repathTime), raycastStartOffset(0.0f), pathNode(0), enabled(true) { }
 	std::shared_ptr<Transform> target;
+	bool enabled;
 	float repathTime;
 	float repathTimer;
 	glm::vec3 lastPosition;

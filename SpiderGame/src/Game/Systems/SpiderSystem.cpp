@@ -23,11 +23,12 @@
 
 #include "Sound/SoundManager.h"
 
-const float SpiderSystem::attackDistance = 3.0f;
+const float SpiderSystem::attackDistance = 6.0f;
 
-SpiderSystem::SpiderSystem(World& world, btDynamicsWorld* dynamicsWorld, Renderer& renderer, SoundManager& soundManager, std::default_random_engine& generator)
+SpiderSystem::SpiderSystem(World& world, EventManager& eventManager, btDynamicsWorld* dynamicsWorld, Renderer& renderer, SoundManager& soundManager, std::default_random_engine& generator)
 	: System(world),
 	dynamicsWorld(dynamicsWorld),
+	eventManager(eventManager),
 	renderer(renderer),
 	soundManager(soundManager),
 	generator(generator)
@@ -40,6 +41,8 @@ SpiderSystem::SpiderSystem(World& world, btDynamicsWorld* dynamicsWorld, Rendere
 	require<FollowComponent>();
 	require<AudioSourceComponent>();
 	require<SpiderComponent>();
+
+	eventManager.registerForEvent<CollisionEvent>(std::bind(&SpiderSystem::onSpiderCollided, this, std::placeholders::_1));
 }
 
 void SpiderSystem::updateEntity(float dt, eid_t entity)
@@ -58,45 +61,74 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	btRigidBody* spiderBody = (btRigidBody*)collisionComponent->collisionObject;
 	btVector3 velocity = spiderBody->getLinearVelocity();
 	SpiderState newState = spiderComponent->animState;
-	if (velocity.length() > 0.01f) {
-		newState = SPIDER_MOVING;
-	} else {
-		newState = SPIDER_IDLE;
-	}
-
+	
 	float distanceToAttackTarget = glm::length(followComponent->target->getWorldPosition() - transformComponent->transform->getWorldPosition());
-	if (spiderComponent->attackTimer > 0.0f) {
-		spiderComponent->attackTimer -= dt;
-		newState = SPIDER_ATTACKING;
-	} else if (distanceToAttackTarget < attackDistance) {
-		newState = SPIDER_ATTACKING;
-		spiderComponent->madeHurtbox = false;
-		spiderComponent->attackTimer = spiderComponent->attackTime;
+
+	switch (spiderComponent->animState) {
+	case SPIDER_IDLE:
+	case SPIDER_MOVING:
+		if (distanceToAttackTarget < attackDistance) {
+			newState = SPIDER_PREPARING_LEAP;
+		} else if (velocity.length() > 0.01f) {
+			newState = SPIDER_MOVING;
+		} else {
+			newState = SPIDER_IDLE;
+		}
+		break;
+	case SPIDER_PREPARING_LEAP: {
+		followComponent->enabled = false;
+		glm::vec3 dir = followComponent->target->getWorldPosition() - transformComponent->transform->getWorldPosition();
+		float angle = atan2f(dir.x, dir.z);
+		glm::quat facing(glm::angleAxis(angle, glm::vec3(0.0f, 1.0f, 0.0f)));
+		rigidbodyMotorComponent->movement = glm::vec2(0.0f, 0.0f);
+		rigidbodyMotorComponent->facing = facing;
+
+		spiderComponent->timer += dt;
+		if (spiderComponent->timer >= spiderComponent->attackTime) {
+			newState = SPIDER_LEAPING;
+			rigidbodyMotorComponent->movement = glm::vec2(-1.0f, 0.0f);
+			rigidbodyMotorComponent->moveSpeed = spiderComponent->leapMoveSpeed;
+			rigidbodyMotorComponent->canJump = true;
+			rigidbodyMotorComponent->jump = true;
+
+			btVector3 aabbMin, aabbMax;
+			btTransform transform;
+			transform.setIdentity();
+			spiderBody->getCollisionShape()->getAabb(transform, aabbMin, aabbMax);
+
+			glm::vec3 hurtboxHalfExtents(1.0f, 0.7f, 0.25f);
+			glm::vec3 hurtboxOffset(glm::vec3(0.0f, (aabbMax.y() - aabbMin.y()) / 2.0f, aabbMax.z() + hurtboxHalfExtents.z) * (1.0f / transformComponent->transform->getScale()));
+			Transform hurtboxTransform(hurtboxOffset);
+
+			spiderComponent->hurtbox = this->createHurtbox(hurtboxTransform, hurtboxHalfExtents, transformComponent->transform);
+			spiderComponent->soundTimer = spiderComponent->soundTime;
+			spiderComponent->timer = 0.0f;
+		}
+		break;
+	}
+	case SPIDER_LEAPING:
+		// Transition controlled by onSpiderCollided
+		break;
+	case SPIDER_LEAP_RECOVERY:
+		rigidbodyMotorComponent->movement = glm::vec2(0.0f, 0.0f);
+		spiderComponent->timer += dt;
+		if (spiderComponent->timer >= spiderComponent->recoveryTime) {
+			spiderComponent->timer = 0.0f;
+			followComponent->enabled = true;
+			newState = SPIDER_IDLE;
+		}
+		break;
+	default:
+		break;
 	}
 
+	// This transition can happen at any time
 	if (healthComponent->health <= 0) {
 		newState = SPIDER_DEAD;
-	}
-
-	if (newState == SPIDER_ATTACKING &&
-		!spiderComponent->madeHurtbox &&
-		spiderComponent->attackTimer < spiderComponent->attackTime / 2.0f)
-	{
-		btVector3 aabbMin, aabbMax;
-		btTransform transform;
-		transform.setIdentity();
-		spiderBody->getCollisionShape()->getAabb(transform, aabbMin, aabbMax);
-
-		btTransform spiderTransform = spiderBody->getWorldTransform();
-		btQuaternion spiderRotation = spiderTransform.getRotation();
-		glm::vec3 hurtboxHalfExtents(1.5f, 1.5f, 1.0f);
-		btVector3 hurtboxOffset = btVector3(0.0f, 0.0f, aabbMax.z() + hurtboxHalfExtents.z).rotate(spiderRotation.getAxis(), spiderRotation.getAngle());
-		Transform hurtboxTransform(Util::btToGlm(spiderTransform.getOrigin() + hurtboxOffset), Util::btToGlm(spiderRotation));
-		this->createHurtbox(hurtboxTransform, hurtboxHalfExtents);
-
-		spiderComponent->soundTimer = spiderComponent->soundTime;
-
-		spiderComponent->madeHurtbox = true;
+		
+		if (spiderComponent->hurtbox != World::NullEntity) {
+			world.removeEntity(spiderComponent->hurtbox);
+		}
 	}
 
 	spiderComponent->soundTimer += dt;
@@ -129,11 +161,14 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 			anim = "AnimStack::walk";
 			rigidbodyMotorComponent->canMove = true;
 			break;
-		case SPIDER_ATTACKING:
+		case SPIDER_PREPARING_LEAP:
 			anim = "AnimStack::attack";
-			rigidbodyMotorComponent->canMove = false;
 			break;
-		case SPIDER_DEAD:
+		case SPIDER_LEAPING:
+			break;
+		case SPIDER_LEAP_RECOVERY:
+			break;
+		case SPIDER_DEAD: {
 			anim = "AnimStack::die";
 			rigidbodyMotorComponent->canMove = false;
 			ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(entity);
@@ -141,33 +176,41 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 			soundManager.playClipAtSource(spiderComponent->deathSound, audioSourceComponent->sourceHandle);
 			break;
 		}
+		default:
+			break;
+		}
 
-		bool loop = newState != SPIDER_DEAD;
-		renderer.setRenderableAnimation(modelRenderComponent->rendererHandle, anim, loop);
+		if (!anim.empty()) {
+			bool loop = newState != SPIDER_DEAD && newState != SPIDER_PREPARING_LEAP;
+			renderer.setRenderableAnimation(modelRenderComponent->rendererHandle, anim, loop);
+		}
 		spiderComponent->animState = newState;
 	}
 }
 
-void SpiderSystem::createHurtbox(const Transform& transform, const glm::vec3& halfExtents)
+eid_t SpiderSystem::createHurtbox(const Transform& transform, const glm::vec3& halfExtents, const std::shared_ptr<Transform>& spiderTransform)
 {
-	eid_t hurtboxEntity = world.getNewEntity();
+	eid_t hurtboxEntity = world.getNewEntity("Hurtbox");
 	TransformComponent* transformComponent = world.addComponent<TransformComponent>(hurtboxEntity);
 	CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(hurtboxEntity);
 	HurtboxComponent* hurtboxComponent = world.addComponent<HurtboxComponent>(hurtboxEntity);
-	ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(hurtboxEntity);
 
 	btBoxShape* shape = new btBoxShape(Util::glmToBt(halfExtents));
 	btCollisionObject* collisionObject = new btCollisionObject();
 	collisionObject->setUserPointer(new eid_t(hurtboxEntity));
 	collisionObject->setCollisionShape(shape);
-	collisionObject->setWorldTransform(btTransform(Util::glmToBt(transform.getRotation()), Util::glmToBt(transform.getPosition())));
+	collisionObject->setWorldTransform(Util::gameToBt(transform));
 	collisionObject->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE | btCollisionObject::CF_KINEMATIC_OBJECT);
-	dynamicsWorld->addCollisionObject(collisionObject);
+	dynamicsWorld->addCollisionObject(collisionObject, CollisionGroupHurtbox, CollisionGroupPlayer);
 
 	collisionComponent->collisionObject = collisionObject;
 	collisionComponent->world = dynamicsWorld;
+	collisionComponent->controlsMovement = false;
 
-	expiresComponent->expiryTime = 0.5f;
+	transformComponent->transform->setPosition(transform.getPosition());
+	transformComponent->transform->setRotation(transform.getRotation());
+	transformComponent->transform->setScale(transform.getScale());
+	transformComponent->transform->setParent(spiderTransform);
 
 	if (debugShader.isValid()) {
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(hurtboxEntity);
@@ -176,4 +219,35 @@ void SpiderSystem::createHurtbox(const Transform& transform, const glm::vec3& ha
 		Renderer::RenderableHandle renderableHandle = renderer.getRenderableHandle(debugModelHandle, debugShader);
 		modelComponent->rendererHandle = renderableHandle;
 	}
+
+	return hurtboxEntity;
+}
+
+void SpiderSystem::onSpiderCollided(const CollisionEvent& collisionEvent)
+{
+	if (collisionEvent.type != CollisionResponseType_Began) {
+		return;
+	}
+
+	eid_t spider = collisionEvent.e1;
+	eid_t otherEntity = collisionEvent.e2;
+	bool hasComponents = world.orderEntities(spider, otherEntity, requiredComponents, ComponentBitmask());
+	if (!hasComponents) {
+		return;
+	}
+
+	std::string name = world.getEntityName(otherEntity);
+	printf("collide %s\n", name.c_str());
+	SpiderComponent* spiderComponent = world.getComponent<SpiderComponent>(spider);
+	if (spiderComponent->animState != SPIDER_LEAPING) {
+		return;
+	}
+
+	RigidbodyMotorComponent* motorComponent = world.getComponent<RigidbodyMotorComponent>(spider);
+	motorComponent->moveSpeed = spiderComponent->normalMoveSpeed;
+	spiderComponent->animState = SPIDER_LEAP_RECOVERY;
+	spiderComponent->timer = 0.0f;
+
+	world.removeEntity(spiderComponent->hurtbox);
+	spiderComponent->hurtbox = World::NullEntity;
 }

@@ -23,8 +23,4 @@ void VelocitySystem::updateEntity(float dt, eid_t entity)
 	transform->setPosition(transform->getPosition() + transform->getForward() * velocityComponent->speed * dt);
 	transform->setRotation(transform->getRotation() * glm::angleAxis(velocityComponent->angularSpeed * dt, velocityComponent->rotationAxis));
 
-	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
-	if (collisionComponent != nullptr && collisionComponent->controlsMovement == false) {
-		collisionComponent->collisionObject->setWorldTransform(btTransform(Util::glmToBt(transform->getRotation()), Util::glmToBt(transform->getPosition())));
-	}
 }
