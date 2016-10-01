@@ -90,4 +90,5 @@ GLenum glDrawTypeFromMaterial(const Material& material)
 		return GL_TRIANGLES;
 		break;
 	}
+	return GL_INVALID_ENUM;
 }

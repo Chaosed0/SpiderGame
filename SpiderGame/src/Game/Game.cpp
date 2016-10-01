@@ -191,6 +191,12 @@ int Game::setup()
 
 	TextureLoader textureLoader;
 
+	Material defaultMaterial;
+	defaultMaterial.setProperty("shininess", FLT_MAX);
+	defaultMaterial.setProperty("diffuseTint", glm::vec3(1.0f));
+	defaultMaterial.setProperty("texture_specular", textureLoader.loadFromFile(TextureType_specular, "assets/img/default_specular.png"));
+	modelLoader.setDefaultMaterialProperties(defaultMaterial);
+
 	/*! Event Manager */
 	eventManager = std::make_unique<EventManager>(world);
 
@@ -297,7 +303,7 @@ int Game::setup()
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
 	Renderer::ModelHandle pedestalModelHandle = renderer.getModelHandle(pedestalModel);
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
-	Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
+	gemModel.material.setProperty("shininess", 32.0f);
 
 	const RoomBox& centerRoomBox = room.boxes[0];
 	const RoomBox& topmostRoomBox = room.boxes[room.topmostBox];
@@ -311,18 +317,25 @@ int Game::setup()
 		roomBoxCenter(bottommostRoomBox)
 	};
 
+	std::vector<glm::vec3> gemColors = {
+		glm::vec3(1.0f, 0.0f, 0.2f),
+		glm::vec3(0.2f, 1.0f, 0.0f),
+		glm::vec3(0.0f, 0.2f, 1.0f)
+	};
+
 	// Put a light in the center room and the rooms that are farthest out
 	for (unsigned i = 0; i < gemFloorPositions.size(); i++) {
 		glm::vec3 floorPosition = gemFloorPositions[i];
+		glm::vec3 color = gemColors[i];
 
 		PointLight light;
 		light.position = floorPosition + glm::vec3(0.0f, roomHeight / 2.0f, 0.0f);
 		light.constant = 1.0f;
 		light.linear = 0.18f;
 		light.quadratic = 0.064f;
-		light.ambient = glm::vec3(0.0f, 0.0f, 0.1f);
-		light.diffuse = glm::vec3(0.1f, 0.1f, 0.4f);
-		light.specular = glm::vec3(0.1f, 0.1f, 1.0f);
+		light.ambient = color * 0.1f;
+		light.diffuse = color * 0.6f;
+		light.specular = color * 1.0f;
 		renderer.setPointLight(i+1, light);
 
 		Renderer::RenderableHandle pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
@@ -332,6 +345,8 @@ int Game::setup()
 		pedestalTransformComponent->transform->setPosition(floorPosition);
 		pedestalModelComponent->rendererHandle = pedestalHandle;
 
+		gemModel.material.setProperty("diffuseTint", color);
+		Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
 		Renderer::RenderableHandle gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
 
 		std::stringstream namestream;

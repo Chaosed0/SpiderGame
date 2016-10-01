@@ -25,6 +25,9 @@ struct ModelLoader::Impl
 	/*! Used to load textures from imported models. */
 	TextureLoader textureLoader;
 
+	/*! Default material properties.*/
+	Material defaultMaterial;
+
 	/*!
 	 * \brief Processes an assimp model, starting from its root node.
 	 */
@@ -64,6 +67,11 @@ ModelLoader::ModelLoader()
 }
 
 ModelLoader::~ModelLoader() { }
+
+void ModelLoader::setDefaultMaterialProperties(const Material& material)
+{
+	impl->defaultMaterial = material;
+}
 
 Model ModelLoader::loadModelFromPath(const std::string& path)
 {
@@ -238,6 +246,7 @@ Model ModelLoader::Impl::processMesh(aiMesh* mesh, const aiScene* scene, std::un
 		}
 	}
 
+	Material material = defaultMaterial;
 	if (mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
@@ -245,14 +254,18 @@ Model ModelLoader::Impl::processMesh(aiMesh* mesh, const aiScene* scene, std::un
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 		std::vector<Texture> specularMaps = this->loadMaterialTextures(this->curDir, material, aiTextureType_SPECULAR);
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+		for (unsigned i = 0; i < material->mNumProperties; i++) {
+			aiMaterialProperty* materialProperty = material->mProperties[i];
+			// TODO: Map assimp properties to our properties
+		}
 	}
+	material.setTextures(textures);
 
 	std::vector<VertexBoneData> vertexBoneData;
 	std::vector<BoneData> boneData;
 	loadBoneData(mesh, scene, nodeIdMap, vertexBoneData, boneData);
 
-	Material material;
-	material.setTextures(textures);
 	Mesh processedMesh(vertices, indices, vertexBoneData, boneData);
 	Model model(processedMesh, material);
 	return model;
