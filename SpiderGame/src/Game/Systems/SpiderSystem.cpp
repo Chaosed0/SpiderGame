@@ -96,7 +96,9 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 			transform.setIdentity();
 			spiderBody->getCollisionShape()->getAabb(transform, aabbMin, aabbMax);
 
-			glm::vec3 hurtboxHalfExtents(1.0f, 0.7f, 0.25f);
+			// Make the hurtbox the size of the front of the spider, and make it jut out a little bit
+			// so the player is only hurt from the front
+			glm::vec3 hurtboxHalfExtents((aabbMax.x() - aabbMin.x()) / 2.0f, (aabbMax.y() - aabbMin.y()) / 2.0f, 0.1f);
 			glm::vec3 hurtboxOffset(glm::vec3(0.0f, (aabbMax.y() - aabbMin.y()) / 2.0f, aabbMax.z() + hurtboxHalfExtents.z) * (1.0f / transformComponent->transform->getScale()));
 			Transform hurtboxTransform(hurtboxOffset);
 
