@@ -295,18 +295,24 @@ void Renderer::drawInternal(RenderSpace space)
 		}
 
 		shaderCache.shader.use();
-		shaderCache.shader.setModelMatrix(modelMatrix);
 
 		if (renderable.animatable) {
-			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
-
 			Mesh& mesh = model.mesh;
-			std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
-			for (unsigned int j = 0; j < boneTransforms.size(); j++) {
-				glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
+			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
+			if (mesh.impl->boneData.size() == 0) {
+				// Not skinned animation
+				// TODO: Actually find the node of the mesh
+				modelMatrix *= nodeTransforms[1];
+			} else {
+				// Skinned animation
+				std::vector<glm::mat4> boneTransforms = mesh.getBoneTransforms(nodeTransforms);
+				for (unsigned int j = 0; j < boneTransforms.size(); j++) {
+					glUniformMatrix4fv(shaderCache.bones[j], 1, GL_FALSE, &boneTransforms[j][0][0]);
+				}
 			}
 		}
 
+		shaderCache.shader.setModelMatrix(modelMatrix);
 		model.material.apply(shaderCache.shader);
 
 		const Mesh& mesh = model.mesh;

@@ -238,8 +238,6 @@ void SpiderSystem::onSpiderCollided(const CollisionEvent& collisionEvent)
 		return;
 	}
 
-	std::string name = world.getEntityName(otherEntity);
-	printf("collide %s\n", name.c_str());
 	SpiderComponent* spiderComponent = world.getComponent<SpiderComponent>(spider);
 	if (spiderComponent->animState != SPIDER_LEAPING) {
 		return;

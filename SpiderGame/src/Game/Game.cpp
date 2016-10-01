@@ -594,6 +594,7 @@ int Game::setup()
 	Model gunModel = modelLoader.loadModelFromPath("assets/models/gun.fbx");
 	auto gunModelHandle = renderer.getModelHandle(gunModel);
 	auto gunRenderableHandle = renderer.getRenderableHandle(gunModelHandle, shader);
+	renderer.setRenderableAnimation(gunRenderableHandle, "AnimStack::Gun|Idle", true);
 	gunModelComponent->rendererHandle = gunRenderableHandle;
 
 	// This was gotten from blender - isn't my game engine awesome

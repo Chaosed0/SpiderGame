@@ -48,19 +48,9 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	if (playerComponent->gunRecoiling) {
 		playerComponent->gunRecoilTimer += dt;
 
-		float lerp = 0.0f;
-		if (playerComponent->gunRecoilTimer <= playerComponent->gunKickTime) {
-			lerp = playerComponent->gunRecoilTimer / playerComponent->gunKickTime;
-		} else if (playerComponent->gunRecoilTimer <= playerComponent->gunReturnTime) {
-			lerp = (playerComponent->gunReturnTime - playerComponent->gunRecoilTimer) / (playerComponent->gunReturnTime - playerComponent->gunKickTime);
-			// apply some easing (in)
-			lerp = lerp*lerp;
-		} else {
+		if (playerComponent->gunRecoilTimer >= playerComponent->gunReturnTime) {
 			playerComponent->gunRecoiling = false;
 		}
-
-		TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->gun);
-		gunTransformComponent->transform->setRotation(glm::angleAxis(playerComponent->gunKickAngle * lerp, Util::right));
 	}
 
 	// Do the shot if shooting
@@ -94,6 +84,10 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			/* Create shot FX */
 			this->createTracer(playerComponent, 0.2f, 75.0f);
 			this->createMuzzleFlash(playerComponent, 0.05f);
+
+			/* Animate the gun */
+			ModelRenderComponent* gunRenderComponent = world.getComponent<ModelRenderComponent>(playerComponent->gun);
+			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Shoot", false);
 
 			/* Do the raytrace to see if we hit anything */
 			TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
