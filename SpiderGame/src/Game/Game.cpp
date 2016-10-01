@@ -385,7 +385,9 @@ int Game::setup()
 	renderer.setPointLight(0, light);
 
 	// Clutter
-	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(modelLoader.loadModelFromPath("assets/models/barrel.fbx"));
+	Model barrelModel = modelLoader.loadModelFromPath("assets/models/barrel.fbx");
+	barrelModel.material.setProperty("shininess", 16.0f);
+	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(barrelModel);
 	std::uniform_real_distribution<float> barrelRand(0.0f, 1.0f);
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide& side = room.sides[i];
