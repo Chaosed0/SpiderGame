@@ -49,7 +49,8 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 
 	// Trying to reload && can reload
 	if (playerComponent->reloadTimer >= playerComponent->reloadTime &&
-		playerComponent->bulletCount > 0)
+		playerComponent->bulletCount > 0 &&
+		playerComponent->bulletsInGun != playerComponent->maxBulletsInGun)
 	{
 		if (playerComponent->reloading && playerComponent->gunState == GunState_Ready) {
 			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Reload", false);
@@ -72,7 +73,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	// Do the shot if shooting
-	if (playerComponent->shooting) {
+	if (playerComponent->shooting && playerComponent->reloadTimer >= playerComponent->reloadTime) {
 		if (playerComponent->bulletsInGun <= 0) {
 			ShotEvent event;
 			event.source = entity;

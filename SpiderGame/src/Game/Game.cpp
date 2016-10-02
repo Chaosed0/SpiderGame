@@ -289,7 +289,7 @@ int Game::setup()
 
 	/* Aiming reticle*/
 	gui.reticleImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/reticle.png"), glm::vec2(32.0f, 32.0f));
-	gui.reticleImage->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f)).matrix();
+	gui.reticleImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 16.0f, windowHeight / 2.0f - 16.0f, 0.0f)).matrix();
 	gui.reticleHandle = uiRenderer.getEntityHandle(gui.reticleImage, imageShader);
 
 	/* Test Room */
@@ -379,8 +379,8 @@ int Game::setup()
 	}
 	PointLight light;
 	light.constant = 1.0f;
-	light.linear = 0.2f;
-	light.quadratic = 0.5f;
+	light.linear = 0.3f;
+	light.quadratic = 0.7f;
 	light.ambient = glm::vec3(0.2f);
 	light.diffuse = glm::vec3(0.6f);
 	light.specular = glm::vec3(1.0f);

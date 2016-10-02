@@ -15,7 +15,7 @@ class PlayerComponent : public Component
 public:
 	PlayerComponent()
 		: shooting(false), reloading(false),
-		maxShotDistance(100.0f), shotCooldown(1/30.0f), shotTimer(0.0f), reloadTime(3.0f), reloadTimer(0.0f), shotDamage(10),
+		maxShotDistance(100.0f), shotCooldown(1/30.0f), shotTimer(0.0f), reloadTime(2.5f), reloadTimer(0.0f), shotDamage(10),
 		gunBarrelOffset(0.0f), gunState(GunState_Ready),
 		gemCount(0), bulletCount(0), bulletsInGun(0), maxBulletsInGun(6),
 		lastFacedEntity(World::NullEntity), camera(World::NullEntity), gun(World::NullEntity) { }
