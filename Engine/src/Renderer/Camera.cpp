@@ -83,10 +83,11 @@ Frustum Camera::computeFrustum() const
 	float farHeight = 2.0f * tan(fieldOfView / 2.0f) * farClip;
 	float farWidth = farHeight * width / height;
 
-	glm::vec3 cameraPos = glm::vec3(inverseViewMatrix[0][3], inverseViewMatrix[1][3], inverseViewMatrix[2][3]);
-	glm::vec3 cameraFwd = glm::vec3(inverseViewMatrix[0][2], inverseViewMatrix[1][2], inverseViewMatrix[2][2]);
-	glm::vec3 cameraUp = glm::vec3(inverseViewMatrix[0][1], inverseViewMatrix[1][1], inverseViewMatrix[2][1]);
-	glm::vec3 cameraRight = glm::vec3(inverseViewMatrix[0][0], inverseViewMatrix[1][0], inverseViewMatrix[2][0]);
+	// Fwd is negated because negative z == forward
+	glm::vec3 cameraPos = glm::vec3(inverseViewMatrix[3][0], inverseViewMatrix[3][1], inverseViewMatrix[3][2]);
+	glm::vec3 cameraFwd = -glm::vec3(inverseViewMatrix[2][0], inverseViewMatrix[2][1], inverseViewMatrix[2][2]);
+	glm::vec3 cameraUp = glm::vec3(inverseViewMatrix[1][0], inverseViewMatrix[1][1], inverseViewMatrix[1][2]);
+	glm::vec3 cameraRight = glm::vec3(inverseViewMatrix[0][0], inverseViewMatrix[0][1], inverseViewMatrix[0][2]);
 
 	glm::vec3 nearCenter = cameraPos + cameraFwd * nearClip;
 	glm::vec3 nearX = cameraUp * nearHeight / 2.0f;
