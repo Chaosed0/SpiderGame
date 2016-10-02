@@ -59,7 +59,7 @@ glm::quat Util::rotateHorizontalVertical(float horizontal, float vertical)
 
 eid_t Util::raycast(btDynamicsWorld* dynamicsWorld, const glm::vec3& from, const glm::vec3& to, short int collisionMask)
 {
-	return Util::raycast(dynamicsWorld, Util::glmToBt(from), Util::glmToBt(to));
+	return Util::raycast(dynamicsWorld, Util::glmToBt(from), Util::glmToBt(to), collisionMask);
 }
 
 eid_t Util::raycast(btDynamicsWorld* dynamicsWorld, const btVector3& from, const btVector3& to, short int collisionMask)
