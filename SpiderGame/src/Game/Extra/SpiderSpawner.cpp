@@ -112,8 +112,6 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 	AudioSourceComponent* audioSourceComponent = world.addComponent<AudioSourceComponent>(spider);
 	SpiderComponent* spiderComponent = world.addComponent<SpiderComponent>(spider);
 
-	TransformComponent* playerTransformComponent = world.getComponent<TransformComponent>(player);
-
 	transformComponent->transform->setPosition(position);
 	transformComponent->transform->setScale(glm::vec3(scaleRand(generator)));
 
@@ -134,7 +132,7 @@ eid_t SpiderSpawner::makeSpider(glm::vec3 position)
 	audioSourceComponent->sourceHandle = soundManager.getSourceHandle();
 	soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->transform->getWorldPosition());
 
-	followComponent->target = playerTransformComponent->transform;
+	followComponent->target = player;
 	followComponent->raycastStartOffset = glm::vec3(0.0f, halfExtents.y, 0.0f);
 
 	spiderComponent->normalMoveSpeed = 3.0f;

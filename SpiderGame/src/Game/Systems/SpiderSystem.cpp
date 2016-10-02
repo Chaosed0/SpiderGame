@@ -24,6 +24,7 @@
 #include "Sound/SoundManager.h"
 
 const float SpiderSystem::attackDistance = 6.0f;
+const float SpiderSystem::leadTime = 0.25f;
 
 SpiderSystem::SpiderSystem(World& world, EventManager& eventManager, btDynamicsWorld* dynamicsWorld, Renderer& renderer, SoundManager& soundManager, std::default_random_engine& generator)
 	: System(world),
@@ -61,8 +62,10 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	btRigidBody* spiderBody = (btRigidBody*)collisionComponent->collisionObject;
 	btVector3 velocity = spiderBody->getLinearVelocity();
 	SpiderState newState = spiderComponent->animState;
+
+	std::shared_ptr<Transform> targetTransform = world.getComponent<TransformComponent>(followComponent->target)->transform;
 	
-	float distanceToAttackTarget = glm::length(followComponent->target->getWorldPosition() - transformComponent->transform->getWorldPosition());
+	float distanceToAttackTarget = glm::length(targetTransform->getWorldPosition() - transformComponent->transform->getWorldPosition());
 
 	switch (spiderComponent->animState) {
 	case SPIDER_IDLE:
@@ -77,8 +80,20 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 		break;
 	case SPIDER_PREPARING_LEAP: {
 		followComponent->enabled = false;
-		glm::vec3 dir = followComponent->target->getWorldPosition() - transformComponent->transform->getWorldPosition();
-		float angle = atan2f(dir.x, dir.z);
+
+		CollisionComponent* targetCollisionComponent = world.getComponent<CollisionComponent>(followComponent->target);
+		glm::vec3 leadVec(0.0f);
+		if (targetCollisionComponent != nullptr) {
+			btCollisionObject* collisionObject = targetCollisionComponent->collisionObject;
+			if (collisionObject->getInternalType() == btCollisionObject::CO_RIGID_BODY) {
+				btRigidBody* targetBody = (btRigidBody*)targetCollisionComponent->collisionObject;
+				leadVec = Util::btToGlm(targetBody->getLinearVelocity()) * leadTime;
+			}
+		}
+
+		glm::vec3 leapTarget = targetTransform->getWorldPosition() + leadVec;
+		glm::vec3 leapDir = leapTarget - transformComponent->transform->getWorldPosition();
+		float angle = atan2f(leapDir.x, leapDir.z);
 		glm::quat facing(glm::angleAxis(angle, glm::vec3(0.0f, 1.0f, 0.0f)));
 		rigidbodyMotorComponent->movement = glm::vec2(0.0f, 0.0f);
 		rigidbodyMotorComponent->facing = facing;

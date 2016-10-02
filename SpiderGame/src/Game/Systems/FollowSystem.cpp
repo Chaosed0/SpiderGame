@@ -30,13 +30,13 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
-	if (followComponent->target == nullptr || !followComponent->enabled) {
+	if (followComponent->target == World::NullEntity || !followComponent->enabled) {
 		return;
 	}
 
 	followComponent->repathTimer += dt;
 
-	Transform* finalTarget = followComponent->target.get();
+	std::shared_ptr<Transform> finalTarget = world.getComponent<TransformComponent>(followComponent->target)->transform;
 	glm::vec3 localTarget(0.0f);
 	bool pathFound = false;
 
@@ -110,6 +110,13 @@ bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget
 	path.clear();
 	if (startBox < 0 || finishBox < 0) {
 		return false;
+	}
+
+	if (startBox == finishBox) {
+		// Just return any portal to help spiders get unstuck
+		RoomPortal& portal = room.boxes[startBox].portals[0];
+		path.push_back(glm::vec3((portal.x0 + portal.x1) / 2.0f, 0.0f, (portal.y0 + portal.y1) / 2.0f));
+		return true;
 	}
 
 	std::vector<int> prevBox(room.boxes.size(), -1);

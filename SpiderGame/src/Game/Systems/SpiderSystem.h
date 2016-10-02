@@ -31,4 +31,5 @@ private:
 	std::default_random_engine& generator;
 
 	static const float attackDistance;
+	static const float leadTime;
 };
