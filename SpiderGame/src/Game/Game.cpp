@@ -170,6 +170,7 @@ int Game::setup()
 	input.setDefaultMapping("Jump", KbmAxis_Space, KbmAxis_None);
 	input.setDefaultMapping("Use", KbmAxis_E, KbmAxis_None);
 	input.setDefaultMapping("Fire", KbmAxis_MouseLeft, KbmAxis_None);
+	input.setDefaultMapping("Reload", KbmAxis_R, KbmAxis_None);
 
 	input.setDefaultMapping("Horizontal", ControllerAxis_LStickXPos, ControllerAxis_LStickXNeg);
 	input.setDefaultMapping("Vertical", ControllerAxis_LStickYPos, ControllerAxis_LStickYNeg);
@@ -178,6 +179,7 @@ int Game::setup()
 	input.setDefaultMapping("Jump", ControllerAxis_A, ControllerAxis_None);
 	input.setDefaultMapping("Use", ControllerAxis_X, ControllerAxis_None);
 	input.setDefaultMapping("Fire", ControllerAxis_RightTrigger, ControllerAxis_None);
+	input.setDefaultMapping("Reload", ControllerAxis_Y, ControllerAxis_None);
 
 	/* Shaders */
 	ShaderLoader shaderLoader;
@@ -267,7 +269,7 @@ int Game::setup()
 
 	/* Bullet label */
 	gui.bulletLabel = std::make_shared<Label>(font);
-	gui.bulletLabel->setText("0");
+	gui.bulletLabel->setText("0/0");
 	gui.bulletLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gui.bulletLabel->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.bulletLabelHandle = uiRenderer.getEntityHandle(gui.bulletLabel, textShader);
@@ -377,10 +379,10 @@ int Game::setup()
 	}
 	PointLight light;
 	light.constant = 1.0f;
-	light.linear = 0.1f;
-	light.quadratic = 0.25f;
+	light.linear = 0.2f;
+	light.quadratic = 0.5f;
 	light.ambient = glm::vec3(0.2f);
-	light.diffuse = glm::vec3(0.8f);
+	light.diffuse = glm::vec3(0.6f);
 	light.specular = glm::vec3(1.0f);
 	renderer.setPointLight(0, light);
 
@@ -692,7 +694,7 @@ int Game::setup()
 			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
 
 			std::stringstream sstream;
-			sstream << event.newBulletCount;
+			sstream << event.newBulletsInGun << "/" << event.newBulletCount;
 			bulletLabel->setText(sstream.str());
 		};
 	eventManager->registerForEvent<BulletCountChangedEvent>(bulletCountChangedCallback);
@@ -720,14 +722,16 @@ int Game::loop()
 		// Pause while the console is visible
 		if (!console->isVisible()) {
 			accumulator += SDL_GetTicks() - lastUpdate;
-
 			lastUpdate = SDL_GetTicks();
+
 			if (accumulator >= 1000.0f / updatesPerSecond)
 			{
 				timeDelta = 1.0f / updatesPerSecond;
 				update();
 				accumulator -= 1000.0f / updatesPerSecond;
 			}
+		} else {
+			lastUpdate = SDL_GetTicks();
 		}
 	
 		draw();

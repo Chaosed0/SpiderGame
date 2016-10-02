@@ -234,6 +234,7 @@ void Renderer::draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	this->drawInternal(RenderSpace_World);
 
 	glDisable(GL_DEPTH_TEST);

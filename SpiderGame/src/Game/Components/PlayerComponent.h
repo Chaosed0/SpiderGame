@@ -5,20 +5,31 @@
 #include "Sound/AudioClip.h"
 #include "Renderer/Renderer.h"
 
+enum GunState {
+	GunState_Reloading,
+	GunState_Ready,
+};
+
 class PlayerComponent : public Component
 {
 public:
 	PlayerComponent()
-		: shooting(false),
-		maxShotDistance(100.0f), shotCooldown(1/30.0f), shotTimer(0.0f), shotDamage(10),
-		gunBarrelOffset(0.0f), gunKickTime(0.025f), gunReturnTime(0.3f), gunKickAngle(glm::radians(70.0f)), gunRecoilTimer(0.0f),
-		gemCount(0), gunRecoiling(false), bulletCount(0),
+		: shooting(false), reloading(false),
+		maxShotDistance(100.0f), shotCooldown(1/30.0f), shotTimer(0.0f), reloadTime(3.0f), reloadTimer(0.0f), shotDamage(10),
+		gunBarrelOffset(0.0f), gunState(GunState_Ready),
+		gemCount(0), bulletCount(0), bulletsInGun(0), maxBulletsInGun(6),
 		lastFacedEntity(World::NullEntity), camera(World::NullEntity), gun(World::NullEntity) { }
 
 	bool shooting;
+	bool reloading;
+
+	float reloadTime;
+	float reloadTimer;
 	float shotCooldown;
 	float shotTimer;
 	float maxShotDistance;
+	GunState gunState;
+
 	unsigned shotDamage;
 	unsigned gemCount;
 
@@ -28,13 +39,9 @@ public:
 	Shader tracerShader;
 	Renderer::ModelHandle muzzleFlashModelHandle;
 	Shader flashShader;
-	float gunKickTime;
-	float gunReturnTime;
-	float gunKickAngle;
-	float gunKickDistance;
-	float gunRecoilTimer;
-	bool gunRecoiling;
 	unsigned bulletCount;
+	unsigned maxBulletsInGun;
+	unsigned bulletsInGun;
 
 	AudioClip shotClip;
 	AudioClip dryFireClip;

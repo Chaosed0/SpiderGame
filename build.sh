@@ -1,4 +1,4 @@
-libdir=E:/Libraries/
+libdir=D:/Libraries/
 openal_sdk_dir="C:/Program Files (x86)/OpenAL 1.1 SDK"
 libsndfile_sdk_dir="C:/Program Files (x86)/Mega-Nerd/libsndfile"
 TARGET=vs2015
@@ -43,7 +43,7 @@ export SDL_IMAGE_LIBDIR_D=$libdir/SDL2_image-2.0.1/lib/x86/
 export OPENAL_LIBDIR_D=$openal_sdk_dir/libs/Win32/
 export LIBSNDFILE_LIBDIR_D=$libsndfile_sdk_dir/lib/
 export GLEW_LIBDIR_D=$libdir/glew-1.13.0/lib/Release/Win32/
-export NOISE_LIBDIR_D=$libdir/libnoise/bin/
+export NOISE_LIBDIR_D=$libdir/libnoise/Win32/Debug/
 
 export FREETYPE_LIBDIR=$libdir/freetype-2.6.3/objs/vc2010/win32/
 export ASSIMP_LIBDIR=$libdir/assimp-3.1.1/build/code/MinSizeRel
@@ -53,6 +53,6 @@ export SDL_IMAGE_LIBDIR=$libdir/SDL2_image-2.0.1/lib/x86/
 export OPENAL_LIBDIR=$openal_sdk_dir/libs/Win32/
 export LIBSNDFILE_LIBDIR=$libsndfile_sdk_dir/lib/
 export GLEW_LIBDIR=$libdir/glew-1.13.0/lib/Release/Win32/
-export NOISE_LIBDIR=$libdir/libnoise/win32/Release/
+export NOISE_LIBDIR=$libdir/libnoise/Win32/Release/
 
 ./premake5.exe $TARGET -f ./premake5.lua

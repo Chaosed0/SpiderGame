@@ -8,6 +8,8 @@
 #include "Game/Events/GemCountChangedEvent.h"
 #include "Game/Events/BulletCountChangedEvent.h"
 
+static const unsigned bulletPileCount = 12;
+
 PlayerInputSystem::PlayerInputSystem(World& world, Input& input, EventManager& eventManager)
 	: System(world), input(input), eventManager(eventManager),
 	noclip(false), horizontalRad(0.0f), verticalRad(0.0f)
@@ -45,6 +47,7 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	rigidbodyMotorComponent->noclip = noclip;
 
 	playerComponent->shooting = input.getButtonDown("Fire", device);
+	playerComponent->reloading = input.getButtonDown("Reload", device);
 }
 
 void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerComponent)
@@ -66,13 +69,15 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		event.oldGemCount = event.newGemCount - 1;
 		eventManager.sendEvent(event);
 	} else if (name.compare(0, 7, "Bullets") == 0) {
-		playerComponent->bulletCount += 6;
+		playerComponent->bulletCount += bulletPileCount;
 		world.removeEntity(entity);
 
 		BulletCountChangedEvent event;
 		event.source = player;
 		event.newBulletCount = playerComponent->bulletCount;
 		event.oldBulletCount = event.newBulletCount - 1;
+		event.newBulletsInGun = playerComponent->bulletsInGun;
+		event.oldBulletsInGun = playerComponent->bulletsInGun;
 		eventManager.sendEvent(event);
 	}
 }

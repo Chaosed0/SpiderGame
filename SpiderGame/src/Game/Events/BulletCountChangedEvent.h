@@ -9,4 +9,6 @@ public:
 	eid_t source;
 	unsigned oldBulletCount;
 	unsigned newBulletCount;
+	unsigned oldBulletsInGun;
+	unsigned newBulletsInGun;
 };

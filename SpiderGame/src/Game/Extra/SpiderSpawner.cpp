@@ -15,14 +15,20 @@
 
 #include "Util.h"
 
-const float SpiderSpawner::defaultSpawnTime = 3.0f;
+#include <algorithm>
+
+const float SpiderSpawner::defaultStartSpawnTime = 5.0f;
+const float SpiderSpawner::defaultEndSpawnTime = 2.5f;
+const float SpiderSpawner::defaultDifficultyRampTime = 30.0f;
 const float SpiderSpawner::defaultMinSpawnDistance = 7.0f;
 const int SpiderSpawner::maximumSpawnRetries = 10;
 const int SpiderSpawner::maxSpiders = 10;
 
 SpiderSpawner::SpiderSpawner(Renderer& renderer, SoundManager& soundManager, World& world, btDynamicsWorld* dynamicsWorld, ModelLoader& modelLoader, std::default_random_engine& generator, Shader& spiderShader, Room room, eid_t player)
 	: renderer(renderer), soundManager(soundManager), world(world), dynamicsWorld(dynamicsWorld), generator(generator), spiderShader(spiderShader), player(player), room(room),
-	spawnTimer(0.0f), spawnTime(defaultSpawnTime), minSpawnDistance(defaultMinSpawnDistance)
+	startSpawnTime(defaultStartSpawnTime), endSpawnTime(defaultEndSpawnTime),
+	spawnTimer(0.0f), difficultyRampTimer(0.0f),
+	minSpawnDistance(defaultMinSpawnDistance)
 {
 	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
 	spiderModelHandle = renderer.getModelHandle(spiderModel);
@@ -39,8 +45,12 @@ SpiderSpawner::SpiderSpawner(Renderer& renderer, SoundManager& soundManager, Wor
 
 void SpiderSpawner::update(float dt)
 {
+	difficultyRampTimer = (std::min)(difficultyRampTimer + dt, difficultyRampTime);
 	spawnTimer += dt;
-	if (spawnTimer >= spawnTime) {
+
+	float currentSpawnTime = startSpawnTime + difficultyRampTimer / difficultyRampTime * (endSpawnTime - startSpawnTime);
+
+	if (spawnTimer >= currentSpawnTime) {
 		bool spawned = false;
 
 		if (world.getEntitiesWithComponent<SpiderComponent>().size() >= maxSpiders) {
@@ -85,7 +95,7 @@ void SpiderSpawner::update(float dt)
 		
 		// If we didn't spawn anything, we'll try again next frame
 		if (spawned) {
-			spawnTimer -= spawnTime;
+			spawnTimer -= currentSpawnTime;
 		}
 	}
 }

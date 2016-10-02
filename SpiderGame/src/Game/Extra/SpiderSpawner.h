@@ -15,9 +15,13 @@ public:
 
 	void update(float dt);
 private:
-	float spawnTimer;
-	float spawnTime;
+	float startSpawnTime;
+	float endSpawnTime;
+	float difficultyRampTime;
 	float minSpawnDistance;
+
+	float spawnTimer;
+	float difficultyRampTimer;
 
 	Renderer& renderer;
 	SoundManager& soundManager;
@@ -38,7 +42,9 @@ private:
 
 	eid_t makeSpider(glm::vec3 position);
 
-	static const float defaultSpawnTime;
+	static const float defaultStartSpawnTime;
+	static const float defaultEndSpawnTime;
+	static const float defaultDifficultyRampTime;
 	static const float defaultMinSpawnDistance;
 	static const int maximumSpawnRetries;
 	static const int maxSpiders;

@@ -42,21 +42,38 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	TransformComponent* transformComponent(world.getComponent<TransformComponent>(entity));
 	PlayerComponent* playerComponent(world.getComponent<PlayerComponent>(entity));
 
+	ModelRenderComponent* gunRenderComponent = world.getComponent<ModelRenderComponent>(playerComponent->gun);
+
 	playerComponent->shotTimer = std::min(playerComponent->shotTimer + dt, playerComponent->shotCooldown);
+	playerComponent->reloadTimer = std::min(playerComponent->reloadTimer + dt, playerComponent->reloadTime);
 
-	// Interpolate the gun if we're in the middle of a recoil
-	if (playerComponent->gunRecoiling) {
-		playerComponent->gunRecoilTimer += dt;
+	// Trying to reload && can reload
+	if (playerComponent->reloadTimer >= playerComponent->reloadTime &&
+		playerComponent->bulletCount > 0)
+	{
+		if (playerComponent->reloading && playerComponent->gunState == GunState_Ready) {
+			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Reload", false);
+			playerComponent->gunState = GunState_Reloading;
+			playerComponent->reloadTimer = 0.0f;
+		} else if (playerComponent->gunState == GunState_Reloading) {
+			unsigned oldBulletsInGun = playerComponent->bulletsInGun;
+			playerComponent->bulletsInGun = (std::min)(playerComponent->bulletCount, playerComponent->maxBulletsInGun);
+			playerComponent->bulletCount -= playerComponent->bulletsInGun - oldBulletsInGun;
+			playerComponent->gunState = GunState_Ready;
 
-		if (playerComponent->gunRecoilTimer >= playerComponent->gunReturnTime) {
-			playerComponent->gunRecoiling = false;
+			BulletCountChangedEvent bulletCountEvent;
+			bulletCountEvent.source = entity;
+			bulletCountEvent.oldBulletCount = playerComponent->bulletCount;
+			bulletCountEvent.newBulletCount = playerComponent->bulletCount;
+			bulletCountEvent.oldBulletsInGun = oldBulletsInGun;
+			bulletCountEvent.newBulletsInGun = playerComponent->bulletsInGun;
+			eventManager.sendEvent(bulletCountEvent);
 		}
 	}
 
 	// Do the shot if shooting
-	if (playerComponent->shooting)
-	{
-		if (playerComponent->bulletCount <= 0) {
+	if (playerComponent->shooting) {
+		if (playerComponent->bulletsInGun <= 0) {
 			ShotEvent event;
 			event.source = entity;
 			event.actuallyShot = false;
@@ -64,8 +81,6 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 		} else if (playerComponent->shotTimer >= playerComponent->shotCooldown) {
 			std::shared_ptr<Transform> transform = transformComponent->transform;
 			playerComponent->shotTimer = 0.0f;
-			playerComponent->gunRecoilTimer = 0.0f;
-			playerComponent->gunRecoiling = true;
 
 			/* Fire off an event to let people know we shot a bullet */
 			ShotEvent event;
@@ -74,11 +89,13 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			eventManager.sendEvent(event);
 
 			/* Decrement the player's bullet count */
-			--playerComponent->bulletCount;
+			--playerComponent->bulletsInGun;
 			BulletCountChangedEvent bulletCountEvent;
 			bulletCountEvent.source = entity;
-			bulletCountEvent.oldBulletCount = playerComponent->bulletCount + 1;
+			bulletCountEvent.oldBulletCount = playerComponent->bulletCount;
 			bulletCountEvent.newBulletCount = playerComponent->bulletCount;
+			bulletCountEvent.oldBulletsInGun = playerComponent->bulletsInGun + 1;
+			bulletCountEvent.newBulletsInGun = playerComponent->bulletsInGun;
 			eventManager.sendEvent(bulletCountEvent);
 
 			/* Create shot FX */
@@ -86,7 +103,6 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			this->createMuzzleFlash(playerComponent, 0.05f);
 
 			/* Animate the gun */
-			ModelRenderComponent* gunRenderComponent = world.getComponent<ModelRenderComponent>(playerComponent->gun);
 			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Shoot", false);
 
 			/* Do the raytrace to see if we hit anything */
