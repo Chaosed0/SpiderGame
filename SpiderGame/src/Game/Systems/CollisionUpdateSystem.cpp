@@ -18,7 +18,7 @@ void CollisionUpdateSystem::updateEntity(float dt, eid_t entity)
 	CollisionComponent* collisionComponent(world.getComponent<CollisionComponent>(entity));
 	TransformComponent* transformComponent(world.getComponent<TransformComponent>(entity));
 
-	std::shared_ptr<Transform>& transform = transformComponent->transform;
+	std::shared_ptr<Transform>& transform = transformComponent->data;
 	if (collisionComponent->controlsMovement) {
 		btTransform colTransform = collisionComponent->collisionObject->getWorldTransform();
 		transform->setPosition(Util::btToGlm(colTransform.getOrigin()));

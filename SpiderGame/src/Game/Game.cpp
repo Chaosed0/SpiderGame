@@ -13,6 +13,7 @@
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 
+#include "Framework/Prefab.h"
 #include "Renderer/Camera.h"
 #include "Util.h"
 
@@ -304,6 +305,10 @@ int Game::setup()
 
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
 	Renderer::ModelHandle pedestalModelHandle = renderer.getModelHandle(pedestalModel);
+	Prefab pedestalPrefab;
+	pedestalPrefab.addConstructor(new TransformConstructor());
+	pedestalPrefab.addConstructor(new ModelRenderConstructor(renderer, pedestalModelHandle, shader));
+
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
 	gemModel.material.setProperty("shininess", 32.0f);
 
@@ -340,42 +345,29 @@ int Game::setup()
 		light.specular = color * 1.0f;
 		renderer.setPointLight(i+1, light);
 
-		Renderer::RenderableHandle pedestalHandle = renderer.getRenderableHandle(pedestalModelHandle, shader);
-		eid_t pedestalEntity = world.getNewEntity();
-		TransformComponent* pedestalTransformComponent = world.addComponent<TransformComponent>(pedestalEntity);
-		ModelRenderComponent* pedestalModelComponent = world.addComponent<ModelRenderComponent>(pedestalEntity);
-		pedestalTransformComponent->transform->setPosition(floorPosition);
-		pedestalModelComponent->rendererHandle = pedestalHandle;
+		eid_t pedestalEntity = world.constructPrefab(pedestalPrefab);
+		TransformComponent* pedestalTransformComponent = world.getComponent<TransformComponent>(pedestalEntity);
+		pedestalTransformComponent->data->setPosition(floorPosition);
 
 		gemModel.material.setProperty("diffuseTint", color);
 		Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
-		Renderer::RenderableHandle gemHandle = renderer.getRenderableHandle(gemModelHandle, shader);
-
-		std::stringstream namestream;
-		namestream << "Gem " << i;
-		eid_t gemEntity = world.getNewEntity(namestream.str());
-		TransformComponent* transformComponent = world.addComponent<TransformComponent>(gemEntity);
-		CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(gemEntity);
-		ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(gemEntity);
-		VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(gemEntity);
 
 		glm::vec3 gemPosition = floorPosition + glm::vec3(0.0f, 1.5f, 0.0f);
 		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
-		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), Util::glmToBt(gemPosition))), gemCollisionShape);
-		btRigidBody* gemCollisionObject = new btRigidBody(info);
-		gemCollisionObject->setUserPointer(new eid_t(gemEntity));
-		dynamicsWorld->addRigidBody(gemCollisionObject, CollisionGroupDefault, CollisionGroupAll);
+		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(), gemCollisionShape);
 
-		transformComponent->transform->setPosition(gemPosition);
+		Prefab gemPrefab;
+		gemPrefab.addConstructor(new TransformConstructor(gemPosition));
+		gemPrefab.addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
+		gemPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info, CollisionGroupDefault, CollisionGroupAll, false));
+		gemPrefab.addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
 
-		collisionComponent->collisionObject = gemCollisionObject;
-		collisionComponent->world = dynamicsWorld;
-		collisionComponent->controlsMovement = false;
+		std::stringstream namestream;
+		namestream << "Gem " << i;
+		eid_t gemEntity = world.constructPrefab(gemPrefab, namestream.str());
 
-		velocityComponent->angularSpeed = 1.0f;
-		velocityComponent->rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
-
-		modelRenderComponent->rendererHandle = gemHandle;
+		CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(gemEntity);
+		collisionComponent->collisionObject->setUserPointer(new eid_t(gemEntity));
 	}
 	PointLight light;
 	light.constant = 1.0f;
@@ -391,6 +383,18 @@ int Game::setup()
 	barrelModel.material.setProperty("shininess", 16.0f);
 	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(barrelModel);
 	std::uniform_real_distribution<float> barrelRand(0.0f, 1.0f);
+
+	btVector3 halfExtents(0.5f, 0.75f, 0.5f);
+	btCollisionShape* barrelShape = new btBoxShape(halfExtents);
+	btCompoundShape* barrelCompoundShape = new btCompoundShape();
+	barrelCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y(), 0.0f)), barrelShape);
+	btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(), barrelShape);
+
+	Prefab barrelPrefab;
+	barrelPrefab.addConstructor(new TransformConstructor());
+	barrelPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info));
+	barrelPrefab.addConstructor(new ModelRenderConstructor(renderer, barrelModelHandle, shader));
+
 	for (unsigned i = 0; i < room.sides.size(); i++) {
 		RoomSide& side = room.sides[i];
 
@@ -418,25 +422,10 @@ int Game::setup()
 			int x = horizontal ? i : side.x0 + side.normal.x;
 			int y = horizontal ? side.y0 + side.normal.y : i;
 			if (rand < 0.1f) {
-				eid_t entity = world.getNewEntity("Barrel");
-				TransformComponent* transformComponent = world.addComponent<TransformComponent>(entity);
-				CollisionComponent* collisionComponent = world.addComponent<CollisionComponent>(entity);
-				ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(entity);
-
-				Renderer::RenderableHandle barrelHandle = renderer.getRenderableHandle(barrelModelHandle, shader);
-				modelRenderComponent->rendererHandle = barrelHandle;
-
-				btVector3 halfExtents(0.5f, 0.75f, 0.5f);
-				btCollisionShape* collisionShape = new btBoxShape(halfExtents);
-				btCompoundShape* compoundShape = new btCompoundShape();
-				compoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y(), 0.0f)), collisionShape);
-				btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(btTransform(btQuaternion::getIdentity(), btVector3((float)x, 0, (float)y))), compoundShape);
-				btRigidBody* collisionObject = new btRigidBody(info);
-				collisionObject->setUserPointer(new eid_t(entity));
-				dynamicsWorld->addRigidBody(collisionObject, CollisionGroupDefault, CollisionGroupAll);
-
-				collisionComponent->collisionObject = collisionObject;
-				collisionComponent->world = dynamicsWorld;
+				eid_t entity = world.constructPrefab(barrelPrefab, "Barrel");
+				CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
+				collisionComponent->collisionObject->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3((float)x, 0.0f, (float)y)));
+				collisionComponent->collisionObject->setUserPointer(new eid_t(entity));
 			}
 		}
 	}
@@ -469,9 +458,30 @@ int Game::setup()
 	Model tableModel = modelLoader.loadModelFromPath("assets/models/table.fbx");
 	Renderer::ModelHandle tableModelHandle = renderer.getModelHandle(tableModel);
 
+	btCollisionShape* tableCollisionShape = new btBoxShape(Util::glmToBt(tableDimensions / 2.0f));
+	btCompoundShape* tableCompoundShape = new btCompoundShape();
+	tableCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, tableDimensions.y / 2.0f, 0.0f)), tableCollisionShape);
+	btRigidBody::btRigidBodyConstructionInfo tableInfo(0.0f, new btDefaultMotionState(), tableCompoundShape);
+
+	Prefab tablePrefab;
+	tablePrefab.addConstructor(new TransformConstructor());
+	tablePrefab.addConstructor(new CollisionConstructor(dynamicsWorld, tableInfo));
+	tablePrefab.addConstructor(new ModelRenderConstructor(renderer, tableModelHandle, shader));
+
 	glm::vec3 bulletDimensions(0.2f, 0.07f, 0.2f);
 	Model bulletModel = modelLoader.loadModelFromPath("assets/models/bullets.fbx");
 	Renderer::ModelHandle bulletModelHandle = renderer.getModelHandle(bulletModel);
+
+	std::uniform_real_distribution<float> angleRand(-glm::half_pi<float>(), glm::half_pi<float>());
+	btCollisionShape* bulletCollisionShape = new btBoxShape(Util::glmToBt(bulletDimensions / 2.0f));
+	btCompoundShape* bulletCompoundShape = new btCompoundShape();
+	bulletCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)), bulletCollisionShape);
+	btRigidBody::btRigidBodyConstructionInfo bulletInfo(0.0f, new btDefaultMotionState(), bulletCompoundShape);
+
+	Prefab bulletPrefab;
+	bulletPrefab.addConstructor(new TransformConstructor());
+	bulletPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info));
+	bulletPrefab.addConstructor(new ModelRenderConstructor(renderer, bulletModelHandle, shader));
 
 	std::vector<Transform> bulletSpawnLocations = {
 		Transform(roomBoxCenter(topmostRoomBox)),
@@ -484,49 +494,18 @@ int Game::setup()
 		Transform initialTransform = bulletSpawnLocations[i];
 
 		// Table
-		eid_t table = world.getNewEntity("Table");
-		TransformComponent* tableTransformComponent = world.addComponent<TransformComponent>(table);
-		CollisionComponent* tableCollisionComponent = world.addComponent<CollisionComponent>(table);
-		ModelRenderComponent* tableModelComponent = world.addComponent<ModelRenderComponent>(table);
-
-		btCollisionShape* tableCollisionShape = new btBoxShape(Util::glmToBt(tableDimensions / 2.0f));
-		btCompoundShape* tableCompoundShape = new btCompoundShape();
-		tableCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, tableDimensions.y / 2.0f, 0.0f)), tableCollisionShape);
-
-		btRigidBody::btRigidBodyConstructionInfo tableInfo(0.0f, new btDefaultMotionState(Util::gameToBt(initialTransform)), tableCompoundShape);
-		btRigidBody* tableCollisionObject = new btRigidBody(tableInfo);
-		tableCollisionObject->setUserPointer(new eid_t(table));
-		dynamicsWorld->addRigidBody(tableCollisionObject, CollisionGroupDefault, CollisionGroupAll);
-
-		tableCollisionComponent->collisionObject = tableCollisionObject;
-		tableCollisionComponent->world = dynamicsWorld;
-
-		Renderer::RenderableHandle tableHandle = renderer.getRenderableHandle(tableModelHandle, shader);
-		tableModelComponent->rendererHandle = tableHandle;
+		eid_t table = world.constructPrefab(tablePrefab, "Table");
+		CollisionComponent* tableCollisionComponent = world.getComponent<CollisionComponent>(table);
+		tableCollisionComponent->collisionObject->setWorldTransform(Util::gameToBt(initialTransform));
+		tableCollisionComponent->collisionObject->setUserPointer(new eid_t(table));
 
 		// Bullet
 		glm::vec3 bulletPosition(initialTransform.getPosition() + glm::vec3(0.0f, tableDimensions.y + bulletDimensions.y / 2.0f, 0.0f));
-		eid_t bullet = world.getNewEntity("Bullets");
-		TransformComponent* bulletTransformComponent = world.addComponent<TransformComponent>(bullet);
+		eid_t bullet = world.constructPrefab(bulletPrefab, "Bullets");
 		CollisionComponent* bulletCollisionComponent = world.addComponent<CollisionComponent>(bullet);
-		ModelRenderComponent* bulletModelComponent = world.addComponent<ModelRenderComponent>(bullet);
-
-		std::uniform_real_distribution<float> angleRand(-glm::half_pi<float>(), glm::half_pi<float>());
-		btCollisionShape* bulletCollisionShape = new btBoxShape(Util::glmToBt(bulletDimensions / 2.0f));
-		btCompoundShape* bulletCompoundShape = new btCompoundShape();
-		bulletCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)), bulletCollisionShape);
-
 		btTransform bulletTransform(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), angleRand(generator)), Util::glmToBt(bulletPosition));
-		btRigidBody::btRigidBodyConstructionInfo bulletInfo(0.0f, new btDefaultMotionState(bulletTransform), bulletCompoundShape);
-		btRigidBody* bulletCollisionObject = new btRigidBody(bulletInfo);
-		bulletCollisionObject->setUserPointer(new eid_t(bullet));
-		dynamicsWorld->addRigidBody(bulletCollisionObject, CollisionGroupDefault, CollisionGroupAll);
-
-		bulletCollisionComponent->collisionObject = bulletCollisionObject;
-		bulletCollisionComponent->world = dynamicsWorld;
-
-		Renderer::RenderableHandle bulletHandle = renderer.getRenderableHandle(bulletModelHandle, shader);
-		bulletModelComponent->rendererHandle = bulletHandle;
+		bulletCollisionComponent->collisionObject->setUserPointer(new eid_t(bullet));
+		bulletCollisionComponent->collisionObject->setWorldTransform(bulletTransform);
 	}
 
 	// Initialize the player
@@ -541,10 +520,10 @@ int Game::setup()
 	AudioListenerComponent* playerAudioListenerComponent = world.addComponent<AudioListenerComponent>(player);
 	AudioSourceComponent* playerAudioSourceComponent = world.addComponent<AudioSourceComponent>(player);
 
-	playerTransform->transform->setPosition(playerSpawn);
+	playerTransform->data->setPosition(playerSpawn);
 
-	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->transform->getScale().x, 0.7f * playerTransform->transform->getScale().y);
-	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(*playerTransform->transform));
+	btCapsuleShape* shape = new btCapsuleShape(0.5f * playerTransform->data->getScale().x, 0.7f * playerTransform->data->getScale().y);
+	btDefaultMotionState* motionState = new btDefaultMotionState(Util::gameToBt(*playerTransform->data));
 	btRigidBody* playerBody = new btRigidBody(5.0f, motionState, shape, btVector3(0.0f, 0.0f, 0.0f));
 	playerBody->setContactProcessingThreshold(0.0f);
 	playerBody->setAngularFactor(btVector3(0.0f, 0.0f, 0.0f));
@@ -555,43 +534,43 @@ int Game::setup()
 	playerCollisionComponent->world = dynamicsWorld;
 	dynamicsWorld->addRigidBody(playerBody, CollisionGroupPlayer, CollisionGroupAll);
 
-	playerRigidbodyMotorComponent->jumpSpeed = 5.0f;
-	playerRigidbodyMotorComponent->moveSpeed = 5.0f;
+	playerRigidbodyMotorComponent->data.jumpSpeed = 5.0f;
+	playerRigidbodyMotorComponent->data.moveSpeed = 5.0f;
 
-	playerComponent->shotCooldown = 0.3f;
-	playerComponent->shotDamage = 100;
-	playerComponent->shotClip = AudioClip("assets/sound/shot.wav");
-	playerComponent->dryFireClip = AudioClip("assets/sound/dryfire.wav");
-	playerComponent->hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
-	playerComponent->gemPickupClip = AudioClip("assets/sound/pickup.wav");
+	playerComponent->data.shotCooldown = 0.3f;
+	playerComponent->data.shotDamage = 100;
+	playerComponent->data.shotClip = AudioClip("assets/sound/shot.wav");
+	playerComponent->data.dryFireClip = AudioClip("assets/sound/dryfire.wav");
+	playerComponent->data.hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
+	playerComponent->data.gemPickupClip = AudioClip("assets/sound/pickup.wav");
 
 	eid_t camera = world.getNewEntity("Camera");
 	TransformComponent* cameraTransformComponent = world.addComponent<TransformComponent>(camera);
 	CameraComponent* cameraComponent = world.addComponent<CameraComponent>(camera);
-	cameraComponent->camera = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
-	cameraTransformComponent->transform->setPosition(glm::vec3(0.0f, 0.85f, 0.0f));
+	cameraComponent->data = Camera(glm::radians(90.0f), windowWidth, windowHeight, 0.1f, 1000000.0f);
+	cameraTransformComponent->data->setPosition(glm::vec3(0.0f, 0.85f, 0.0f));
 
-	cameraTransformComponent->transform->setParent(playerTransform->transform);
-	playerComponent->camera = camera;
+	cameraTransformComponent->data->setParent(playerTransform->data);
+	playerComponent->data.camera = camera;
 
 	SoundManager::SourceHandle playerSourceHandle = soundManager.getSourceHandle();
 	playerAudioSourceComponent->sourceHandle = playerSourceHandle;
 
-	renderer.setCamera(&cameraComponent->camera);
-	debugDrawer.setCamera(&cameraComponent->camera);
+	renderer.setCamera(&cameraComponent->data);
+	debugDrawer.setCamera(&cameraComponent->data);
 
 	eid_t playerLight = world.getNewEntity("PlayerLight");
 	TransformComponent* lightTransform = world.addComponent<TransformComponent>(playerLight);
 	PointLightComponent* lightComponent = world.addComponent<PointLightComponent>(playerLight);
-	lightTransform->transform->setParent(playerTransform->transform);
-	lightComponent->pointLightIndex = 0;
+	lightTransform->data->setParent(playerTransform->data);
+	lightComponent->data.pointLightIndex = 0;
 
 	eid_t playerGun = world.getNewEntity("PlayerGun");
 	TransformComponent* gunTransform = world.addComponent<TransformComponent>(playerGun);
 	ModelRenderComponent* gunModelComponent = world.addComponent<ModelRenderComponent>(playerGun);
 
-	gunTransform->transform->setPosition(glm::vec3(0.2f, -0.3f, -0.15f));
-	gunTransform->transform->setParent(cameraTransformComponent->transform);
+	gunTransform->data->setPosition(glm::vec3(0.2f, -0.3f, -0.15f));
+	gunTransform->data->setParent(cameraTransformComponent->data);
 
 	Model gunModel = modelLoader.loadModelFromPath("assets/models/gun.fbx");
 	auto gunModelHandle = renderer.getModelHandle(gunModel);
@@ -601,8 +580,8 @@ int Game::setup()
 
 	// This was gotten from blender - isn't my game engine awesome
 	glm::vec3 gunBarrelEnd(0.0f, 0.19f, -0.665f);
-	playerComponent->gun = playerGun;
-	playerComponent->gunBarrelOffset = gunBarrelEnd;
+	playerComponent->data.gun = playerGun;
+	playerComponent->data.gunBarrelOffset = gunBarrelEnd;
 
 	// Create gunFX
 	Vertex fromVert;
@@ -614,14 +593,62 @@ int Game::setup()
 	material.drawType = MaterialDrawType_Lines;
 	material.setProperty("color", MaterialProperty(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f)));
 	auto bulletMeshHandle = renderer.getModelHandle(Model(lineMesh, material));
-	playerComponent->shotTracerModelHandle = bulletMeshHandle;
-	playerComponent->tracerShader = lightShader;
+
+	Prefab bulletTracer;
+	bulletTracer.addConstructor(new TransformConstructor());
+	bulletTracer.addConstructor(new ModelRenderConstructor(renderer, bulletMeshHandle, lightShader));
+	bulletTracer.addConstructor(new ExpiresConstructor(ExpiresComponent::Data(0.2f)));
+	bulletTracer.addConstructor(new VelocityConstructor(75.0f));
+	playerComponent->data.shotTracerPrefab = bulletTracer;
 
 	Texture muzzleFlashTexture(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/flash.png"));
 	Model muzzleFlashPlane = getPlane(std::vector<Texture> { muzzleFlashTexture }, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.3f, 0.3f));
 	auto muzzleFlashModelHandle = renderer.getModelHandle(muzzleFlashPlane);
-	playerComponent->muzzleFlashModelHandle = muzzleFlashModelHandle;
-	playerComponent->flashShader = shader;
+
+	Prefab muzzleFlash;
+	muzzleFlash.addConstructor(new TransformConstructor());
+	muzzleFlash.addConstructor(new ModelRenderConstructor(renderer, muzzleFlashModelHandle, shader));
+	muzzleFlash.addConstructor(new ExpiresConstructor(ExpiresComponent::Data(0.05f)));
+	playerComponent->data.muzzleFlashPrefab = muzzleFlash;
+
+	std::vector<AudioClip> spiderSounds = {
+		AudioClip("assets/sound/minecraft/spider/say1.ogg"),
+		AudioClip("assets/sound/minecraft/spider/say2.ogg"),
+		AudioClip("assets/sound/minecraft/spider/say3.ogg"),
+		AudioClip("assets/sound/minecraft/spider/say4.ogg")
+	};
+	AudioClip spiderDeathSound("assets/sound/minecraft/spider/death.ogg");
+
+	Model spiderModel = modelLoader.loadModelFromPath("assets/models/spider/spider-tex.fbx");
+	auto spiderModelHandle = renderer.getModelHandle(spiderModel);
+
+	glm::vec3 spiderHalfExtents = glm::vec3(125.0f, 75.0f, 120.0f) * 0.005f;
+	btCapsuleShapeZ* spiderShape = new btCapsuleShapeZ(spiderHalfExtents.y, spiderHalfExtents.x);
+	btCompoundShape* spiderCompoundShape = new btCompoundShape();
+	spiderCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, spiderHalfExtents.y, 0.0f)), spiderShape);
+	btRigidBody::btRigidBodyConstructionInfo spiderBodyInfo(5.0f, new btDefaultMotionState(), spiderCompoundShape);
+
+	FollowComponent::Data followData;
+	followData.target = player;
+	followData.repathTime = 3.0f;
+	followData.raycastStartOffset = glm::vec3(0.0f, spiderHalfExtents.y, 0.0f);
+
+	SpiderComponent::Data spiderData;
+	spiderData.normalMoveSpeed = 3.0f;
+	spiderData.attackTime = 0.5f;
+	spiderData.sounds = spiderSounds;
+	spiderData.deathSound = spiderDeathSound;
+	spiderData.leapMoveSpeed = 7.5f;
+
+	Prefab spiderPrefab;
+	spiderPrefab.addConstructor(new TransformConstructor(Transform(glm::vec3(0.0f), glm::quat(), glm::vec3(0.005f))));
+	spiderPrefab.addConstructor(new ModelRenderConstructor(renderer, spiderModelHandle, skinnedShader));
+	spiderPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, spiderBodyInfo));
+	spiderPrefab.addConstructor(new FollowConstructor(followData));
+	spiderPrefab.addConstructor(new RigidbodyMotorConstructor(RigidbodyMotorComponent::Data(spiderData.normalMoveSpeed, 3.5f)));
+	spiderPrefab.addConstructor(new HealthConstructor(HealthComponent::Data(100)));
+	spiderPrefab.addConstructor(new AudioSourceConstructor(soundManager));
+	spiderPrefab.addConstructor(new SpiderConstructor(spiderData));
 
 	shootingSystem = std::make_unique<ShootingSystem>(world, dynamicsWorld, renderer, *eventManager, generator);
 	playerInputSystem = std::make_unique<PlayerInputSystem>(world, input, *eventManager);
@@ -640,7 +667,7 @@ int Game::setup()
 
 	spiderSystem->debugShader = lightShader;
 
-	spiderSpawner = std::make_unique<SpiderSpawner>(renderer, soundManager, world, dynamicsWorld, modelLoader, generator, skinnedShader, roomData.room, player);
+	spiderSpawner = std::make_unique<SpiderSpawner>(world, dynamicsWorld, spiderPrefab, roomData.room, generator);
 
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, *eventManager);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, *eventManager);
@@ -652,9 +679,9 @@ int Game::setup()
 			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
 			AudioClip clip;
 			if (event.actuallyShot) {
-				clip = playerComponent->shotClip;
+				clip = playerComponent->data.shotClip;
 			} else {
-				clip = playerComponent->dryFireClip;
+				clip = playerComponent->data.dryFireClip;
 			}
 			soundManager->playClipAtSource(clip, audioSourceComponent->sourceHandle);
 		};
@@ -670,7 +697,7 @@ int Game::setup()
 
 			if (event.healthChange < 0) {
 				AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.entity);
-				soundManager->playClipAtSource(playerComponent->hurtClip, audioSourceComponent->sourceHandle);
+				soundManager->playClipAtSource(playerComponent->data.hurtClip, audioSourceComponent->sourceHandle);
 			}
 		};
 	eventManager->registerForEvent<HealthChangedEvent>(healthChangedCallback);
@@ -684,7 +711,7 @@ int Game::setup()
 			sstream << event.newGemCount;
 			gemLabel->setText(sstream.str());
 
-			soundManager->playClipAtSource(playerComponent->gemPickupClip, audioSourceComponent->sourceHandle);
+			soundManager->playClipAtSource(playerComponent->data.gemPickupClip, audioSourceComponent->sourceHandle);
 		};
 	eventManager->registerForEvent<GemCountChangedEvent>(gemCountChangedCallback);
 

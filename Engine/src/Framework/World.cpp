@@ -1,6 +1,8 @@
 
 #include "Framework/World.h"
 
+#include "Framework/Prefab.h"
+
 const eid_t World::NullEntity = UINT32_MAX;
 
 World::eid_iterator::eid_iterator()
@@ -40,6 +42,44 @@ bool World::eid_iterator::atEnd()
 void World::eid_iterator::reset()
 {
 	this->entityIter = this->entityIterBegin;
+}
+
+eid_t World::constructPrefab(const Prefab& prefab, const std::string& name)
+{
+	eid_t entity = this->getNewEntity(name);
+	auto entityIter = entities.find(entity);
+
+	std::vector<ComponentConstructorInfo> infos = prefab.construct();
+	for (unsigned i = 0; i < infos.size(); i++) {
+		ComponentConstructorInfo& info = infos[i];
+		cid_t cid = getComponentId(info.typeidHash);
+		ComponentPool& componentPool = this->entityComponentMaps[cid];
+		componentPool.emplace(entity, std::unique_ptr<Component>(info.component));
+		entityIter->second.components.setBit(cid, true);
+	}
+
+	return entity;
+}
+
+cid_t World::getComponentId(size_t typeidHash)
+{
+	auto iter = componentIdMap.find(typeidHash);
+	cid_t id;
+	if (iter == componentIdMap.end()) {
+		id = this->registerComponent(typeidHash);
+	} else {
+		id = iter->second;
+	}
+	return id;
+}
+
+cid_t World::registerComponent(size_t typeidHash)
+{
+	cid_t id = nextComponentId++;
+	componentIdMap.emplace(typeidHash, id);
+	entityComponentMaps.push_back(ComponentPool());
+	assert(componentIdMap.size() == entityComponentMaps.size());
+	return id;
 }
 
 eid_t World::getNewEntity(const std::string& name)

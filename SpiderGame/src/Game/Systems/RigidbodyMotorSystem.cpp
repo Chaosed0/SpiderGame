@@ -38,7 +38,7 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 		if (glm::length(moveDir) > 1.0f) {
 			moveDir = glm::normalize(moveDir);
 		}
-		movement = moveDir * rigidbodyMotorComponent->moveSpeed;
+		movement = moveDir * rigidbodyMotorComponent->data.moveSpeed;
 	}
 
 	glm::vec3 facingVec = rigidbodyMotorComponent->facing * Util::forward;
@@ -68,7 +68,7 @@ void RigidbodyMotorSystem::updateEntity(float dt, eid_t entity)
 		}
 
 		if (rigidbodyMotorComponent->jump && rigidbodyMotorComponent->canJump) {
-			velocity.setY(rigidbodyMotorComponent->jumpSpeed);
+			velocity.setY(rigidbodyMotorComponent->data.jumpSpeed);
 			rigidbodyMotorComponent->canJump = false;
 		}
 	}

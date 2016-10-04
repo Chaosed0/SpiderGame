@@ -17,5 +17,5 @@ void ModelRenderSystem::updateEntity(float dt, eid_t entity)
 	ModelRenderComponent* modelComponent = world.getComponent<ModelRenderComponent>(entity);
 	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 
-	renderer.setRenderableTransform(modelComponent->rendererHandle, transformComponent->transform->matrix());
+	renderer.setRenderableTransform(modelComponent->rendererHandle, transformComponent->data->matrix());
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Framework/Component.h"
+#include "Framework/DefaultComponentConstructor.h"
 #include "Sound/AudioClip.h"
 
 enum SpiderState
@@ -16,22 +17,31 @@ enum SpiderState
 class SpiderComponent : public Component
 {
 public:
-	SpiderComponent() : animState(SPIDER_IDLE), timer(0.0f), soundTimer(0.0f), soundTimeMin(3.0f), soundTimeMax(6.0f), soundTime(-1.0f), attackTime(0.5f), recoveryTime(0.25f), normalMoveSpeed(3.5f), leapMoveSpeed(7.0f) { }
-	SpiderState animState;
+	SpiderComponent() : animState(SPIDER_IDLE), timer(0.0f), soundTimer(0.0f), soundTime(-1.0f) { }
 
-	std::vector<AudioClip> sounds;
-	AudioClip deathSound;
+	struct Data {
+		Data() : soundTimeMin(3.0f), soundTimeMax(6.0f), attackTime(0.5f), recoveryTime(0.25f), normalMoveSpeed(3.5f), leapMoveSpeed(7.0f) { }
+		std::vector<AudioClip> sounds;
+		AudioClip deathSound;
 
-	float attackTime;
-	float recoveryTime;
-	float soundTimeMin;
-	float soundTimeMax;
-	float normalMoveSpeed;
-	float leapMoveSpeed;
+		float attackTime;
+		float recoveryTime;
+		float soundTimeMin;
+		float soundTimeMax;
+		float normalMoveSpeed;
+		float leapMoveSpeed;
+	};
 
-	/* Should only be set by system */
+	Data data;
+
 	float timer;
 	float soundTimer;
 	float soundTime;
 	eid_t hurtbox;
+	SpiderState animState;
+};
+
+class SpiderConstructor : public DefaultComponentConstructor<SpiderComponent> {
+public:
+	using DefaultComponentConstructor<SpiderComponent>::DefaultComponentConstructor;
 };

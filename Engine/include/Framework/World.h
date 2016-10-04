@@ -1,13 +1,15 @@
 #pragma once
 
-#include "Component.h"
-#include "ComponentBitmask.h"
+#include "Framework/Component.h"
+#include "Framework/ComponentBitmask.h"
 
 #include <unordered_map>
 #include <map>
 #include <memory>
 #include <cassert>
 #include <string>
+
+class Prefab;
 
 typedef uint32_t eid_t;
 typedef uint32_t cid_t;
@@ -16,16 +18,15 @@ class World
 {
 public:
 	World() : nextComponentId(0), nextEntityId(0) { }
-
-	template <class T>
-	cid_t registerComponent();
 	
-	eid_t getNewEntity(const std::string& name = "");
-	void removeEntity(eid_t entity);
-	std::string getEntityName(eid_t eid) const;
 	void cleanupEntities();
 
+	std::string getEntityName(eid_t eid) const;
 	eid_t getEntityWithName(const std::string& name);
+
+	eid_t constructPrefab(const Prefab& prefab, const std::string& name = "");
+	eid_t getNewEntity(const std::string& name = "");
+	void removeEntity(eid_t entity);
 
 	bool entityHasComponents(eid_t entity, const ComponentBitmask& bitmask);
 	bool orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2);
@@ -73,6 +74,12 @@ public:
 private:
 	typedef std::unordered_map<eid_t, std::unique_ptr<Component>> ComponentPool;
 
+	template <class T>
+	cid_t registerComponent();
+
+	cid_t getComponentId(size_t typeidHash);
+	cid_t registerComponent(size_t typeidHash);
+
 	std::unordered_map<size_t, cid_t> componentIdMap;
 	std::vector<ComponentPool> entityComponentMaps;
 	std::map<eid_t, Entity> entities;
@@ -86,10 +93,7 @@ private:
 template <class T>
 cid_t World::registerComponent()
 {
-	cid_t id = nextComponentId++;
-	componentIdMap.emplace(typeid(T).hash_code(), id);
-	entityComponentMaps.push_back(ComponentPool());
-	assert(componentIdMap.size() == entityComponentMaps.size());
+	size_t hash = typeid(T).hash_code();
 	return id;
 }
 
@@ -97,14 +101,7 @@ template <class T>
 cid_t World::getComponentId()
 {
 	size_t hash = typeid(T).hash_code();
-	auto iter = componentIdMap.find(hash);
-	cid_t id;
-	if (iter == componentIdMap.end()) {
-		id = this->registerComponent<T>();
-	} else {
-		id = iter->second;
-	}
-	return id;
+	return getComponentId(hash);
 }
 	
 template <class T>

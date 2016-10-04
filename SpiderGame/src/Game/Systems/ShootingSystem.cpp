@@ -42,15 +42,15 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	TransformComponent* transformComponent(world.getComponent<TransformComponent>(entity));
 	PlayerComponent* playerComponent(world.getComponent<PlayerComponent>(entity));
 
-	ModelRenderComponent* gunRenderComponent = world.getComponent<ModelRenderComponent>(playerComponent->gun);
+	ModelRenderComponent* gunRenderComponent = world.getComponent<ModelRenderComponent>(playerComponent->data.gun);
 
-	playerComponent->shotTimer = std::min(playerComponent->shotTimer + dt, playerComponent->shotCooldown);
-	playerComponent->reloadTimer = std::min(playerComponent->reloadTimer + dt, playerComponent->reloadTime);
+	playerComponent->shotTimer = std::min(playerComponent->shotTimer + dt, playerComponent->data.shotCooldown);
+	playerComponent->reloadTimer = std::min(playerComponent->reloadTimer + dt, playerComponent->data.reloadTime);
 
 	// Trying to reload && can reload
-	if (playerComponent->reloadTimer >= playerComponent->reloadTime &&
+	if (playerComponent->reloadTimer >= playerComponent->data.reloadTime &&
 		playerComponent->bulletCount > 0 &&
-		playerComponent->bulletsInGun != playerComponent->maxBulletsInGun)
+		playerComponent->bulletsInGun != playerComponent->data.maxBulletsInGun)
 	{
 		if (playerComponent->reloading && playerComponent->gunState == GunState_Ready) {
 			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Reload", false);
@@ -58,7 +58,7 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			playerComponent->reloadTimer = 0.0f;
 		} else if (playerComponent->gunState == GunState_Reloading) {
 			unsigned oldBulletsInGun = playerComponent->bulletsInGun;
-			playerComponent->bulletsInGun = (std::min)(playerComponent->bulletCount, playerComponent->maxBulletsInGun);
+			playerComponent->bulletsInGun = (std::min)(playerComponent->bulletCount, playerComponent->data.maxBulletsInGun);
 			playerComponent->bulletCount -= playerComponent->bulletsInGun - oldBulletsInGun;
 			playerComponent->gunState = GunState_Ready;
 
@@ -73,14 +73,14 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	// Do the shot if shooting
-	if (playerComponent->shooting && playerComponent->reloadTimer >= playerComponent->reloadTime) {
+	if (playerComponent->shooting && playerComponent->reloadTimer >= playerComponent->data.reloadTime) {
 		if (playerComponent->bulletsInGun <= 0) {
 			ShotEvent event;
 			event.source = entity;
 			event.actuallyShot = false;
 			eventManager.sendEvent(event);
-		} else if (playerComponent->shotTimer >= playerComponent->shotCooldown) {
-			std::shared_ptr<Transform> transform = transformComponent->transform;
+		} else if (playerComponent->shotTimer >= playerComponent->data.shotCooldown) {
+			std::shared_ptr<Transform> transform = transformComponent->data;
 			playerComponent->shotTimer = 0.0f;
 
 			/* Fire off an event to let people know we shot a bullet */
@@ -100,16 +100,16 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			eventManager.sendEvent(bulletCountEvent);
 
 			/* Create shot FX */
-			this->createTracer(playerComponent, 0.2f, 75.0f);
-			this->createMuzzleFlash(playerComponent, 0.05f);
+			this->createTracer(playerComponent);
+			this->createMuzzleFlash(playerComponent);
 
 			/* Animate the gun */
 			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Shoot", false);
 
 			/* Do the raytrace to see if we hit anything */
-			TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->camera);
-			glm::vec3 from = cameraTransformComponent->transform->getWorldPosition();
-			glm::vec3 to = from + cameraTransformComponent->transform->getWorldRotation() * (Util::forward * playerComponent->maxShotDistance);
+			TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->data.camera);
+			glm::vec3 from = cameraTransformComponent->data->getWorldPosition();
+			glm::vec3 to = from + cameraTransformComponent->data->getWorldRotation() * (Util::forward * playerComponent->data.maxShotDistance);
 			eid_t hitEntity = Util::raycast(this->dynamicsWorld, from, to);
 
 			HealthComponent* enemyHealthComponent = world.getComponent<HealthComponent>(hitEntity);
@@ -117,49 +117,33 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 				return;
 			}
 
-			enemyHealthComponent->health -= playerComponent->shotDamage;
+			enemyHealthComponent->data.health -= playerComponent->data.shotDamage;
 		}
 		playerComponent->shooting = false;
 	}
 }
 
-eid_t ShootingSystem::createTracer(PlayerComponent* playerComponent, float expiryTime, float speed)
+eid_t ShootingSystem::createTracer(PlayerComponent* playerComponent)
 {
-	eid_t line = world.getNewEntity("ShotTracer");
-	TransformComponent* transformComponent = world.addComponent<TransformComponent>(line);
-	ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(line);
-	ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(line);
-	VelocityComponent* velocityComponent = world.addComponent<VelocityComponent>(line);
-
-	TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->gun);
-	glm::vec3 gunBarrelPosition = gunTransformComponent->transform->getWorldPosition() + gunTransformComponent->transform->getWorldRotation() * playerComponent->gunBarrelOffset;
-	glm::quat gunBarrelRotation = gunTransformComponent->transform->getWorldRotation();
-
-	transformComponent->transform->setPosition(gunBarrelPosition);
-	transformComponent->transform->setRotation(gunBarrelRotation);
-	modelRenderComponent->rendererHandle = renderer.getRenderableHandle(playerComponent->shotTracerModelHandle, playerComponent->tracerShader);
-	expiresComponent->expiryTime = expiryTime;
-	velocityComponent->speed = speed;
-
-	return line;
+	eid_t tracer = world.constructPrefab(playerComponent->data.shotTracerPrefab, "ShotTracer");
+	TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->data.gun);
+	TransformComponent* tracerTransformComponent = world.getComponent<TransformComponent>(tracer);
+	glm::vec3 gunBarrelPosition = gunTransformComponent->data->getWorldPosition() + gunTransformComponent->data->getWorldRotation() * playerComponent->data.gunBarrelOffset;
+	glm::quat gunBarrelRotation = gunTransformComponent->data->getWorldRotation();
+	tracerTransformComponent->data->setPosition(gunBarrelPosition);
+	tracerTransformComponent->data->setRotation(gunBarrelRotation);
+	return tracer;
 }
 
-eid_t ShootingSystem::createMuzzleFlash(PlayerComponent* playerComponent, float expiryTime)
+eid_t ShootingSystem::createMuzzleFlash(PlayerComponent* playerComponent)
 {
-	eid_t flash = world.getNewEntity("MuzzleFlash");
-	TransformComponent* transformComponent = world.addComponent<TransformComponent>(flash);
-	ModelRenderComponent* modelRenderComponent = world.addComponent<ModelRenderComponent>(flash);
-	ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(flash);
-
-	TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->gun);
-	glm::vec3 gunBarrelPosition = playerComponent->gunBarrelOffset;
+	eid_t flash = world.constructPrefab(playerComponent->data.muzzleFlashPrefab, "MuzzleFlash");
+	TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->data.gun);
+	TransformComponent* flashTransformComponent = world.getComponent<TransformComponent>(flash);
+	glm::vec3 gunBarrelPosition = playerComponent->data.gunBarrelOffset;
 	glm::quat randomRotation = glm::angleAxis(randomAngleDistribution(generator), Util::forward);
-
-	transformComponent->transform->setPosition(gunBarrelPosition);
-	transformComponent->transform->setRotation(randomRotation);
-	transformComponent->transform->setParent(gunTransformComponent->transform);
-	modelRenderComponent->rendererHandle = renderer.getRenderableHandle(playerComponent->muzzleFlashModelHandle, playerComponent->flashShader);
-	expiresComponent->expiryTime = expiryTime;
-
+	flashTransformComponent->data->setPosition(gunBarrelPosition);
+	flashTransformComponent->data->setRotation(randomRotation);
+	flashTransformComponent->data->setParent(gunTransformComponent->data);
 	return flash;
 }

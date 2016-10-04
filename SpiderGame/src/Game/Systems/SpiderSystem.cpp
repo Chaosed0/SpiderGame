@@ -63,9 +63,9 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	btVector3 velocity = spiderBody->getLinearVelocity();
 	SpiderState newState = spiderComponent->animState;
 
-	std::shared_ptr<Transform> targetTransform = world.getComponent<TransformComponent>(followComponent->target)->transform;
+	std::shared_ptr<Transform> targetTransform = world.getComponent<TransformComponent>(followComponent->data.target)->data;
 	
-	float distanceToAttackTarget = glm::length(targetTransform->getWorldPosition() - transformComponent->transform->getWorldPosition());
+	float distanceToAttackTarget = glm::length(targetTransform->getWorldPosition() - transformComponent->data->getWorldPosition());
 
 	switch (spiderComponent->animState) {
 	case SPIDER_IDLE:
@@ -81,7 +81,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	case SPIDER_PREPARING_LEAP: {
 		followComponent->enabled = false;
 
-		CollisionComponent* targetCollisionComponent = world.getComponent<CollisionComponent>(followComponent->target);
+		CollisionComponent* targetCollisionComponent = world.getComponent<CollisionComponent>(followComponent->data.target);
 		glm::vec3 leadVec(0.0f);
 		if (targetCollisionComponent != nullptr) {
 			btCollisionObject* collisionObject = targetCollisionComponent->collisionObject;
@@ -92,17 +92,17 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 		}
 
 		glm::vec3 leapTarget = targetTransform->getWorldPosition() + leadVec;
-		glm::vec3 leapDir = leapTarget - transformComponent->transform->getWorldPosition();
+		glm::vec3 leapDir = leapTarget - transformComponent->data->getWorldPosition();
 		float angle = atan2f(leapDir.x, leapDir.z);
 		glm::quat facing(glm::angleAxis(angle, glm::vec3(0.0f, 1.0f, 0.0f)));
 		rigidbodyMotorComponent->movement = glm::vec2(0.0f, 0.0f);
 		rigidbodyMotorComponent->facing = facing;
 
 		spiderComponent->timer += dt;
-		if (spiderComponent->timer >= spiderComponent->attackTime) {
+		if (spiderComponent->timer >= spiderComponent->data.attackTime) {
 			newState = SPIDER_LEAPING;
 			rigidbodyMotorComponent->movement = glm::vec2(-1.0f, 0.0f);
-			rigidbodyMotorComponent->moveSpeed = spiderComponent->leapMoveSpeed;
+			rigidbodyMotorComponent->data.moveSpeed = spiderComponent->data.leapMoveSpeed;
 			rigidbodyMotorComponent->canJump = true;
 			rigidbodyMotorComponent->jump = true;
 
@@ -114,10 +114,10 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 			// Make the hurtbox the size of the front of the spider, and make it jut out a little bit
 			// so the player is only hurt from the front
 			glm::vec3 hurtboxHalfExtents((aabbMax.x() - aabbMin.x()) / 2.0f, (aabbMax.y() - aabbMin.y()) / 2.0f, 0.1f);
-			glm::vec3 hurtboxOffset(glm::vec3(0.0f, (aabbMax.y() - aabbMin.y()) / 2.0f, aabbMax.z() + hurtboxHalfExtents.z) * (1.0f / transformComponent->transform->getScale()));
+			glm::vec3 hurtboxOffset(glm::vec3(0.0f, (aabbMax.y() - aabbMin.y()) / 2.0f, aabbMax.z() + hurtboxHalfExtents.z) * (1.0f / transformComponent->data->getScale()));
 			Transform hurtboxTransform(hurtboxOffset);
 
-			spiderComponent->hurtbox = this->createHurtbox(hurtboxTransform, hurtboxHalfExtents, transformComponent->transform);
+			spiderComponent->hurtbox = this->createHurtbox(hurtboxTransform, hurtboxHalfExtents, transformComponent->data);
 			spiderComponent->soundTimer = spiderComponent->soundTime;
 			spiderComponent->timer = 0.0f;
 		}
@@ -129,7 +129,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	case SPIDER_LEAP_RECOVERY:
 		rigidbodyMotorComponent->movement = glm::vec2(0.0f, 0.0f);
 		spiderComponent->timer += dt;
-		if (spiderComponent->timer >= spiderComponent->recoveryTime) {
+		if (spiderComponent->timer >= spiderComponent->data.recoveryTime) {
 			spiderComponent->timer = 0.0f;
 			followComponent->enabled = true;
 			newState = SPIDER_IDLE;
@@ -140,7 +140,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	// This transition can happen at any time
-	if (healthComponent->health <= 0) {
+	if (healthComponent->data.health <= 0) {
 		newState = SPIDER_DEAD;
 		
 		if (spiderComponent->hurtbox != World::NullEntity) {
@@ -151,19 +151,19 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	spiderComponent->soundTimer += dt;
 	if (newState != SPIDER_DEAD &&
 		spiderComponent->soundTime > 0 &&
-		spiderComponent->sounds.size() > 0 &&
+		spiderComponent->data.sounds.size() > 0 &&
 		spiderComponent->soundTimer >= spiderComponent->soundTime)
 	{
 		spiderComponent->soundTimer = 0.0f;
-		std::uniform_int_distribution<int> soundRand(0, spiderComponent->sounds.size() - 1);
-		AudioClip& clip = spiderComponent->sounds[soundRand(generator)];
+		std::uniform_int_distribution<int> soundRand(0, spiderComponent->data.sounds.size() - 1);
+		AudioClip& clip = spiderComponent->data.sounds[soundRand(generator)];
 		soundManager.playClipAtSource(clip, audioSourceComponent->sourceHandle);
 		spiderComponent->soundTime = -1.0f;
 	}
 
 	// Handles the case where it isn't initialized too
 	if (spiderComponent->soundTime < 0.0f) {
-		std::uniform_real_distribution<float> nextSoundTime(spiderComponent->soundTimeMin, spiderComponent->soundTimeMax);
+		std::uniform_real_distribution<float> nextSoundTime(spiderComponent->data.soundTimeMin, spiderComponent->data.soundTimeMax);
 		spiderComponent->soundTime = nextSoundTime(generator);
 	}
 
@@ -189,8 +189,8 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 			anim = "AnimStack::die";
 			rigidbodyMotorComponent->canMove = false;
 			ExpiresComponent* expiresComponent = world.addComponent<ExpiresComponent>(entity);
-			expiresComponent->expiryTime = 2.0f;
-			soundManager.playClipAtSource(spiderComponent->deathSound, audioSourceComponent->sourceHandle);
+			expiresComponent->data.expiryTime = 2.0f;
+			soundManager.playClipAtSource(spiderComponent->data.deathSound, audioSourceComponent->sourceHandle);
 			break;
 		}
 		default:
@@ -224,10 +224,10 @@ eid_t SpiderSystem::createHurtbox(const Transform& transform, const glm::vec3& h
 	collisionComponent->world = dynamicsWorld;
 	collisionComponent->controlsMovement = false;
 
-	transformComponent->transform->setPosition(transform.getPosition());
-	transformComponent->transform->setRotation(transform.getRotation());
-	transformComponent->transform->setScale(transform.getScale());
-	transformComponent->transform->setParent(spiderTransform);
+	transformComponent->data->setPosition(transform.getPosition());
+	transformComponent->data->setRotation(transform.getRotation());
+	transformComponent->data->setScale(transform.getScale());
+	transformComponent->data->setParent(spiderTransform);
 
 	if (debugShader.isValid()) {
 		ModelRenderComponent* modelComponent = world.addComponent<ModelRenderComponent>(hurtboxEntity);
@@ -259,7 +259,7 @@ void SpiderSystem::onSpiderCollided(const CollisionEvent& collisionEvent)
 	}
 
 	RigidbodyMotorComponent* motorComponent = world.getComponent<RigidbodyMotorComponent>(spider);
-	motorComponent->moveSpeed = spiderComponent->normalMoveSpeed;
+	motorComponent->data.moveSpeed = spiderComponent->data.normalMoveSpeed;
 	spiderComponent->animState = SPIDER_LEAP_RECOVERY;
 	spiderComponent->timer = 0.0f;
 

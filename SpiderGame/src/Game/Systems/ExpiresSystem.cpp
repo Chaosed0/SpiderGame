@@ -14,7 +14,7 @@ void ExpiresSystem::updateEntity(float dt, eid_t entity)
 	ExpiresComponent* expiresComponent = world.getComponent<ExpiresComponent>(entity);
 
 	expiresComponent->timer += dt;
-	if (expiresComponent->timer >= expiresComponent->expiryTime) {
+	if (expiresComponent->timer >= expiresComponent->data.expiryTime) {
 		world.removeEntity(entity);
 	}
 }

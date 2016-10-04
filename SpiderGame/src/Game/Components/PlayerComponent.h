@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Framework/Component.h"
+#include "Framework/DefaultComponentConstructor.h"
 #include "Framework/World.h"
+#include "Framework/Prefab.h"
 #include "Sound/AudioClip.h"
 #include "Renderer/Renderer.h"
 
@@ -15,39 +17,53 @@ class PlayerComponent : public Component
 public:
 	PlayerComponent()
 		: shooting(false), reloading(false),
-		maxShotDistance(100.0f), shotCooldown(1/30.0f), shotTimer(0.0f), reloadTime(2.5f), reloadTimer(0.0f), shotDamage(10),
-		gunBarrelOffset(0.0f), gunState(GunState_Ready),
-		gemCount(0), bulletCount(0), bulletsInGun(0), maxBulletsInGun(6),
-		lastFacedEntity(World::NullEntity), camera(World::NullEntity), gun(World::NullEntity) { }
+		shotTimer(0.0f), reloadTimer(0.0f),
+		gunState(GunState_Ready),
+		gemCount(0), bulletCount(0), bulletsInGun(0),
+		lastFacedEntity(World::NullEntity) { }
+
+	struct Data {
+		Data()
+			: maxShotDistance(100.0f), shotCooldown(1/30.0f), reloadTime(2.5f),
+			gunBarrelOffset(0.0f), maxBulletsInGun(6), shotDamage(100),
+			camera(World::NullEntity), gun(World::NullEntity) { }
+
+		eid_t gun;
+		float reloadTime;
+		float shotCooldown;
+		float maxShotDistance;
+		unsigned maxBulletsInGun;
+		unsigned shotDamage;
+		glm::vec3 gunBarrelOffset;
+
+		Prefab shotTracerPrefab;
+		Prefab muzzleFlashPrefab;
+
+		AudioClip shotClip;
+		AudioClip dryFireClip;
+		AudioClip hurtClip;
+		AudioClip gemPickupClip;
+
+		eid_t camera;
+	};
+
+	Data data;
 
 	bool shooting;
 	bool reloading;
 
-	float reloadTime;
 	float reloadTimer;
-	float shotCooldown;
 	float shotTimer;
-	float maxShotDistance;
 	GunState gunState;
 
-	unsigned shotDamage;
 	unsigned gemCount;
 
-	eid_t gun;
-	glm::vec3 gunBarrelOffset;
-	Renderer::ModelHandle shotTracerModelHandle;
-	Shader tracerShader;
-	Renderer::ModelHandle muzzleFlashModelHandle;
-	Shader flashShader;
 	unsigned bulletCount;
-	unsigned maxBulletsInGun;
 	unsigned bulletsInGun;
 
-	AudioClip shotClip;
-	AudioClip dryFireClip;
-	AudioClip hurtClip;
-	AudioClip gemPickupClip;
-
 	eid_t lastFacedEntity;
-	eid_t camera;
+};
+
+class PlayerConstructor : public DefaultComponentConstructor<PlayerComponent> {
+	using DefaultComponentConstructor<PlayerComponent>::DefaultComponentConstructor;
 };

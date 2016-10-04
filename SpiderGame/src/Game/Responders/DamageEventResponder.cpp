@@ -23,11 +23,11 @@ void DamageEventResponder::damageReceived(const DamageEvent& event)
 	}
 
 	HealthComponent* healthComponent = world.getComponent<HealthComponent>(event.target);
-	healthComponent->health -= event.damage;
+	healthComponent->data.health -= event.damage;
 
 	HealthChangedEvent healthChangedEvent;
 	healthChangedEvent.entity = event.target;
 	healthChangedEvent.healthChange = -(int)event.damage;
-	healthChangedEvent.newHealth = healthComponent->health;
+	healthChangedEvent.newHealth = healthComponent->data.health;
 	eventManager.sendEvent(healthChangedEvent);
 }

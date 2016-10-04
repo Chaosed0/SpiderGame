@@ -22,6 +22,6 @@ private:
 
 	std::uniform_real_distribution<float> randomAngleDistribution;
 
-	eid_t createTracer(PlayerComponent* playerComponent, float expiryTime, float speed);
-	eid_t createMuzzleFlash(PlayerComponent* playerComponent, float expiryTime);
+	eid_t createTracer(PlayerComponent* playerComponent);
+	eid_t createMuzzleFlash(PlayerComponent* playerComponent);
 };

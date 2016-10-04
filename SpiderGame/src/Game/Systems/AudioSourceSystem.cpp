@@ -17,5 +17,5 @@ void AudioSourceSystem::updateEntity(float dt, eid_t entity)
 	AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(entity);
 	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 
-	soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->transform->getWorldPosition());
+	soundManager.setSourcePosition(audioSourceComponent->sourceHandle, transformComponent->data->getWorldPosition());
 }

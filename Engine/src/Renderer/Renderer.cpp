@@ -139,7 +139,6 @@ Renderer::RenderableHandle Renderer::getRenderableHandle(const ModelHandle& mode
 
 	bool animatable = (model.animationData.animations.size() > 0);
 
-	// Index modelMap to initialize this so we don't depend on the passed reference
 	RenderableHandle handle = this->entityPool.getNewHandle(Entity(*shader.impl, modelHandle, animatable));
 	return handle;
 }

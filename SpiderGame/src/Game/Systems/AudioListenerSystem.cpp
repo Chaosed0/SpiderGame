@@ -16,5 +16,5 @@ void AudioListenerSystem::updateEntity(float dt, eid_t entity)
 {
 	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 
-	soundManager.setListenerTransform(transformComponent->transform->getWorldPosition(), transformComponent->transform->getWorldRotation());
+	soundManager.setListenerTransform(transformComponent->data->getWorldPosition(), transformComponent->data->getWorldRotation());
 }

@@ -44,7 +44,7 @@ void HurtboxPlayerResponder::handleCollisionEvent(const CollisionEvent& collisio
 	DamageEvent damageEvent;
 	damageEvent.target = e1;
 	damageEvent.source = e2;
-	damageEvent.damage = hurtboxComponent->damage;
+	damageEvent.damage = hurtboxComponent->data.damage;
 	eventManager.sendEvent(damageEvent);
 
 	ignoreEntities.push_back(e1);

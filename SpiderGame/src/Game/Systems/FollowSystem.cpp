@@ -30,17 +30,17 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
-	if (followComponent->target == World::NullEntity || !followComponent->enabled) {
+	if (followComponent->data.target == World::NullEntity || !followComponent->enabled) {
 		return;
 	}
 
 	followComponent->repathTimer += dt;
 
-	std::shared_ptr<Transform> finalTarget = world.getComponent<TransformComponent>(followComponent->target)->transform;
+	std::shared_ptr<Transform> finalTarget = world.getComponent<TransformComponent>(followComponent->data.target)->data;
 	glm::vec3 localTarget(0.0f);
 	bool pathFound = false;
 
-	glm::vec3 from = transformComponent->transform->getWorldPosition() + followComponent->raycastStartOffset;
+	glm::vec3 from = transformComponent->data->getWorldPosition() + followComponent->data.raycastStartOffset;
 	glm::vec3 to = finalTarget->getWorldPosition();
 	btVector3 btStart(Util::glmToBt(from));
 	btVector3 btEnd(Util::glmToBt(to));
@@ -50,7 +50,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 
 	btConvexShape* convexShape = new btBoxShape(btVector3(0.65f, 0.2f, 0.5f));
 
-	btQuaternion rotation = Util::glmToBt(transformComponent->transform->getWorldRotation()); 
+	btQuaternion rotation = Util::glmToBt(transformComponent->data->getWorldRotation()); 
 	btTransform btTStart(rotation, btStart);
 	btTransform btTEnd(rotation, btEnd);
 	btCollisionWorld::ClosestConvexResultCallback sweepTestCallback(btStart, btEnd);
@@ -63,11 +63,11 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 		localTarget = to;
 		pathFound = true;
 	} else {
-		if (followComponent->repathTimer >= followComponent->repathTime) {
+		if (followComponent->repathTimer >= followComponent->data.repathTime) {
 			// Try pathfinding again
 			this->findPath(from, to, followComponent->path);
 			followComponent->pathNode = 0;
-			followComponent->repathTimer -= followComponent->repathTime;
+			followComponent->repathTimer -= followComponent->data.repathTime;
 		}
 
 		if (followComponent->path.size() > 0 && followComponent->pathNode < followComponent->path.size()) {
