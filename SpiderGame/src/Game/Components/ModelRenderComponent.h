@@ -16,7 +16,7 @@ public:
 	ModelRenderConstructor(Renderer& renderer, const Renderer::ModelHandle& modelHandle, const Shader& shader)
 		: renderer(renderer), modelHandle(modelHandle), shader(shader) { }
 
-	virtual ComponentConstructorInfo construct() const
+	virtual ComponentConstructorInfo construct(World& world, eid_t parent, void* userinfo) const
 	{
 		ModelRenderComponent* component = new ModelRenderComponent();
 		component->rendererHandle = renderer.getRenderableHandle(modelHandle, shader);

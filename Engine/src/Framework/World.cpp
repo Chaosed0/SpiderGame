@@ -44,18 +44,25 @@ void World::eid_iterator::reset()
 	this->entityIter = this->entityIterBegin;
 }
 
-eid_t World::constructPrefab(const Prefab& prefab, const std::string& name)
+eid_t World::constructPrefab(const Prefab& prefab, eid_t parent, void* userinfo)
 {
-	eid_t entity = this->getNewEntity(name);
+	eid_t entity = this->getNewEntity(prefab.getName());
 	auto entityIter = entities.find(entity);
 
-	std::vector<ComponentConstructorInfo> infos = prefab.construct();
+	std::vector<ComponentConstructorInfo> infos = prefab.construct(*this, parent, userinfo);
 	for (unsigned i = 0; i < infos.size(); i++) {
 		ComponentConstructorInfo& info = infos[i];
 		cid_t cid = getComponentId(info.typeidHash);
 		ComponentPool& componentPool = this->entityComponentMaps[cid];
 		componentPool.emplace(entity, std::unique_ptr<Component>(info.component));
 		entityIter->second.components.setBit(cid, true);
+	}
+
+	prefab.finish(*this, entity);
+
+	std::vector<std::shared_ptr<Prefab>> children;
+	for (unsigned i = 0; i < children.size(); i++) {
+		this->constructPrefab(*children[i], entity, userinfo);
 	}
 
 	return entity;
@@ -159,7 +166,7 @@ eid_t World::getEntityWithName(const std::string& name)
 	return World::NullEntity;
 }
 
-bool World::orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2)
+bool World::orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2) const
 {
 	ComponentBitmask eb1 = this->getEntityBitmask(e1);
 	ComponentBitmask eb2 = this->getEntityBitmask(e2);
@@ -175,7 +182,7 @@ bool World::orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, cons
 	return false;
 }
 
-bool World::entityHasComponents(eid_t entity, const ComponentBitmask& bitmask)
+bool World::entityHasComponents(eid_t entity, const ComponentBitmask& bitmask) const
 {
 	ComponentBitmask eb = this->getEntityBitmask(entity);
 	return eb.hasComponents(bitmask);

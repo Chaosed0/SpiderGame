@@ -14,7 +14,7 @@ class AudioSourceConstructor : public ComponentConstructor
 {
 public:
 	AudioSourceConstructor(SoundManager& soundManager) : soundManager(soundManager) { }
-	virtual ComponentConstructorInfo construct() const
+	virtual ComponentConstructorInfo construct(World& world, eid_t parent, void* userinfo) const
 	{
 		AudioSourceComponent* component = new AudioSourceComponent();
 		component->sourceHandle = soundManager.getSourceHandle();

@@ -38,6 +38,8 @@
 #include "Game/Events/BulletCountChangedEvent.h"
 #include "Game/Events/ShotEvent.h"
 
+#include "Game/Extra/PrefabConstructionInfo.h"
+
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/UIQuad.h"
 
@@ -345,29 +347,28 @@ int Game::setup()
 		light.specular = color * 1.0f;
 		renderer.setPointLight(i+1, light);
 
-		eid_t pedestalEntity = world.constructPrefab(pedestalPrefab);
-		TransformComponent* pedestalTransformComponent = world.getComponent<TransformComponent>(pedestalEntity);
-		pedestalTransformComponent->data->setPosition(floorPosition);
+		PrefabConstructionInfo pedestalInfo = PrefabConstructionInfo(Transform(floorPosition));
+		eid_t pedestalEntity = world.constructPrefab(pedestalPrefab, World::NullEntity, &pedestalInfo);
 
 		gemModel.material.setProperty("diffuseTint", color);
 		Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
 
 		glm::vec3 gemPosition = floorPosition + glm::vec3(0.0f, 1.5f, 0.0f);
 		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
-		btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(), gemCollisionShape);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
 
 		Prefab gemPrefab;
-		gemPrefab.addConstructor(new TransformConstructor(gemPosition));
+		gemPrefab.addConstructor(new TransformConstructor());
 		gemPrefab.addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
-		gemPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info, CollisionGroupDefault, CollisionGroupAll, false));
+		gemPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, rbInfo, CollisionGroupDefault, CollisionGroupAll, false));
 		gemPrefab.addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
 
 		std::stringstream namestream;
 		namestream << "Gem " << i;
-		eid_t gemEntity = world.constructPrefab(gemPrefab, namestream.str());
+		gemPrefab.setName(namestream.str());
 
-		CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(gemEntity);
-		collisionComponent->collisionObject->setUserPointer(new eid_t(gemEntity));
+		PrefabConstructionInfo gemInfo = PrefabConstructionInfo(Transform(gemPosition));
+		eid_t gemEntity = world.constructPrefab(gemPrefab, World::NullEntity, &gemInfo);
 	}
 	PointLight light;
 	light.constant = 1.0f;
@@ -422,10 +423,8 @@ int Game::setup()
 			int x = horizontal ? i : side.x0 + side.normal.x;
 			int y = horizontal ? side.y0 + side.normal.y : i;
 			if (rand < 0.1f) {
-				eid_t entity = world.constructPrefab(barrelPrefab, "Barrel");
-				CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
-				collisionComponent->collisionObject->setWorldTransform(btTransform(btQuaternion::getIdentity(), btVector3((float)x, 0.0f, (float)y)));
-				collisionComponent->collisionObject->setUserPointer(new eid_t(entity));
+				PrefabConstructionInfo info(Transform(glm::vec3((float)x, 0.0f, (float)y)));
+				eid_t entity = world.constructPrefab(barrelPrefab, World::NullEntity, &info);
 			}
 		}
 	}
@@ -463,7 +462,7 @@ int Game::setup()
 	tableCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, tableDimensions.y / 2.0f, 0.0f)), tableCollisionShape);
 	btRigidBody::btRigidBodyConstructionInfo tableInfo(0.0f, new btDefaultMotionState(), tableCompoundShape);
 
-	Prefab tablePrefab;
+	Prefab tablePrefab("Table");
 	tablePrefab.addConstructor(new TransformConstructor());
 	tablePrefab.addConstructor(new CollisionConstructor(dynamicsWorld, tableInfo));
 	tablePrefab.addConstructor(new ModelRenderConstructor(renderer, tableModelHandle, shader));
@@ -478,7 +477,7 @@ int Game::setup()
 	bulletCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, bulletDimensions.y / 2.0f, 0.0f)), bulletCollisionShape);
 	btRigidBody::btRigidBodyConstructionInfo bulletInfo(0.0f, new btDefaultMotionState(), bulletCompoundShape);
 
-	Prefab bulletPrefab;
+	Prefab bulletPrefab("Bullets");
 	bulletPrefab.addConstructor(new TransformConstructor());
 	bulletPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info));
 	bulletPrefab.addConstructor(new ModelRenderConstructor(renderer, bulletModelHandle, shader));
@@ -494,18 +493,14 @@ int Game::setup()
 		Transform initialTransform = bulletSpawnLocations[i];
 
 		// Table
-		eid_t table = world.constructPrefab(tablePrefab, "Table");
-		CollisionComponent* tableCollisionComponent = world.getComponent<CollisionComponent>(table);
-		tableCollisionComponent->collisionObject->setWorldTransform(Util::gameToBt(initialTransform));
-		tableCollisionComponent->collisionObject->setUserPointer(new eid_t(table));
+		PrefabConstructionInfo tableInfo(initialTransform);
+		eid_t table = world.constructPrefab(tablePrefab, World::NullEntity, &tableInfo);
 
 		// Bullet
 		glm::vec3 bulletPosition(initialTransform.getPosition() + glm::vec3(0.0f, tableDimensions.y + bulletDimensions.y / 2.0f, 0.0f));
-		eid_t bullet = world.constructPrefab(bulletPrefab, "Bullets");
-		CollisionComponent* bulletCollisionComponent = world.addComponent<CollisionComponent>(bullet);
-		btTransform bulletTransform(btQuaternion(btVector3(0.0f, 1.0f, 0.0f), angleRand(generator)), Util::glmToBt(bulletPosition));
-		bulletCollisionComponent->collisionObject->setUserPointer(new eid_t(bullet));
-		bulletCollisionComponent->collisionObject->setWorldTransform(bulletTransform);
+		Transform bulletTransform(bulletPosition, glm::angleAxis(angleRand(generator), glm::vec3(0.0f, 1.0f, 0.0f)));
+		PrefabConstructionInfo bulletInfo(bulletTransform);
+		eid_t bullet = world.constructPrefab(bulletPrefab, World::NullEntity, &bulletInfo);
 	}
 
 	// Initialize the player
@@ -594,7 +589,7 @@ int Game::setup()
 	material.setProperty("color", MaterialProperty(glm::vec4(0.5f, 0.5f, 0.0f, 1.0f)));
 	auto bulletMeshHandle = renderer.getModelHandle(Model(lineMesh, material));
 
-	Prefab bulletTracer;
+	Prefab bulletTracer("BulletTracer");
 	bulletTracer.addConstructor(new TransformConstructor());
 	bulletTracer.addConstructor(new ModelRenderConstructor(renderer, bulletMeshHandle, lightShader));
 	bulletTracer.addConstructor(new ExpiresConstructor(ExpiresComponent::Data(0.2f)));
@@ -605,7 +600,7 @@ int Game::setup()
 	Model muzzleFlashPlane = getPlane(std::vector<Texture> { muzzleFlashTexture }, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.3f, 0.3f));
 	auto muzzleFlashModelHandle = renderer.getModelHandle(muzzleFlashPlane);
 
-	Prefab muzzleFlash;
+	Prefab muzzleFlash("MuzzleFlash");
 	muzzleFlash.addConstructor(new TransformConstructor());
 	muzzleFlash.addConstructor(new ModelRenderConstructor(renderer, muzzleFlashModelHandle, shader));
 	muzzleFlash.addConstructor(new ExpiresConstructor(ExpiresComponent::Data(0.05f)));
@@ -640,7 +635,7 @@ int Game::setup()
 	spiderData.deathSound = spiderDeathSound;
 	spiderData.leapMoveSpeed = 7.5f;
 
-	Prefab spiderPrefab;
+	Prefab spiderPrefab("Spider");
 	spiderPrefab.addConstructor(new TransformConstructor(Transform(glm::vec3(0.0f), glm::quat(), glm::vec3(0.005f))));
 	spiderPrefab.addConstructor(new ModelRenderConstructor(renderer, spiderModelHandle, skinnedShader));
 	spiderPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, spiderBodyInfo));

@@ -125,25 +125,19 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 
 eid_t ShootingSystem::createTracer(PlayerComponent* playerComponent)
 {
-	eid_t tracer = world.constructPrefab(playerComponent->data.shotTracerPrefab, "ShotTracer");
 	TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->data.gun);
-	TransformComponent* tracerTransformComponent = world.getComponent<TransformComponent>(tracer);
 	glm::vec3 gunBarrelPosition = gunTransformComponent->data->getWorldPosition() + gunTransformComponent->data->getWorldRotation() * playerComponent->data.gunBarrelOffset;
 	glm::quat gunBarrelRotation = gunTransformComponent->data->getWorldRotation();
-	tracerTransformComponent->data->setPosition(gunBarrelPosition);
-	tracerTransformComponent->data->setRotation(gunBarrelRotation);
-	return tracer;
+	PrefabConstructionInfo info(Transform(gunBarrelPosition, gunBarrelRotation));
+
+	return world.constructPrefab(playerComponent->data.shotTracerPrefab, World::NullEntity, &info);
 }
 
 eid_t ShootingSystem::createMuzzleFlash(PlayerComponent* playerComponent)
 {
-	eid_t flash = world.constructPrefab(playerComponent->data.muzzleFlashPrefab, "MuzzleFlash");
-	TransformComponent* gunTransformComponent = world.getComponent<TransformComponent>(playerComponent->data.gun);
-	TransformComponent* flashTransformComponent = world.getComponent<TransformComponent>(flash);
 	glm::vec3 gunBarrelPosition = playerComponent->data.gunBarrelOffset;
 	glm::quat randomRotation = glm::angleAxis(randomAngleDistribution(generator), Util::forward);
-	flashTransformComponent->data->setPosition(gunBarrelPosition);
-	flashTransformComponent->data->setRotation(randomRotation);
-	flashTransformComponent->data->setParent(gunTransformComponent->data);
-	return flash;
+	PrefabConstructionInfo info(Transform(gunBarrelPosition, randomRotation));
+
+	return world.constructPrefab(playerComponent->data.muzzleFlashPrefab, playerComponent->data.gun, &info);
 }

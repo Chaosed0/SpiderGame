@@ -7,7 +7,7 @@ class DefaultComponentConstructor : public ComponentConstructor
 {
 public:
 	DefaultComponentConstructor(const typename ComponentClass::Data& data);
-	virtual ComponentConstructorInfo construct() const;
+	virtual ComponentConstructorInfo construct(World& world, eid_t parent, void* userinfo) const;
 protected:
 	typename ComponentClass::Data data;
 };
@@ -18,7 +18,7 @@ DefaultComponentConstructor<ComponentClass>::DefaultComponentConstructor(const t
 { }
 
 template <class ComponentClass>
-ComponentConstructorInfo DefaultComponentConstructor<ComponentClass>::construct() const
+ComponentConstructorInfo DefaultComponentConstructor<ComponentClass>::construct(World& world, eid_t parent, void* userinfo) const
 {
 	ComponentClass* component = new ComponentClass();
 	component->data = this->data;

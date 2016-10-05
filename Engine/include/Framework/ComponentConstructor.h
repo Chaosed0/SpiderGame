@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Framework/Component.h"
+#include "Framework/World.h"
 
 #include <typeinfo>
 
@@ -18,6 +19,7 @@ class ComponentConstructor
 public:
 	ComponentConstructor() { }
 	virtual ~ComponentConstructor() = default;
-	virtual ComponentConstructorInfo construct() const = 0;
+	virtual ComponentConstructorInfo construct(World& world, eid_t parent, void* userinfo) const = 0;
+	virtual void finish(World& world, eid_t entity) { }
 private:
 };

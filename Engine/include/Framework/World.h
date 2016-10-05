@@ -24,12 +24,12 @@ public:
 	std::string getEntityName(eid_t eid) const;
 	eid_t getEntityWithName(const std::string& name);
 
-	eid_t constructPrefab(const Prefab& prefab, const std::string& name = "");
+	eid_t constructPrefab(const Prefab& prefab, eid_t parent = World::NullEntity, void* userinfo = nullptr);
 	eid_t getNewEntity(const std::string& name = "");
 	void removeEntity(eid_t entity);
 
-	bool entityHasComponents(eid_t entity, const ComponentBitmask& bitmask);
-	bool orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2);
+	bool entityHasComponents(eid_t entity, const ComponentBitmask& bitmask) const;
+	bool orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, const ComponentBitmask& b2) const;
 
 	template <class T>
 	T* addComponent(eid_t entity);

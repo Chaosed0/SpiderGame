@@ -98,9 +98,7 @@ void SpiderSpawner::update(float dt)
 
 eid_t SpiderSpawner::makeSpider(const glm::vec3& position)
 {
-	eid_t spider = world.constructPrefab(spiderPrefab, "Spider");
-	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(spider);
-	collisionComponent->collisionObject->setUserPointer(new eid_t(spider));
-	collisionComponent->collisionObject->setWorldTransform(btTransform(btQuaternion::getIdentity(), Util::glmToBt(position)));
+	PrefabConstructionInfo info = PrefabConstructionInfo(Transform(position, glm::quat(), glm::vec3(scaleRand(generator))));
+	eid_t spider = world.constructPrefab(spiderPrefab, World::NullEntity, &info);
 	return spider;
 }
