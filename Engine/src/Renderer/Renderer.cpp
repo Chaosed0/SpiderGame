@@ -133,7 +133,7 @@ Renderer::RenderableHandle Renderer::getRenderableHandle(const ModelHandle& mode
 
 	std::experimental::optional<std::reference_wrapper<Model>> modelOpt = modelPool.get(modelHandle);
 	if (!modelOpt) {
-		return modelPool.invalidHandle;
+		return entityPool.invalidHandle;
 	}
 	Model& model = *modelOpt;
 

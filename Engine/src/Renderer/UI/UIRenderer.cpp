@@ -22,7 +22,7 @@ struct UIRenderer::Entity {
 class UIRendererSortComparator
 {
 public:
-	bool operator() (const std::pair<std::weak_ptr<uint32_t>, UIRenderer::Entity>& p1, const std::pair<std::weak_ptr<uint32_t>, UIRenderer::Entity>& p2)
+	bool operator() (const std::pair<HandlePool<UIRenderer::Entity>::WeakHandle, UIRenderer::Entity>& p1, const std::pair<HandlePool<UIRenderer::Entity>::WeakHandle, UIRenderer::Entity>& p2)
 	{
 		// 2,3 is the location of z position in the matrix
 		return p1.second.renderable->getTransform()[2][3] < p2.second.renderable->getTransform()[2][3];
@@ -35,7 +35,7 @@ struct UIRenderer::Impl
 	HandlePool<UIRenderer::Entity> pool;
 
 	/*! List of entities sorted by z position, used when drawing. */
-	std::list<std::pair<std::weak_ptr<uint32_t>, UIRenderer::Entity>> sortedEntities;
+	std::list<std::pair<HandlePool<UIRenderer::Entity>::WeakHandle, UIRenderer::Entity>> sortedEntities;
 
 	/*! Projection to use when drawing elements. */
 	glm::mat4 projection;
@@ -63,7 +63,8 @@ UIRenderer::UIElementHandle UIRenderer::getEntityHandle(const std::shared_ptr<Re
 	entity.shader = *shader.impl;
 
 	UIElementHandle handle = impl->pool.getNewHandle(entity);
-	impl->sortedEntities.push_back(std::make_pair(handle, entity));
+	HandlePool<UIRenderer::Entity>::WeakHandle weakHandle(handle);
+	impl->sortedEntities.push_back(std::make_pair(weakHandle, entity));
 
 	return handle;
 }

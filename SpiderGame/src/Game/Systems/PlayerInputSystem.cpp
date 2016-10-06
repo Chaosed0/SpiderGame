@@ -24,6 +24,10 @@ void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 
+	if (playerComponent->isDead) {
+		return;
+	}
+
 	TransformComponent* cameraTransformComponent = world.getComponent<TransformComponent>(playerComponent->data.camera);
 
 	float horizontal = input.getAxis("Horizontal", device);

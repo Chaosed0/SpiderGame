@@ -12,10 +12,11 @@
 #include <algorithm>
 #include <unordered_set>
 
-FollowSystem::FollowSystem(World& world, btDynamicsWorld* dynamicsWorld, Room room)
+bool findPath(const Room& room, const glm::vec3& start, const glm::vec3& finalTarget, std::vector<glm::vec3>& path);
+
+FollowSystem::FollowSystem(World& world, btDynamicsWorld* dynamicsWorld)
 	: System(world),
-	dynamicsWorld(dynamicsWorld),
-	room(room)
+	dynamicsWorld(dynamicsWorld)
 {
 	require<TransformComponent>();
 	require<FollowComponent>();
@@ -65,7 +66,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	} else {
 		if (followComponent->repathTimer >= followComponent->data.repathTime) {
 			// Try pathfinding again
-			this->findPath(from, to, followComponent->path);
+			findPath(followComponent->data.room, from, to, followComponent->path);
 			followComponent->pathNode = 0;
 			followComponent->repathTimer -= followComponent->data.repathTime;
 		}
@@ -90,7 +91,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	}
 }
 
-RoomPortal FollowSystem::getPortal(const RoomBox& box, int otherBoxIndex)
+RoomPortal getPortal(const RoomBox& box, int otherBoxIndex)
 {
 	for (unsigned i = 0; i < box.portals.size(); i++) {
 		if (box.portals[i].otherBox == otherBoxIndex) {
@@ -101,7 +102,7 @@ RoomPortal FollowSystem::getPortal(const RoomBox& box, int otherBoxIndex)
 	return RoomPortal();
 }
 
-bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget, std::vector<glm::vec3>& path)
+bool findPath(const Room& room, const glm::vec3& start, const glm::vec3& finalTarget, std::vector<glm::vec3>& path)
 {
 	// Figure out where we are
 	int startBox = room.boxForCoordinate(glm::vec2(start.x, start.z));
@@ -114,7 +115,7 @@ bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget
 
 	if (startBox == finishBox) {
 		// Just return any portal to help spiders get unstuck
-		RoomPortal& portal = room.boxes[startBox].portals[0];
+		const RoomPortal& portal = room.boxes[startBox].portals[0];
 		path.push_back(glm::vec3((portal.x0 + portal.x1) / 2.0f, 0.0f, (portal.y0 + portal.y1) / 2.0f));
 		return true;
 	}
@@ -135,7 +136,7 @@ bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget
 		}
 
 		visitedBoxes.insert(current);
-		std::vector<RoomPortal>& portals = room.boxes[current].portals;
+		const std::vector<RoomPortal>& portals = room.boxes[current].portals;
 
 		for (unsigned i = 0; i < portals.size(); i++) {
 			int next = portals[i].otherBox;
@@ -156,7 +157,7 @@ bool FollowSystem::findPath(const glm::vec3& start, const glm::vec3& finalTarget
 	RoomBox currentBox = room.boxes[current];
 	while (current != startBox) {
 		int previous = prevBox[current];
-		RoomPortal portal = this->getPortal(currentBox, previous);
+		RoomPortal portal = getPortal(currentBox, previous);
 		path.push_back(glm::vec3((portal.x0 + portal.x1) / 2.0f, 0.0f, (portal.y0 + portal.y1) / 2.0f));
 
 		current = previous;

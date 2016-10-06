@@ -317,10 +317,10 @@ static Room boxesToRoom(std::vector<RoomBox> boxes)
 	return room;
 }
 
-int Room::boxForCoordinate(glm::vec2 coord)
+int Room::boxForCoordinate(const glm::vec2& coord) const
 {
 	for (unsigned i = 0; i < boxes.size(); i++) {
-		RoomBox& box = boxes[i];
+		const RoomBox& box = boxes[i];
 		if (box.left <= coord.x && coord.x <= box.right &&
 			box.bottom <= coord.y && coord.y <= box.top)
 		{
@@ -331,7 +331,7 @@ int Room::boxForCoordinate(glm::vec2 coord)
 	return -1;
 }
 
-glm::ivec2 RoomBox::getCenter()
+glm::ivec2 RoomBox::getCenter() const
 {
 	return glm::ivec2((left + right) / 2.0f, (top + bottom) / 2.0f);
 }

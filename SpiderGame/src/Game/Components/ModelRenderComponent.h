@@ -22,9 +22,8 @@ public:
 		component->rendererHandle = renderer.getRenderableHandle(modelHandle, shader);
 		return ComponentConstructorInfo(component, typeid(ModelRenderComponent).hash_code());
 	}
-
-	Renderer::ModelHandle modelHandle;
 private:
 	Renderer& renderer;
 	Shader shader;
+	Renderer::ModelHandle modelHandle;
 };

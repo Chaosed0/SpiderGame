@@ -25,7 +25,7 @@ struct RoomBox
 	int top;
 	int left;
 	int bottom;
-	glm::ivec2 getCenter();
+	glm::ivec2 getCenter() const;
 	std::vector<RoomPortal> portals;
 };
 
@@ -38,7 +38,7 @@ struct Room
 	int rightmostBox, leftmostBox;
 	int topmostBox, bottommostBox;
 
-	int boxForCoordinate(glm::vec2 coord);
+	int boxForCoordinate(const glm::vec2& coord) const;
 	SDL_Surface* saveToSurface();
 };
 

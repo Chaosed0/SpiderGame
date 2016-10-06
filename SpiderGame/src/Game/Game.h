@@ -15,8 +15,6 @@
 #include "Renderer/Model.h"
 
 #include "Renderer/UI/UIRenderer.h"
-#include "Renderer/UI/Label.h"
-#include "Renderer/UI/Font.h"
 
 #include "Sound/SoundManager.h"
 
@@ -40,54 +38,13 @@
 #include "Game/Systems/AudioListenerSystem.h"
 #include "Game/Systems/AudioSourceSystem.h"
 #include "Game/Systems/PointLightSystem.h"
+#include "Game/Systems/SpawnerSystem.h"
 
 #include "Framework/Physics.h"
 #include "Framework/EventManager.h"
-#include "Game/Responders/DamageEventResponder.h"
-#include "Game/Responders/PlayerJumpResponder.h"
-#include "Game/Responders/HurtboxPlayerResponder.h"
-
-#include "Game/Extra/SpiderSpawner.h"
 
 #include "Input/Input.h"
-
-struct RoomData
-{
-	Room room;
-	btRigidBody* rigidBody;
-	MeshBuilder meshBuilder;
-};
-
-struct GameTerrainData
-{
-	Model model;
-	TerrainPatch patch;
-	TerrainPatchCollision collision;
-	btTriangleIndexVertexArray* vertArray;
-	btBvhTriangleMeshShape* shape;
-	btCollisionObject* object;
-};
-
-struct GUI
-{
-	std::shared_ptr<Label> healthLabel;
-	std::shared_ptr<Label> gemLabel;
-	std::shared_ptr<Label> bulletLabel;
-	std::shared_ptr<UIQuad> healthImage;
-	std::shared_ptr<UIQuad> gemImage;
-	std::shared_ptr<UIQuad> bulletImage;
-	std::shared_ptr<Label> facingLabel;
-	std::shared_ptr<UIQuad> reticleImage;
-
-	UIRenderer::UIElementHandle healthLabelHandle;
-	UIRenderer::UIElementHandle healthImageHandle;
-	UIRenderer::UIElementHandle gemLabelHandle;
-	UIRenderer::UIElementHandle gemImageHandle;
-	UIRenderer::UIElementHandle bulletLabelHandle;
-	UIRenderer::UIElementHandle bulletImageHandle;
-	UIRenderer::UIElementHandle facingLabelHandle;
-	UIRenderer::UIElementHandle reticleHandle;
-};
+#include "Scene.h"
 
 class Game
 {
@@ -104,8 +61,6 @@ private:
 	void handleEvent(SDL_Event& event);
 	void draw();
 
-	void generateTestTerrain();
-
 	bool wireframe;
 	bool running;
 	Uint32 lastUpdate;
@@ -115,31 +70,6 @@ private:
 	SDL_Window* window;
 	SDL_GLContext context;
 
-	Renderer renderer;
-	ModelLoader modelLoader;
-
-	UIRenderer uiRenderer;
-	GUI gui;
-
-	SoundManager soundManager;
-
-	Input input;
-
-	Shader shader;
-	Shader skinnedShader;
-	Shader lightShader;
-	Shader skyboxShader;
-	Shader textShader;
-	Shader imageShader;
-	Shader backShader;
-
-	RoomGenerator roomGenerator;
-	RoomData roomData;
-	std::vector<GameTerrainData> terrainData;
-	Model pointLightModel;
-	Model skyboxModel;
-
-	World world;
 	std::unique_ptr<ShootingSystem> shootingSystem;
 	std::unique_ptr<ModelRenderSystem> modelRenderSystem;
 	std::unique_ptr<CollisionUpdateSystem> collisionUpdateSystem;
@@ -154,22 +84,23 @@ private:
 	std::unique_ptr<AudioListenerSystem> audioListenerSystem;
 	std::unique_ptr<AudioSourceSystem> audioSourceSystem;
 	std::unique_ptr<PointLightSystem> pointLightSystem;
-
-	std::unique_ptr<SpiderSpawner> spiderSpawner;
-
-	std::unique_ptr<Physics> physics;
+	std::unique_ptr<SpawnerSystem> spawnerSystem;
 
 	std::unique_ptr<EventManager> eventManager;
-	std::shared_ptr<DamageEventResponder> damageEventResponder;
-	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
-	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
 
-	btDiscreteDynamicsWorld* dynamicsWorld;
 	BulletDebugDrawer debugDrawer;
-
 	std::unique_ptr<Console> console;
 
+	std::unique_ptr<Physics> physics;
+	World world;
+	UIRenderer uiRenderer;
+	Renderer renderer;
+	SoundManager soundManager;
+	btDiscreteDynamicsWorld* dynamicsWorld;
 	std::default_random_engine generator;
+	Input input;
+
+	std::unique_ptr<Scene> scene;
 
 	void exit();
 	void setWireframe(bool on);

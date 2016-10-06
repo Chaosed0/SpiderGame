@@ -6,6 +6,7 @@
 #include "Framework/Prefab.h"
 #include "Sound/AudioClip.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/UI/Label.h"
 
 enum GunState {
 	GunState_Reloading,
@@ -18,7 +19,7 @@ public:
 	PlayerComponent()
 		: shooting(false), reloading(false),
 		shotTimer(0.0f), reloadTimer(0.0f),
-		gunState(GunState_Ready),
+		gunState(GunState_Ready), isDead(false),
 		gemCount(0), bulletCount(0), bulletsInGun(0),
 		lastFacedEntity(World::NullEntity) { }
 
@@ -44,6 +45,7 @@ public:
 		AudioClip hurtClip;
 		AudioClip gemPickupClip;
 
+		std::shared_ptr<Label> facingLabel;
 		eid_t camera;
 	};
 
@@ -51,6 +53,7 @@ public:
 
 	bool shooting;
 	bool reloading;
+	bool isDead;
 
 	float reloadTimer;
 	float shotTimer;

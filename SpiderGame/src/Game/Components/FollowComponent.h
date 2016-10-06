@@ -15,6 +15,7 @@ public:
 		Data() : target(World::NullEntity), repathTime(3.0f), raycastStartOffset(0.0f) { }
 		eid_t target;
 		float repathTime;
+		Room room;
 		glm::vec3 raycastStartOffset;
 	};
 

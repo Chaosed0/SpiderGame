@@ -7,8 +7,8 @@
 #include "Game/Components/PlayerComponent.h"
 #include "Game/Components/CameraComponent.h"
 
-PlayerFacingSystem::PlayerFacingSystem(World& world, btDynamicsWorld* dynamicsWorld, const std::shared_ptr<Label>& label)
-	: System(world), dynamicsWorld(dynamicsWorld), label(label)
+PlayerFacingSystem::PlayerFacingSystem(World& world, btDynamicsWorld* dynamicsWorld)
+	: System(world), dynamicsWorld(dynamicsWorld)
 {
 	require<RigidbodyMotorComponent>();
 	require<PlayerComponent>();
@@ -31,7 +31,7 @@ void PlayerFacingSystem::updateEntity(float dt, eid_t entity)
 
 	if (hitEntityTransformComponent != nullptr) {
 		glm::vec2 screenPoint = cameraComponent->data.worldToScreenPoint(hitEntityTransformComponent->data->getWorldPosition());
-		label->transform = Transform(glm::vec3(screenPoint + glm::vec2(20.0f, -20.0f), 0.0f)).matrix();
+		playerComponent->data.facingLabel->transform = Transform(glm::vec3(screenPoint + glm::vec2(20.0f, -20.0f), 0.0f)).matrix();
 	}
 
 	if (playerComponent->lastFacedEntity == hitEntity) {
@@ -48,5 +48,5 @@ void PlayerFacingSystem::updateEntity(float dt, eid_t entity)
 		text = "";
 	}
 
-	label->setText(text);
+	playerComponent->data.facingLabel->setText(text);
 }

@@ -13,7 +13,7 @@
 class PlayerFacingSystem : public System
 {
 public:
-	PlayerFacingSystem(World& world, btDynamicsWorld* dynamicsWorld, const std::shared_ptr<Label>& label);
+	PlayerFacingSystem(World& world, btDynamicsWorld* dynamicsWorld);
 	void updateEntity(float dt, eid_t entity);
 private:
 	btDynamicsWorld* dynamicsWorld;
