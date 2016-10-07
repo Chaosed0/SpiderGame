@@ -187,3 +187,13 @@ bool World::entityHasComponents(eid_t entity, const ComponentBitmask& bitmask) c
 	ComponentBitmask eb = this->getEntityBitmask(entity);
 	return eb.hasComponents(bitmask);
 }
+
+void World::clear()
+{
+	entities.clear();
+	for (unsigned i = 0; i < this->entityComponentMaps.size(); i++) {
+		this->entityComponentMaps[i].clear();
+	}
+
+	nextEntityId = 0;
+}

@@ -20,6 +20,7 @@
 
 #include "Game/Components/ExpiresComponent.h"
 #include "Game/Components/HurtboxComponent.h"
+#include "Game/Components/PlayerComponent.h"
 
 #include "Sound/SoundManager.h"
 
@@ -63,7 +64,24 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	btVector3 velocity = spiderBody->getLinearVelocity();
 	SpiderState newState = spiderComponent->animState;
 
-	std::shared_ptr<Transform> targetTransform = world.getComponent<TransformComponent>(followComponent->data.target)->data;
+	std::vector<eid_t> players = world.getEntitiesWithComponent<PlayerComponent>();
+	std::shared_ptr<Transform> targetTransform;
+	glm::vec3 targetVelocity;
+	if (players.size() > 0) {
+		eid_t target = players[0];
+		targetTransform = world.getComponent<TransformComponent>(target)->data;
+
+		CollisionComponent* targetCollisionComponent = world.getComponent<CollisionComponent>(target);
+		if (targetCollisionComponent != nullptr) {
+			btCollisionObject* collisionObject = targetCollisionComponent->collisionObject;
+			if (collisionObject->getInternalType() == btCollisionObject::CO_RIGID_BODY) {
+				btRigidBody* targetBody = (btRigidBody*)targetCollisionComponent->collisionObject;
+				targetVelocity = Util::btToGlm(targetBody->getLinearVelocity());
+			}
+		}
+	} else {
+		targetTransform = std::shared_ptr<Transform>(new Transform());
+	}
 	
 	float distanceToAttackTarget = glm::length(targetTransform->getWorldPosition() - transformComponent->data->getWorldPosition());
 
@@ -81,17 +99,7 @@ void SpiderSystem::updateEntity(float dt, eid_t entity)
 	case SPIDER_PREPARING_LEAP: {
 		followComponent->enabled = false;
 
-		CollisionComponent* targetCollisionComponent = world.getComponent<CollisionComponent>(followComponent->data.target);
-		glm::vec3 leadVec(0.0f);
-		if (targetCollisionComponent != nullptr) {
-			btCollisionObject* collisionObject = targetCollisionComponent->collisionObject;
-			if (collisionObject->getInternalType() == btCollisionObject::CO_RIGID_BODY) {
-				btRigidBody* targetBody = (btRigidBody*)targetCollisionComponent->collisionObject;
-				leadVec = Util::btToGlm(targetBody->getLinearVelocity()) * leadTime;
-			}
-		}
-
-		glm::vec3 leapTarget = targetTransform->getWorldPosition() + leadVec;
+		glm::vec3 leapTarget = targetTransform->getWorldPosition() + targetVelocity * leadTime;
 		glm::vec3 leapDir = leapTarget - transformComponent->data->getWorldPosition();
 		float angle = atan2f(leapDir.x, leapDir.z);
 		glm::quat facing(glm::angleAxis(angle, glm::vec3(0.0f, 1.0f, 0.0f)));

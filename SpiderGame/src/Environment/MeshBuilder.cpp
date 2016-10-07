@@ -123,8 +123,30 @@ btBvhTriangleMeshShape* MeshBuilder::getCollisionMesh()
 	return meshShape;
 }
 
+void MeshBuilder::reset() {
+	if (meshShape != nullptr) {
+		delete meshShape;
+	}
+
+	if (ivArray != nullptr) {
+		delete ivArray;
+	}
+
+	meshShape = nullptr;
+	ivArray = nullptr;
+
+	verts.clear();
+	collisionVerts.clear();
+	indices.clear();
+}
+
 MeshBuilder::~MeshBuilder()
 {
-	delete(ivArray);
-	delete(meshShape);
+	if (meshShape != nullptr) {
+		delete meshShape;
+	}
+
+	if (ivArray != nullptr) {
+		delete ivArray;
+	}
 }

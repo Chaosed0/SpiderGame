@@ -24,6 +24,7 @@
 #include "Environment/MeshBuilder.h"
 
 #include "Framework/World.h"
+#include "Framework/Prefab.h"
 #include "Framework/EventManager.h"
 
 #include "Game/Responders/DamageEventResponder.h"
@@ -67,6 +68,8 @@ struct SceneInfo
 	EventManager* eventManager;
 	btDynamicsWorld* dynamicsWorld;
 	std::default_random_engine* generator;
+
+	int windowWidth, windowHeight;
 };
 
 class Scene
@@ -75,8 +78,11 @@ public:
 	Scene(const SceneInfo& info);
 	void setup();
 private:
+	void setupPrefabs();
 
 	ModelLoader modelLoader;
+	TextureLoader textureLoader;
+	ShaderLoader shaderLoader;
 
 	GUI gui;
 
@@ -91,7 +97,30 @@ private:
 	btDynamicsWorld* dynamicsWorld;
 	std::default_random_engine& generator;
 
+	int windowWidth;
+	int windowHeight;
+
 	std::shared_ptr<DamageEventResponder> damageEventResponder;
 	std::shared_ptr<PlayerJumpResponder> playerJumpResponder;
 	std::shared_ptr<HurtboxPlayerResponder> hurtboxPlayerResponder;
+
+	bool prefabsSetup;
+	Prefab pedestalPrefab;
+	Prefab barrelPrefab;
+	Prefab bulletPrefab;
+	Prefab tablePrefab;
+	Prefab bulletTracer;
+	Prefab muzzleFlash;
+	Prefab spiderPrefab;
+	Prefab spiderSpawnerPrefab;
+	Prefab playerGunPrefab;
+	Prefab playerPrefab;
+	Prefab cameraPrefab;
+	Prefab lightPrefab;
+
+	Shader shader;
+	Shader skinnedShader;
+	Shader singleColorShader;
+	Shader textShader;
+	Shader imageShader;
 };

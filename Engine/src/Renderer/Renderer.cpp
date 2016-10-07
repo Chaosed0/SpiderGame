@@ -299,7 +299,9 @@ void Renderer::drawInternal(RenderSpace space)
 		if (renderable.animatable) {
 			Mesh& mesh = model.mesh;
 			std::vector<glm::mat4> nodeTransforms = model.getNodeTransforms(renderable.animName, renderable.time, renderable.context);
-			if (mesh.impl->boneData.size() == 0) {
+			if (renderable.animName.empty()) {
+				// Just do bindpose
+			} else if (mesh.impl->boneData.size() == 0) {
 				// Not skinned animation
 				// TODO: Actually find the node of the mesh
 				modelMatrix *= nodeTransforms[1];

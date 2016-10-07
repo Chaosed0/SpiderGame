@@ -12,10 +12,8 @@ public:
 
 	struct Data
 	{
-		Data() : target(World::NullEntity), repathTime(3.0f), raycastStartOffset(0.0f) { }
-		eid_t target;
+		Data() : repathTime(3.0f), raycastStartOffset(0.0f) { }
 		float repathTime;
-		Room room;
 		glm::vec3 raycastStartOffset;
 	};
 

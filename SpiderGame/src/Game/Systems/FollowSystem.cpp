@@ -8,6 +8,9 @@
 #include "Game/Components/RigidbodyMotorComponent.h"
 #include "Game/Components/CollisionComponent.h"
 
+#include "Game/Components/PlayerComponent.h"
+#include "Game/Components/LevelComponent.h"
+
 #include <cmath>
 #include <algorithm>
 #include <unordered_set>
@@ -31,13 +34,16 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
 
-	if (followComponent->data.target == World::NullEntity || !followComponent->enabled) {
+	std::vector<eid_t> players = world.getEntitiesWithComponent<PlayerComponent>();
+
+	if (players.size() <= 0 || !followComponent->enabled) {
 		return;
 	}
 
+	eid_t target = players[0];
 	followComponent->repathTimer += dt;
 
-	std::shared_ptr<Transform> finalTarget = world.getComponent<TransformComponent>(followComponent->data.target)->data;
+	std::shared_ptr<Transform> finalTarget = world.getComponent<TransformComponent>(target)->data;
 	glm::vec3 localTarget(0.0f);
 	bool pathFound = false;
 
@@ -49,7 +55,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 	float distanceToTarget = (btEnd - btStart).length();
 	float distanceToHit = FLT_MAX;
 
-	btConvexShape* convexShape = new btBoxShape(btVector3(0.65f, 0.2f, 0.5f));
+	btConvexShape* convexShape = new btBoxShape(btVector3(0.5f, 0.1f, 0.5f));
 
 	btQuaternion rotation = Util::glmToBt(transformComponent->data->getWorldRotation()); 
 	btTransform btTStart(rotation, btStart);
@@ -61,12 +67,19 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 
 	// Bullet reports the hit point as very far away if no contact is found
 	if (distanceToHit >= distanceToTarget - 0.1f) {
+		printf("Can see\n");
 		localTarget = to;
 		pathFound = true;
 	} else {
 		if (followComponent->repathTimer >= followComponent->data.repathTime) {
 			// Try pathfinding again
-			findPath(followComponent->data.room, from, to, followComponent->path);
+			std::vector<eid_t> levelEntities = world.getEntitiesWithComponent<LevelComponent>();
+			if (levelEntities.size() <= 0) {
+				printf("WARNING: %s tried to repath, but no level found", world.getEntityName(entity).c_str());
+			}
+			LevelComponent* levelComponent = world.getComponent<LevelComponent>(levelEntities[0]);
+
+			findPath(levelComponent->data.room, from, to, followComponent->path);
 			followComponent->pathNode = 0;
 			followComponent->repathTimer -= followComponent->data.repathTime;
 		}

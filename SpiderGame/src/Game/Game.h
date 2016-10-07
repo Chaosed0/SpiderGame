@@ -107,4 +107,5 @@ private:
 	void setNoclip(bool on);
 	void setBulletDebugDraw(bool on);
 	void refreshBulletDebugDraw();
+	void restartGame();
 };

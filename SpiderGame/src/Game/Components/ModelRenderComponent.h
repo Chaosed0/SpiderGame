@@ -13,8 +13,8 @@ struct ModelRenderComponent : public Component
 class ModelRenderConstructor : public ComponentConstructor
 {
 public:
-	ModelRenderConstructor(Renderer& renderer, const Renderer::ModelHandle& modelHandle, const Shader& shader)
-		: renderer(renderer), modelHandle(modelHandle), shader(shader) { }
+	ModelRenderConstructor(Renderer& renderer, const Renderer::ModelHandle& modelHandle, const Shader& shader, const std::string& defaultAnimation = "")
+		: renderer(renderer), modelHandle(modelHandle), shader(shader), defaultAnimation(defaultAnimation) { }
 
 	virtual ComponentConstructorInfo construct(World& world, eid_t parent, void* userinfo) const
 	{
@@ -22,8 +22,15 @@ public:
 		component->rendererHandle = renderer.getRenderableHandle(modelHandle, shader);
 		return ComponentConstructorInfo(component, typeid(ModelRenderComponent).hash_code());
 	}
+
+	virtual void finish(World& world, eid_t entity)
+	{
+		ModelRenderComponent* component = world.getComponent<ModelRenderComponent>(entity);
+		renderer.setRenderableAnimation(component->rendererHandle, defaultAnimation, true);
+	}
 private:
 	Renderer& renderer;
 	Shader shader;
 	Renderer::ModelHandle modelHandle;
+	std::string defaultAnimation;
 };

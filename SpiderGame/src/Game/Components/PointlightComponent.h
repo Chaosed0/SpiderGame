@@ -7,7 +7,8 @@
 struct PointLightComponent : public Component
 {
 	struct Data {
-		Data() : pointLightIndex(-1) { }
+		Data() : Data(-1) { }
+		Data(int index) : pointLightIndex(index) { }
 		int pointLightIndex;
 	};
 

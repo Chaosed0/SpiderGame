@@ -24,9 +24,6 @@ const static int updatesPerSecond = 60;
 const static int windowWidth = 1080;
 const static int windowHeight = 720;
 
-const static int gemCount = 3;
-const static int spiderCount = 6;
-
 Game::Game()
 {
 	running = false;
@@ -93,6 +90,21 @@ void Game::refreshBulletDebugDraw()
 {
 	debugDrawer.reset();
 	dynamicsWorld->debugDrawWorld();
+}
+
+void Game::restartGame()
+{
+	world.clear();
+
+	scene->setup();
+	std::vector<eid_t> cameraEntities = world.getEntitiesWithComponent<CameraComponent>();
+	if (cameraEntities.size() < 0) {
+		printf("WARNING: No camera in scene");
+	} else {
+		CameraComponent* cameraComponent = world.getComponent<CameraComponent>(cameraEntities[0]);
+		renderer.setCamera(&cameraComponent->data);
+		debugDrawer.setCamera(&cameraComponent->data);
+	}
 }
 
 int Game::setup()
@@ -174,6 +186,7 @@ int Game::setup()
 	console->addCallback("noclip", CallbackMap::defineCallback<bool>(std::bind(&Game::setNoclip, this, std::placeholders::_1)));
 	console->addCallback("enableBulletDebugDraw", CallbackMap::defineCallback<bool>(std::bind(&Game::setBulletDebugDraw, this, std::placeholders::_1)));
 	console->addCallback("refreshBulletDebugDraw", CallbackMap::defineCallback(std::bind(&Game::refreshBulletDebugDraw, this)));
+	console->addCallback("restart", CallbackMap::defineCallback(std::bind(&Game::restartGame, this)));
 	console->addToRenderer(uiRenderer, backShader, textShader);
 
 	/* Renderer */
@@ -221,17 +234,13 @@ int Game::setup()
 	sceneInfo.soundManager = &soundManager;
 	sceneInfo.uiRenderer = &uiRenderer;
 	sceneInfo.world = &world;
-	scene = std::make_unique<Scene>(sceneInfo);
-	scene->setup();
 
-	std::vector<eid_t> cameraEntities = world.getEntitiesWithComponent<CameraComponent>();
-	if (cameraEntities.size() < 0) {
-		printf("WARNING: No camera in scene");
-	} else {
-		CameraComponent* cameraComponent = world.getComponent<CameraComponent>(cameraEntities[0]);
-		renderer.setCamera(&cameraComponent->data);
-		debugDrawer.setCamera(&cameraComponent->data);
-	}
+	sceneInfo.windowHeight = windowHeight;
+	sceneInfo.windowWidth = windowWidth;
+
+	scene = std::make_unique<Scene>(sceneInfo);
+
+	restartGame();
 
 	return 0;
 }

@@ -18,6 +18,7 @@ public:
 	void construct();
 	btBvhTriangleMeshShape* getCollisionMesh();
 	Model getModel(std::vector<Texture>& textures);
+	void reset();
 private:
 	unsigned addVert(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& texCoord);
 
