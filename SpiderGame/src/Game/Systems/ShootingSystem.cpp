@@ -56,9 +56,13 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			renderer.setRenderableAnimation(gunRenderComponent->rendererHandle, "AnimStack::Gun|Reload", false);
 			playerComponent->gunState = GunState_Reloading;
 			playerComponent->reloadTimer = 0.0f;
+
+			ReloadStartEvent reloadEvent;
+			reloadEvent.source = entity;
+			eventManager.sendEvent(reloadEvent);
 		} else if (playerComponent->gunState == GunState_Reloading) {
 			unsigned oldBulletsInGun = playerComponent->bulletsInGun;
-			playerComponent->bulletsInGun = (std::min)(playerComponent->bulletCount, playerComponent->data.maxBulletsInGun);
+			playerComponent->bulletsInGun = (std::min)(playerComponent->bulletCount + oldBulletsInGun, playerComponent->data.maxBulletsInGun);
 			playerComponent->bulletCount -= playerComponent->bulletsInGun - oldBulletsInGun;
 			playerComponent->gunState = GunState_Ready;
 
@@ -69,6 +73,10 @@ void ShootingSystem::updateEntity(float dt, eid_t entity)
 			bulletCountEvent.oldBulletsInGun = oldBulletsInGun;
 			bulletCountEvent.newBulletsInGun = playerComponent->bulletsInGun;
 			eventManager.sendEvent(bulletCountEvent);
+
+			ReloadEndEvent reloadEvent;
+			reloadEvent.source = entity;
+			eventManager.sendEvent(reloadEvent);
 		}
 	}
 

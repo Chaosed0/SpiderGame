@@ -284,6 +284,7 @@ void Scene::setupPrefabs()
 	playerData.dryFireClip = AudioClip("assets/sound/dryfire.wav");
 	playerData.hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
 	playerData.gemPickupClip = AudioClip("assets/sound/pickup.wav");
+	playerData.reloadClip = AudioClip("assets/sound/reload.wav");
 	playerData.gunBarrelOffset = glm::vec3(0.0f, 0.19f, -0.665f);
 
 	playerData.shotTracerPrefab = bulletTracer;
@@ -365,6 +366,15 @@ void Scene::setupPrefabs()
 			bulletLabel->setText(sstream.str());
 		};
 	eventManager.registerForEvent<BulletCountChangedEvent>(bulletCountChangedCallback);
+
+	std::function<void(const ReloadStartEvent& event)> reloadStartCallback =
+		[world = &world, soundManager = &soundManager](const ReloadStartEvent& event) {
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
+			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
+
+			soundManager->playClipAtSource(playerComponent->data.reloadClip, audioSourceComponent->sourceHandle);
+		};
+	eventManager.registerForEvent<ReloadStartEvent>(reloadStartCallback);
 
 	prefabsSetup = true;
 }

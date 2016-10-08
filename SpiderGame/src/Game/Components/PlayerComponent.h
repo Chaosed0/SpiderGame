@@ -42,6 +42,7 @@ public:
 
 		AudioClip shotClip;
 		AudioClip dryFireClip;
+		AudioClip reloadClip;
 		AudioClip hurtClip;
 		AudioClip gemPickupClip;
 
