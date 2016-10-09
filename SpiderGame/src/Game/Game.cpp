@@ -27,6 +27,7 @@ const static int windowHeight = 720;
 
 Game::Game()
 {
+	restart = false;
 	running = false;
 	wireframe = false;
 	lastUpdate = UINT32_MAX;
@@ -226,6 +227,7 @@ int Game::setup()
 	audioSourceSystem = std::make_unique<AudioSourceSystem>(world, soundManager);
 	pointLightSystem = std::make_unique<PointLightSystem>(world, renderer);
 	spawnerSystem = std::make_unique<SpawnerSystem>(world, dynamicsWorld, generator);
+	playerDeathSystem = std::make_unique<PlayerDeathSystem>(world, *eventManager);
 
 	SceneInfo sceneInfo;
 	sceneInfo.dynamicsWorld = dynamicsWorld;
@@ -245,8 +247,8 @@ int Game::setup()
 
 	std::function<void(const RestartEvent& event)> restartCallback =
 		[game = this, world = &world](const RestartEvent& event) {
-			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
-			game->restartGame();
+			// Defer the restart so we avoid invalidating any entity iterators
+			game->restart = true;
 		};
 	eventManager->registerForEvent<RestartEvent>(restartCallback);
 
@@ -331,8 +333,14 @@ void Game::update()
 
 	/* Cleanup */
 	expiresSystem->update(timeDelta);
+	playerDeathSystem->update(timeDelta);
 
 	world.cleanupEntities();
+
+	if (restart) {
+		this->restartGame();
+		restart = false;
+	}
 }
 
 void Game::handleEvent(SDL_Event& event)

@@ -39,6 +39,7 @@
 #include "Game/Systems/AudioSourceSystem.h"
 #include "Game/Systems/PointLightSystem.h"
 #include "Game/Systems/SpawnerSystem.h"
+#include "Game/Systems/PlayerDeathSystem.h"
 
 #include "Framework/Physics.h"
 #include "Framework/EventManager.h"
@@ -63,6 +64,7 @@ private:
 
 	bool wireframe;
 	bool running;
+	bool restart;
 	Uint32 lastUpdate;
 	float accumulator;
 	float timeDelta;
@@ -85,6 +87,7 @@ private:
 	std::unique_ptr<AudioSourceSystem> audioSourceSystem;
 	std::unique_ptr<PointLightSystem> pointLightSystem;
 	std::unique_ptr<SpawnerSystem> spawnerSystem;
+	std::unique_ptr<PlayerDeathSystem> playerDeathSystem;
 
 	std::unique_ptr<EventManager> eventManager;
 

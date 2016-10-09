@@ -343,7 +343,6 @@ void Scene::setupPrefabs()
 				RigidbodyMotorComponent* motorComponent = world->getComponent<RigidbodyMotorComponent>(event.entity);
 				btRigidBody* playerBody = (btRigidBody*)collisionComponent->collisionObject;
 				playerBody->setAngularFactor(btVector3(1.0f, 1.0f, 1.0f));
-				//playerBody->applyCentralImpulse(btVector3(10000.0f, 0.0f, 0.0f));
 				playerComponent->isDead = true;
 				motorComponent->canMove = false;
 			}

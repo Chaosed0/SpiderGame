@@ -18,7 +18,7 @@ class PlayerComponent : public Component
 public:
 	PlayerComponent()
 		: shooting(false), reloading(false),
-		shotTimer(0.0f), reloadTimer(0.0f),
+		shotTimer(0.0f), reloadTimer(data.reloadTime),
 		gunState(GunState_Ready), isDead(false),
 		gemCount(0), bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
 		lastFacedEntity(World::NullEntity) { }

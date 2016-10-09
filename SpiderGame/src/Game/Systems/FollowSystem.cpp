@@ -67,7 +67,6 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 
 	// Bullet reports the hit point as very far away if no contact is found
 	if (distanceToHit >= distanceToTarget - 0.1f) {
-		printf("Can see\n");
 		localTarget = to;
 		pathFound = true;
 	} else {
