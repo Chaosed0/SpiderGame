@@ -84,7 +84,6 @@ void Scene::setupPrefabs()
 	/* Health label */
 	std::shared_ptr<Font> font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
 	gui.healthLabel = std::make_shared<Label>(font);
-	gui.healthLabel->setText("100");
 	gui.healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gui.healthLabel->transform = Transform(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.healthLabelHandle = uiRenderer.getEntityHandle(gui.healthLabel, textShader);
@@ -97,7 +96,6 @@ void Scene::setupPrefabs()
 	/* Gem label */
 	gui.gemLabel = std::make_shared<Label>(font);
 	gui.gemLabel->setAlignment(Label::Alignment_right);
-	gui.gemLabel->setText("0");
 	gui.gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gui.gemLabel->transform = Transform(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.gemLabelHandle = uiRenderer.getEntityHandle(gui.gemLabel, textShader);
@@ -109,7 +107,6 @@ void Scene::setupPrefabs()
 
 	/* Bullet label */
 	gui.bulletLabel = std::make_shared<Label>(font);
-	gui.bulletLabel->setText("0/0");
 	gui.bulletLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gui.bulletLabel->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.bulletLabelHandle = uiRenderer.getEntityHandle(gui.bulletLabel, textShader);
@@ -195,8 +192,11 @@ void Scene::setupPrefabs()
 	glm::vec3 spiderHalfExtents = glm::vec3(125.0f, 75.0f, 120.0f) * 0.005f;
 	btCapsuleShapeZ* spiderShape = new btCapsuleShapeZ(spiderHalfExtents.y, spiderHalfExtents.x);
 	btCompoundShape* spiderCompoundShape = new btCompoundShape();
+	float spiderMass = 40.0f;
+	btVector3 spiderInertia;
+	spiderCompoundShape->calculateLocalInertia(spiderMass, spiderInertia);
 	spiderCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, spiderHalfExtents.y, 0.0f)), spiderShape);
-	btRigidBody::btRigidBodyConstructionInfo spiderBodyInfo(5.0f, new btDefaultMotionState(), spiderCompoundShape);
+	btRigidBody::btRigidBodyConstructionInfo spiderBodyInfo(spiderMass, new btDefaultMotionState(), spiderCompoundShape, spiderInertia);
 
 	FollowComponent::Data followData;
 	followData.repathTime = 3.0f;
@@ -273,7 +273,10 @@ void Scene::setupPrefabs()
 
 	/* Player */
 	btCapsuleShape* shape = new btCapsuleShape(0.5f, 0.7f);
-	btRigidBody::btRigidBodyConstructionInfo playerInfo(10.0f, new btDefaultMotionState(), shape, btVector3(10.0f, 10.0f, 10.0f));
+	float playerMass = 70.0f;
+	btVector3 playerInertia;
+	shape->calculateLocalInertia(playerMass, playerInertia);
+	btRigidBody::btRigidBodyConstructionInfo playerInfo(playerMass, new btDefaultMotionState(), shape, playerInertia);
 
 	PlayerComponent::Data playerData;
 	playerData.shotCooldown = 0.3f;
@@ -337,9 +340,12 @@ void Scene::setupPrefabs()
 
 			if (event.newHealth <= 0) {
 				CollisionComponent* collisionComponent = world->getComponent<CollisionComponent>(event.entity);
-				((btRigidBody*)collisionComponent->collisionObject)->setAngularFactor(btVector3(1.0f, 1.0f, 1.0f));
-				((btRigidBody*)collisionComponent->collisionObject)->applyForce(btVector3(20.0f, 0.0f, 20.0f), btVector3(0.0f, 0.5f, 0.0f));
+				RigidbodyMotorComponent* motorComponent = world->getComponent<RigidbodyMotorComponent>(event.entity);
+				btRigidBody* playerBody = (btRigidBody*)collisionComponent->collisionObject;
+				playerBody->setAngularFactor(btVector3(1.0f, 1.0f, 1.0f));
+				//playerBody->applyCentralImpulse(btVector3(10000.0f, 0.0f, 0.0f));
 				playerComponent->isDead = true;
+				motorComponent->canMove = false;
 			}
 		};
 	eventManager.registerForEvent<HealthChangedEvent>(healthChangedCallback);
@@ -402,6 +408,22 @@ void Scene::setup()
 	roomData.meshBuilder.reset();
 	roomData.meshBuilder.addRoom(room, (float)roomHeight);
 	roomData.meshBuilder.construct();
+
+	// Add the room to collision
+	btCollisionShape* roomShape = roomData.meshBuilder.getCollisionMesh();
+	btRigidBody::btRigidBodyConstructionInfo roomConstructionInfo(0.0f, new btDefaultMotionState(), roomShape);
+
+	// Render the room
+	Texture roomTexture(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/brick.png"));
+	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ roomTexture });
+	roomModel.material.setProperty("shininess", MaterialProperty(FLT_MAX));
+	Renderer::ModelHandle roomModelHandle = renderer.getModelHandle(roomModel);
+
+	Prefab roomPrefab("Level");
+	roomPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, roomConstructionInfo, CollisionGroupWall, CollisionGroupAll));
+	roomPrefab.addConstructor(new ModelRenderConstructor(renderer, roomModelHandle, shader));
+	roomPrefab.addConstructor(new LevelConstructor(LevelComponent::Data(roomData.room)));
+	eid_t roomEntity = world.constructPrefab(roomPrefab);
 
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
 	gemModel.material.setProperty("shininess", 32.0f);
@@ -507,26 +529,6 @@ void Scene::setup()
 		}
 	}
 
-	// Add the room to collision
-	btCollisionShape* roomShape = roomData.meshBuilder.getCollisionMesh();
-	btRigidBody::btRigidBodyConstructionInfo roomConstructionInfo(0.0f, new btDefaultMotionState(), roomShape);
-
-	// Render the room
-	Texture roomTexture(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/brick.png"));
-	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ roomTexture });
-	roomModel.material.setProperty("shininess", MaterialProperty(FLT_MAX));
-	Renderer::ModelHandle roomModelHandle = renderer.getModelHandle(roomModel);
-
-	Prefab roomPrefab("Level");
-	roomPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, roomConstructionInfo, CollisionGroupWall, CollisionGroupAll));
-	roomPrefab.addConstructor(new ModelRenderConstructor(renderer, roomModelHandle, shader));
-	roomPrefab.addConstructor(new LevelConstructor(LevelComponent::Data(roomData.room)));
-	eid_t roomEntity = world.constructPrefab(roomPrefab);
-
-	Model barrelModel = modelLoader.loadModelFromPath("assets/models/barrel.fbx");
-	barrelModel.material.setProperty("shininess", 16.0f);
-	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(barrelModel);
-
 	// Put down tables with bullets
 	std::vector<Transform> bulletSpawnLocations = {
 		Transform(roomBoxCenter(topmostRoomBox)),
@@ -573,6 +575,20 @@ void Scene::setup()
 		RoomBox& box = roomData.room.boxes[i];
 		spawnerComponent->data.candidatePositions.push_back(roomBoxCenter(box) + glm::vec3(0.0f, 1.0f, 0.0f));
 	}
+
+	// Initialize the GUI
+	HealthComponent* playerHealthComponent = world.getComponent<HealthComponent>(player);
+	std::stringstream sstream;
+	sstream << playerHealthComponent->data.health;
+	gui.healthLabel->setText(sstream.str());
+
+	sstream.str("");
+	sstream << playerComponent->gemCount;
+	gui.gemLabel->setText(sstream.str());
+
+	sstream.str("");
+	sstream << playerComponent->bulletsInGun << "/" << playerComponent->bulletCount;
+	gui.bulletLabel->setText(sstream.str());
 }
 
 glm::vec3 roomBoxCenter(const RoomBox& box)
