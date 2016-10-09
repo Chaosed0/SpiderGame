@@ -30,6 +30,7 @@
 #include "Game/Responders/DamageEventResponder.h"
 #include "Game/Responders/PlayerJumpResponder.h"
 #include "Game/Responders/HurtboxPlayerResponder.h"
+#include "Game/Events/RestartEvent.h"
 
 struct RoomData
 {

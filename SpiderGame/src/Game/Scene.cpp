@@ -273,7 +273,7 @@ void Scene::setupPrefabs()
 
 	/* Player */
 	btCapsuleShape* shape = new btCapsuleShape(0.5f, 0.7f);
-	btRigidBody::btRigidBodyConstructionInfo playerInfo(5.0f, new btDefaultMotionState(), shape);
+	btRigidBody::btRigidBodyConstructionInfo playerInfo(10.0f, new btDefaultMotionState(), shape, btVector3(10.0f, 10.0f, 10.0f));
 
 	PlayerComponent::Data playerData;
 	playerData.shotCooldown = 0.3f;
@@ -338,6 +338,7 @@ void Scene::setupPrefabs()
 			if (event.newHealth <= 0) {
 				CollisionComponent* collisionComponent = world->getComponent<CollisionComponent>(event.entity);
 				((btRigidBody*)collisionComponent->collisionObject)->setAngularFactor(btVector3(1.0f, 1.0f, 1.0f));
+				((btRigidBody*)collisionComponent->collisionObject)->applyForce(btVector3(20.0f, 0.0f, 20.0f), btVector3(0.0f, 0.5f, 0.0f));
 				playerComponent->isDead = true;
 			}
 		};
@@ -521,6 +522,10 @@ void Scene::setup()
 	roomPrefab.addConstructor(new ModelRenderConstructor(renderer, roomModelHandle, shader));
 	roomPrefab.addConstructor(new LevelConstructor(LevelComponent::Data(roomData.room)));
 	eid_t roomEntity = world.constructPrefab(roomPrefab);
+
+	Model barrelModel = modelLoader.loadModelFromPath("assets/models/barrel.fbx");
+	barrelModel.material.setProperty("shininess", 16.0f);
+	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(barrelModel);
 
 	// Put down tables with bullets
 	std::vector<Transform> bulletSpawnLocations = {

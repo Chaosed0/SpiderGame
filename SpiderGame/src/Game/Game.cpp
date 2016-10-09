@@ -16,6 +16,7 @@
 
 #include "Game/Components/CollisionComponent.h"
 #include "Game/Components/CameraComponent.h"
+#include "Game/Events/RestartEvent.h"
 
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/UIQuad.h"
@@ -197,7 +198,7 @@ int Game::setup()
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
 	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0.0f, -10.0f, 0.0f));
 
@@ -241,6 +242,13 @@ int Game::setup()
 	scene = std::make_unique<Scene>(sceneInfo);
 
 	restartGame();
+
+	std::function<void(const RestartEvent& event)> restartCallback =
+		[game = this, world = &world](const RestartEvent& event) {
+			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
+			game->restartGame();
+		};
+	eventManager->registerForEvent<RestartEvent>(restartCallback);
 
 	return 0;
 }

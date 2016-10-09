@@ -20,19 +20,20 @@ public:
 		: shooting(false), reloading(false),
 		shotTimer(0.0f), reloadTimer(0.0f),
 		gunState(GunState_Ready), isDead(false),
-		gemCount(0), bulletCount(0), bulletsInGun(0),
+		gemCount(0), bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
 		lastFacedEntity(World::NullEntity) { }
 
 	struct Data {
 		Data()
 			: maxShotDistance(100.0f), shotCooldown(1/30.0f), reloadTime(2.5f),
-			gunBarrelOffset(0.0f), maxBulletsInGun(6), shotDamage(100),
+			gunBarrelOffset(0.0f), maxBulletsInGun(6), shotDamage(100), deathRestartTime(4.0f),
 			camera(World::NullEntity), gun(World::NullEntity) { }
 
 		eid_t gun;
 		float reloadTime;
 		float shotCooldown;
 		float maxShotDistance;
+		float deathRestartTime;
 		unsigned maxBulletsInGun;
 		unsigned shotDamage;
 		glm::vec3 gunBarrelOffset;
@@ -58,6 +59,7 @@ public:
 
 	float reloadTimer;
 	float shotTimer;
+	float deathRestartTimer;
 	GunState gunState;
 
 	unsigned gemCount;

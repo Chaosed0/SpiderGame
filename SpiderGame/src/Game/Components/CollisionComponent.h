@@ -57,7 +57,8 @@ public:
 		}
 
 		btRigidBody::btRigidBodyConstructionInfo info(this->info);
-		info.m_motionState = new btDefaultMotionState(Util::gameToBt(initialTransform));
+		info.m_startWorldTransform = Util::gameToBt(initialTransform);
+		info.m_motionState = NULL;
 
 		CollisionComponent* component = new CollisionComponent();
 		btRigidBody* body = new btRigidBody(info);
