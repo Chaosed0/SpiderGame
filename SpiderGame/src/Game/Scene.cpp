@@ -140,14 +140,14 @@ void Scene::setupPrefabs()
 	barrelModel.material.setProperty("shininess", 16.0f);
 	Renderer::ModelHandle barrelModelHandle = renderer.getModelHandle(barrelModel);
 
-	btVector3 halfExtents(0.5f, 0.75f, 0.5f);
-	btCollisionShape* barrelShape = new btBoxShape(halfExtents);
+	btVector3 barrelHalfExtents(0.5f, 0.75f, 0.5f);
+	btCollisionShape* barrelShape = new btBoxShape(barrelHalfExtents);
 	btCompoundShape* barrelCompoundShape = new btCompoundShape();
-	barrelCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, halfExtents.y(), 0.0f)), barrelShape);
-	btRigidBody::btRigidBodyConstructionInfo info(0.0f, new btDefaultMotionState(), barrelShape);
+	barrelCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, barrelHalfExtents.y(), 0.0f)), barrelShape);
+	btRigidBody::btRigidBodyConstructionInfo barrelBodyInfo(0.0f, new btDefaultMotionState(), barrelShape);
 
 	barrelPrefab.addConstructor(new TransformConstructor());
-	barrelPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info));
+	barrelPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, barrelBodyInfo));
 	barrelPrefab.addConstructor(new ModelRenderConstructor(renderer, barrelModelHandle, shader));
 
 	/* Table */
@@ -163,6 +163,23 @@ void Scene::setupPrefabs()
 	tablePrefab.addConstructor(new CollisionConstructor(dynamicsWorld, tableInfo));
 	tablePrefab.addConstructor(new ModelRenderConstructor(renderer, tableModelHandle, shader));
 
+	/* Platform */
+	Model platformModel = modelLoader.loadModelFromPath("assets/models/platform.fbx");
+	Renderer::ModelHandle platformModelHandle = renderer.getModelHandle(platformModel);
+
+	btVector3 platformHalfExtents1(3.0f, 0.125f, 3.0f);
+	btVector3 platformHalfExtents2(2.25f, 0.125f, 2.25f);
+	btCollisionShape* platformShape1 = new btBoxShape(platformHalfExtents1);
+	btCollisionShape* platformShape2 = new btBoxShape(platformHalfExtents2);
+	btCompoundShape* platformCompoundShape = new btCompoundShape();
+	platformCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, platformHalfExtents1.y(), 0.0f)), platformShape1);
+	platformCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, platformHalfExtents1.y() * 2.0f + platformHalfExtents2.y(), 0.0f)), platformShape2);
+	btRigidBody::btRigidBodyConstructionInfo platformBodyInfo(0.0f, new btDefaultMotionState(), platformCompoundShape);
+
+	platformPrefab.addConstructor(new TransformConstructor());
+	platformPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, platformBodyInfo));
+	platformPrefab.addConstructor(new ModelRenderConstructor(renderer, platformModelHandle, shader));
+
 	/* Bullets */
 	Model bulletModel = modelLoader.loadModelFromPath("assets/models/bullets.fbx");
 	Renderer::ModelHandle bulletModelHandle = renderer.getModelHandle(bulletModel);
@@ -174,7 +191,7 @@ void Scene::setupPrefabs()
 
 	bulletPrefab.setName("Bullets");
 	bulletPrefab.addConstructor(new TransformConstructor());
-	bulletPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, info));
+	bulletPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, bulletInfo));
 	bulletPrefab.addConstructor(new ModelRenderConstructor(renderer, bulletModelHandle, shader));
 
 	/* Spider */
@@ -424,6 +441,10 @@ void Scene::setup()
 	roomPrefab.addConstructor(new LevelConstructor(LevelComponent::Data(roomData.room)));
 	eid_t roomEntity = world.constructPrefab(roomPrefab);
 
+	PrefabConstructionInfo platformInfo = PrefabConstructionInfo(Transform());
+	eid_t platformEntity = world.constructPrefab(platformPrefab, World::NullEntity, &platformInfo);
+
+	// TODO: This actually introduces a bit of a leak where we add this to VRAM every time the scene loads
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
 	gemModel.material.setProperty("shininess", 32.0f);
 
@@ -460,6 +481,15 @@ void Scene::setup()
 		light.specular = color * 1.0f;
 		renderer.setPointLight(i+1, light);
 
+		std::stringstream namestream;
+		PrefabConstructionInfo lightInfo = PrefabConstructionInfo(Transform(light.position));
+		namestream << "Light " << i;
+
+		Prefab lightPrefab(namestream.str());
+		lightPrefab.addConstructor(new TransformConstructor());
+		lightPrefab.addConstructor(new PointLightConstructor(PointLightComponent::Data(i+1)));
+		eid_t lightEntity = world.constructPrefab(lightPrefab, World::NullEntity, &lightInfo);
+
 		PrefabConstructionInfo pedestalInfo = PrefabConstructionInfo(Transform(floorPosition));
 		eid_t pedestalEntity = world.constructPrefab(pedestalPrefab, World::NullEntity, &pedestalInfo);
 
@@ -470,19 +500,19 @@ void Scene::setup()
 		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
 
-		Prefab gemPrefab;
+		namestream.str("");
+		namestream << "Gem " << i;
+
+		Prefab gemPrefab(namestream.str());
 		gemPrefab.addConstructor(new TransformConstructor());
 		gemPrefab.addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
 		gemPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, rbInfo, CollisionGroupDefault, CollisionGroupAll, false));
 		gemPrefab.addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
 
-		std::stringstream namestream;
-		namestream << "Gem " << i;
-		gemPrefab.setName(namestream.str());
-
 		PrefabConstructionInfo gemInfo = PrefabConstructionInfo(Transform(gemPosition));
 		eid_t gemEntity = world.constructPrefab(gemPrefab, World::NullEntity, &gemInfo);
 	}
+
 	PointLight light;
 	light.constant = 1.0f;
 	light.linear = 0.3f;

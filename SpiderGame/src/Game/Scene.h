@@ -119,6 +119,8 @@ private:
 	Prefab cameraPrefab;
 	Prefab lightPrefab;
 
+	Prefab platformPrefab;
+
 	Shader shader;
 	Shader skinnedShader;
 	Shader singleColorShader;

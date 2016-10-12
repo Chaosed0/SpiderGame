@@ -67,6 +67,10 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		playerComponent->gemCount++;
 		world.removeEntity(entity);
 
+		std::string lightName = "Light" + name.substr(3);
+		eid_t light = world.getEntityWithName(lightName);
+		world.removeEntity(light);
+
 		GemCountChangedEvent event;
 		event.source = player;
 		event.newGemCount = playerComponent->gemCount;
