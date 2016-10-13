@@ -79,9 +79,7 @@ struct Renderer::Entity
 };
 
 Renderer::Renderer()
-	: pointLights(maxPointLights),
-	camera(nullptr),
-	pointLightCount(0)
+	: camera(nullptr)
 {
 	this->uiModelTransform = glm::mat4();
 	// Flip the y axis so we can use normal modelspace but position in UI space
@@ -256,16 +254,23 @@ void Renderer::drawInternal(RenderSpace space)
 		}
 		glCheckError();
 
-		for (unsigned int i = 0; i < pointLights.size(); i++) {
-			PointLight light = pointLights[i];
-			glUniform1f(shaderCache.pointLights[i].constant, light.constant);
-			glUniform1f(shaderCache.pointLights[i].linear, light.linear);
-			glUniform1f(shaderCache.pointLights[i].quadratic, light.quadratic);
-			glUniform3f(shaderCache.pointLights[i].ambient, light.ambient.x, light.ambient.y, light.ambient.z);
-			glUniform3f(shaderCache.pointLights[i].diffuse, light.diffuse.x, light.diffuse.y, light.diffuse.z);
-			glUniform3f(shaderCache.pointLights[i].specular, light.specular.x, light.specular.y, light.specular.z);
-			glUniform3f(shaderCache.pointLights[i].position, light.position.x, light.position.y, light.position.z);
+		unsigned pointLightCount = 0;
+		for (auto lightIter = pointLightPool.begin(); lightIter != pointLightPool.end(); ++lightIter) {
+			if (pointLightCount >= maxPointLights) {
+				break;
+			}
+
+			const PointLight& light = lightIter->second;
+			glUniform1f(shaderCache.pointLights[pointLightCount].constant, light.constant);
+			glUniform1f(shaderCache.pointLights[pointLightCount].linear, light.linear);
+			glUniform1f(shaderCache.pointLights[pointLightCount].quadratic, light.quadratic);
+			glUniform3f(shaderCache.pointLights[pointLightCount].ambient, light.ambient.x, light.ambient.y, light.ambient.z);
+			glUniform3f(shaderCache.pointLights[pointLightCount].diffuse, light.diffuse.x, light.diffuse.y, light.diffuse.z);
+			glUniform3f(shaderCache.pointLights[pointLightCount].specular, light.specular.x, light.specular.y, light.specular.z);
+			glUniform3f(shaderCache.pointLights[pointLightCount].position, light.position.x, light.position.y, light.position.z);
 			glCheckError();
+
+			++pointLightCount;
 		}
 		
 		glUniform3f(shaderCache.dirLight.direction, dirLight.direction.x, dirLight.direction.y, dirLight.direction.z);
@@ -335,25 +340,30 @@ void Renderer::setDirLight(DirLight dirLight)
 	this->dirLight = dirLight;
 }
 
-PointLight Renderer::getPointLight(unsigned int index)
+Renderer::PointLightHandle Renderer::getPointLightHandle(const PointLight& light)
 {
-	if (index < pointLights.size()) {
-		return pointLights[index];
-	}
-	return PointLight();
+	return pointLightPool.getNewHandle(light);
 }
 
-void Renderer::setPointLight(unsigned int index, const PointLight& pointLight)
+void Renderer::setPointLight(const Renderer::PointLightHandle& handle, const PointLight& pointLight)
 {
-	if (index < pointLights.size()) {
-		pointLights[index] = pointLight;
-		pointLightCount = (std::max)(index + 1, pointLightCount);
+	std::experimental::optional<std::reference_wrapper<PointLight>> lightOpt = pointLightPool.get(handle);
+	if (!lightOpt) {
+		return;
 	}
+
+	PointLight& light = *lightOpt;
+	light = pointLight;
 }
 
-unsigned int Renderer::getMaxPointLights()
+PointLight Renderer::getPointLight(const Renderer::PointLightHandle& handle)
 {
-	return pointLights.size();
+	std::experimental::optional<std::reference_wrapper<PointLight>> lightOpt = pointLightPool.get(handle);
+	if (!lightOpt) {
+		return PointLight();
+	}
+
+	return *lightOpt;
 }
 
 Renderer::ShaderCache::ShaderCache(const ShaderImpl& shader)

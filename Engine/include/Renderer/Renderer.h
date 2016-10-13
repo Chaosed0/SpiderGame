@@ -51,6 +51,7 @@ public:
 	struct Entity;
 	typedef HandlePool<Model>::Handle ModelHandle;
 	typedef HandlePool<Entity>::Handle RenderableHandle;
+	typedef HandlePool<PointLight>::Handle PointLightHandle;
 	typedef std::function<void(const std::string&)> DebugLogCallback;
 
 	Renderer();
@@ -78,20 +79,22 @@ public:
 
 	/*!
 	 * \brief Sets a point light.
-	 * \param index Must be less than maxPointLights().
+	 * \param handle Handle previously registered using getPointLightHandle.
+	 * \param pointLight New light parameters to pass to the renderer.
 	 */
-	void setPointLight(unsigned int index, const PointLight& pointLight);
+	void setPointLight(const PointLightHandle& handle, const PointLight& pointLight);
 
 	/*!
 	 * \brief Gets a point light.
-	 * \param index Must be less than maxPointLights().
+	 * \param light Initial point light parameters.
+	 * \return New point light handle. If all handles go out of scope, the point light is destroyed.
 	 */
-	PointLight getPointLight(unsigned int index);
+	PointLightHandle getPointLightHandle(const PointLight& light);
 
 	/*!
-	 * \ brief Gets the maximum point lights allowed by the renderer.
+	 * \brief Gets the parameters of an existing point light.
 	 */
-	unsigned getMaxPointLights();
+	PointLight getPointLight(const PointLightHandle& handle);
 
 	/*!
 	 * \brief Gets a handle to a model object, which can be passed to the getRenderableHandle method.
@@ -149,9 +152,6 @@ private:
 	/*! The global directional light. */
 	DirLight dirLight;
 
-	/*! Point lights. */
-	std::vector<PointLight> pointLights;
-
 	/*! Map of shader ids to shaders. */
 	struct ShaderCache;
 	std::unordered_map<uint64_t, ShaderCache> shaderMap;
@@ -161,15 +161,15 @@ private:
 	
 	/*! Pool for renderables registered with this renderer. */
 	HandlePool<Entity> entityPool;
+	
+	/*! Pool for point lights registered with this renderer. */
+	HandlePool<PointLight> pointLightPool;
 
 	/*! The callback to call when an OpenGL debug message is emitted. */
 	DebugLogCallback debugLogCallback;
 
 	/*! ID to assign to the next model requested through getModelHandle(). */
 	unsigned nextModelHandle;
-
-	/*! Total point lights to send to the shader. */
-	unsigned pointLightCount;
 
 	/*! Model space transformation for UI space drawing. */
 	glm::mat4 uiModelTransform;

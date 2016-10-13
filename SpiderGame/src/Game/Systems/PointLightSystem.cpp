@@ -17,12 +17,7 @@ void PointLightSystem::updateEntity(float dt, eid_t entity)
 	PointLightComponent* pointLightComponent = world.getComponent<PointLightComponent>(entity);
 	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 
-	int lightIndex = pointLightComponent->data.pointLightIndex;
-	if (lightIndex < 0) {
-		return;
-	}
-
-	PointLight light = renderer.getPointLight(lightIndex);
+	PointLight light = renderer.getPointLight(pointLightComponent->handle);
 	light.position = transformComponent->data->getWorldPosition();
-	renderer.setPointLight(pointLightComponent->data.pointLightIndex, light);
+	renderer.setPointLight(pointLightComponent->handle, light);
 }

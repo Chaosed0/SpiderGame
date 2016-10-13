@@ -284,9 +284,17 @@ void Scene::setupPrefabs()
 	cameraPrefab.addConstructor(new CameraConstructor(Camera(glm::radians(90.0f), (unsigned)windowWidth, (unsigned)windowHeight, 0.1f, 1000000.0f)));
 
 	/* Player's light */
+	PointLight playerLight;
+	playerLight.constant = 1.0f;
+	playerLight.linear = 0.3f;
+	playerLight.quadratic = 0.7f;
+	playerLight.ambient = glm::vec3(0.2f);
+	playerLight.diffuse = glm::vec3(0.6f);
+	playerLight.specular = glm::vec3(1.0f);
+
 	lightPrefab.setName("Light");
 	lightPrefab.addConstructor(new TransformConstructor());
-	lightPrefab.addConstructor(new PointLightConstructor(PointLightComponent::Data(0)));
+	lightPrefab.addConstructor(new PointLightConstructor(renderer, playerLight));
 
 	/* Player */
 	btCapsuleShape* shape = new btCapsuleShape(0.5f, 0.7f);
@@ -479,7 +487,6 @@ void Scene::setup()
 		light.ambient = color * 0.1f;
 		light.diffuse = color * 0.6f;
 		light.specular = color * 1.0f;
-		renderer.setPointLight(i+1, light);
 
 		std::stringstream namestream;
 		PrefabConstructionInfo lightInfo = PrefabConstructionInfo(Transform(light.position));
@@ -487,7 +494,7 @@ void Scene::setup()
 
 		Prefab lightPrefab(namestream.str());
 		lightPrefab.addConstructor(new TransformConstructor());
-		lightPrefab.addConstructor(new PointLightConstructor(PointLightComponent::Data(i+1)));
+		lightPrefab.addConstructor(new PointLightConstructor(renderer, light));
 		eid_t lightEntity = world.constructPrefab(lightPrefab, World::NullEntity, &lightInfo);
 
 		PrefabConstructionInfo pedestalInfo = PrefabConstructionInfo(Transform(floorPosition));
@@ -512,15 +519,6 @@ void Scene::setup()
 		PrefabConstructionInfo gemInfo = PrefabConstructionInfo(Transform(gemPosition));
 		eid_t gemEntity = world.constructPrefab(gemPrefab, World::NullEntity, &gemInfo);
 	}
-
-	PointLight light;
-	light.constant = 1.0f;
-	light.linear = 0.3f;
-	light.quadratic = 0.7f;
-	light.ambient = glm::vec3(0.2f);
-	light.diffuse = glm::vec3(0.6f);
-	light.specular = glm::vec3(1.0f);
-	renderer.setPointLight(0, light);
 
 	// Clutter
 	std::uniform_real_distribution<float> barrelRand(0.0f, 1.0f);
