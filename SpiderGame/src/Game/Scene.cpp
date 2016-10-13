@@ -93,27 +93,16 @@ void Scene::setupPrefabs()
 	gui.healthImage->transform = Transform(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f)).matrix();
 	gui.healthImageHandle = uiRenderer.getEntityHandle(gui.healthImage, imageShader);
 
-	/* Gem label */
-	gui.gemLabel = std::make_shared<Label>(font);
-	gui.gemLabel->setAlignment(Label::Alignment_right);
-	gui.gemLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	gui.gemLabel->transform = Transform(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f)).matrix();
-	gui.gemLabelHandle = uiRenderer.getEntityHandle(gui.gemLabel, textShader);
-
-	/* Gem image */
-	gui.gemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gem2d.png"), glm::vec2(32.0f, 32.0f));
-	gui.gemImage->transform = Transform(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f)).matrix();
-	gui.gemImageHandle = uiRenderer.getEntityHandle(gui.gemImage, imageShader);
-
 	/* Bullet label */
 	gui.bulletLabel = std::make_shared<Label>(font);
+	gui.bulletLabel->setAlignment(Label::Alignment_right);
 	gui.bulletLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	gui.bulletLabel->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight - 10.0f, 0.0f)).matrix();
+	gui.bulletLabel->transform = Transform(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.bulletLabelHandle = uiRenderer.getEntityHandle(gui.bulletLabel, textShader);
 
 	/* Bullet image */
 	gui.bulletImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/bullet.png"), glm::vec2(32.0f, 32.0f));
-	gui.bulletImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 40.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.bulletImage->transform = Transform(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f)).matrix();
 	gui.bulletImageHandle = uiRenderer.getEntityHandle(gui.bulletImage, imageShader);
 
 	/* Notification label */
@@ -421,13 +410,9 @@ void Scene::setupPrefabs()
 	eventManager.registerForEvent<HealthChangedEvent>(healthChangedCallback);
 
 	std::function<void(const GemCountChangedEvent& event)> gemCountChangedCallback =
-		[world = &world, soundManager = &soundManager, gemLabel = gui.gemLabel](const GemCountChangedEvent& event) {
+		[world = &world, soundManager = &soundManager](const GemCountChangedEvent& event) {
 			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
 			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
-
-			std::stringstream sstream;
-			sstream << event.newGemCount;
-			gemLabel->setText(sstream.str());
 
 			soundManager->playClipAtSource(playerComponent->data.gemPickupClip, audioSourceComponent->sourceHandle);
 		};
@@ -615,10 +600,6 @@ void Scene::setup()
 	std::stringstream sstream;
 	sstream << playerHealthComponent->data.health;
 	gui.healthLabel->setText(sstream.str());
-
-	sstream.str("");
-	sstream << playerComponent->gemCount;
-	gui.gemLabel->setText(sstream.str());
 
 	sstream.str("");
 	sstream << playerComponent->bulletsInGun << "/" << playerComponent->bulletCount;

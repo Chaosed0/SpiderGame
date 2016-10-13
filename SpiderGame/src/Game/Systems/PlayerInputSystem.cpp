@@ -8,6 +8,8 @@
 #include "Game/Events/GemCountChangedEvent.h"
 #include "Game/Events/BulletCountChangedEvent.h"
 
+#include <sstream>
+
 static const unsigned bulletPileCount = 12;
 
 PlayerInputSystem::PlayerInputSystem(World& world, Input& input, EventManager& eventManager)
@@ -64,17 +66,24 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 
 	std::string name = world.getEntityName(entity);
 	if (name.compare(0, 3, "Gem") == 0) {
-		playerComponent->gemCount++;
+		int gemIndex = -1;
+		std::stringstream sstream(name);
+		sstream.ignore(4);
+		sstream >> gemIndex;
+		if (gemIndex > 0 && (unsigned)gemIndex < playerComponent->gemStates.size()) {
+			playerComponent->gemStates[gemIndex] = GemState_PickedUp;
+		}
+
 		world.removeEntity(entity);
 
-		std::string lightName = "Light" + name.substr(3);
-		eid_t light = world.getEntityWithName(lightName);
+		sstream.str("");
+		sstream << "Light " << gemIndex;
+		eid_t light = world.getEntityWithName(sstream.str());
 		world.removeEntity(light);
 
 		GemCountChangedEvent event;
 		event.source = player;
-		event.newGemCount = playerComponent->gemCount;
-		event.oldGemCount = event.newGemCount - 1;
+		event.color = (GemColor)gemIndex;
 		eventManager.sendEvent(event);
 	} else if (name.compare(0, 7, "Bullets") == 0) {
 		playerComponent->bulletCount += bulletPileCount;
