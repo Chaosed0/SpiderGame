@@ -105,6 +105,22 @@ void Scene::setupPrefabs()
 	gui.bulletImage->transform = Transform(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f)).matrix();
 	gui.bulletImageHandle = uiRenderer.getEntityHandle(gui.bulletImage, imageShader);
 
+	/* Gem images */
+	gui.redGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemred.png"), glm::vec2(32.0f, 32.0f));
+	gui.redGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 48.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.redGemImage->isVisible = false;
+	gui.redGemImageHandle = uiRenderer.getEntityHandle(gui.redGemImage, imageShader);
+
+	gui.greenGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemgreen.png"), glm::vec2(32.0f, 32.0f));
+	gui.greenGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 16.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.greenGemImage->isVisible = false;
+	gui.greenGemImageHandle = uiRenderer.getEntityHandle(gui.greenGemImage, imageShader);
+
+	gui.blueGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemblue.png"), glm::vec2(32.0f, 32.0f));
+	gui.blueGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f + 16.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.blueGemImage->isVisible = false;
+	gui.blueGemImageHandle = uiRenderer.getEntityHandle(gui.blueGemImage, imageShader);
+
 	/* Notification label */
 	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);
 	gui.facingLabel = std::make_shared<Label>(font);
@@ -410,9 +426,24 @@ void Scene::setupPrefabs()
 	eventManager.registerForEvent<HealthChangedEvent>(healthChangedCallback);
 
 	std::function<void(const GemCountChangedEvent& event)> gemCountChangedCallback =
-		[world = &world, soundManager = &soundManager](const GemCountChangedEvent& event) {
+		[world = &world, soundManager = &soundManager, gui = &gui](const GemCountChangedEvent& event) {
 			PlayerComponent* playerComponent = world->getComponent<PlayerComponent>(event.source);
 			AudioSourceComponent* audioSourceComponent = world->getComponent<AudioSourceComponent>(event.source);
+
+			for (unsigned i = 0; i < playerComponent->gemStates.size(); i++) {
+				std::shared_ptr<UIQuad> gemImage(nullptr);
+				if (i == GemColor_Red) {
+					gemImage = gui->redGemImage;
+				} else if (i == GemColor_Green) {
+					gemImage = gui->greenGemImage;
+				} else if (i == GemColor_Blue) {
+					gemImage = gui->blueGemImage;
+				} else {
+					continue;
+				}
+
+				gemImage->isVisible = playerComponent->gemStates[i] == GemState_PickedUp;
+			}
 
 			soundManager->playClipAtSource(playerComponent->data.gemPickupClip, audioSourceComponent->sourceHandle);
 		};

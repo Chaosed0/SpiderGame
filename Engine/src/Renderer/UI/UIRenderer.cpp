@@ -89,6 +89,11 @@ void UIRenderer::draw()
 		Entity& entity = iter->second;
 		assert(entity.renderable != NULL);
 
+		if (!entity.renderable->getIsVisible()) {
+			++iter;
+			continue;
+		}
+
 		const Renderable2d& renderable = *entity.renderable;
 		const ShaderImpl& shader = entity.shader;
 		const Material& material = renderable.getMaterial();

@@ -27,7 +27,9 @@ public:
 	virtual unsigned getIndexCount() const;
 	virtual const Material& getMaterial() const;
 	virtual glm::mat4 getTransform() const;
+	virtual bool getIsVisible() const;
 
+	bool isVisible;
 	Material material;
 	glm::mat4 transform;
 private:

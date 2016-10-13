@@ -45,6 +45,9 @@ struct GUI
 	std::shared_ptr<Label> bulletLabel;
 	std::shared_ptr<UIQuad> healthImage;
 	std::shared_ptr<UIQuad> bulletImage;
+	std::shared_ptr<UIQuad> redGemImage;
+	std::shared_ptr<UIQuad> greenGemImage;
+	std::shared_ptr<UIQuad> blueGemImage;
 	std::shared_ptr<Label> facingLabel;
 	std::shared_ptr<UIQuad> reticleImage;
 
@@ -52,6 +55,9 @@ struct GUI
 	UIRenderer::UIElementHandle healthImageHandle;
 	UIRenderer::UIElementHandle bulletLabelHandle;
 	UIRenderer::UIElementHandle bulletImageHandle;
+	UIRenderer::UIElementHandle redGemImageHandle;
+	UIRenderer::UIElementHandle greenGemImageHandle;
+	UIRenderer::UIElementHandle blueGemImageHandle;
 	UIRenderer::UIElementHandle facingLabelHandle;
 	UIRenderer::UIElementHandle reticleHandle;
 };

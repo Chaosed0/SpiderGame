@@ -8,6 +8,7 @@
 #include <algorithm>
 
 UIQuad::UIQuad(const glm::vec2& size)
+	: isVisible(true)
 {
 	quad = UIUtil::generateQuad(size);
 }
@@ -42,4 +43,9 @@ const Material& UIQuad::getMaterial() const
 glm::mat4 UIQuad::getTransform() const
 {
 	return this->transform;
+}
+
+bool UIQuad::getIsVisible() const
+{
+	return this->isVisible;
 }

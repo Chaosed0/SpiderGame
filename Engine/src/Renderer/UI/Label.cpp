@@ -11,6 +11,7 @@
 const unsigned Label::defaultSize = 64;
 
 Label::Label()
+	: Label(nullptr, defaultSize)
 { }
 
 Label::Label(const std::shared_ptr<Font>& font)
@@ -19,7 +20,7 @@ Label::Label(const std::shared_ptr<Font>& font)
 
 Label::Label(const std::shared_ptr<Font>& font, unsigned maxSize)
 	: font(font), maxSize(maxSize), nVertices(0), nIndices(0),
-	text(""), alignment(Alignment_left)
+	text(""), alignment(Alignment_left), isVisible(true)
 {
 	this->generateBuffers();
 	material.setProperty("texture_diffuse", MaterialProperty(font->getTexture()));
@@ -185,4 +186,9 @@ const Material& Label::getMaterial() const
 glm::mat4 Label::getTransform() const
 {
 	return this->transform;
+}
+
+bool Label::getIsVisible() const
+{
+	return this->isVisible;
 }

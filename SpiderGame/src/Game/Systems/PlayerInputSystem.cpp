@@ -67,10 +67,11 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 	std::string name = world.getEntityName(entity);
 	if (name.compare(0, 3, "Gem") == 0) {
 		int gemIndex = -1;
-		std::stringstream sstream(name);
+		std::stringstream sstream;
+		sstream << name;
 		sstream.ignore(4);
 		sstream >> gemIndex;
-		if (gemIndex > 0 && (unsigned)gemIndex < playerComponent->gemStates.size()) {
+		if (gemIndex >= 0 && (unsigned)gemIndex < playerComponent->gemStates.size()) {
 			playerComponent->gemStates[gemIndex] = GemState_PickedUp;
 		}
 
@@ -83,7 +84,6 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 
 		GemCountChangedEvent event;
 		event.source = player;
-		event.color = (GemColor)gemIndex;
 		eventManager.sendEvent(event);
 	} else if (name.compare(0, 7, "Bullets") == 0) {
 		playerComponent->bulletCount += bulletPileCount;

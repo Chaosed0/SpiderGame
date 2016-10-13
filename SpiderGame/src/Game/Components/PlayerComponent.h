@@ -19,6 +19,13 @@ enum GemState {
 	GemState_Placed
 };
 
+enum GemColor {
+	GemColor_Red = 0,
+	GemColor_Green,
+	GemColor_Blue,
+	GemColor_Unknown
+};
+
 class PlayerComponent : public Component
 {
 public:
@@ -26,7 +33,7 @@ public:
 		: shooting(false), reloading(false),
 		shotTimer(0.0f), reloadTimer(data.reloadTime),
 		gunState(GunState_Ready), isDead(false),
-		gemStates(3), bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
+		gemStates(GemColor_Unknown), bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
 		lastFacedEntity(World::NullEntity) { }
 
 	struct Data {

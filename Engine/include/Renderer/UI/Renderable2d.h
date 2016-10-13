@@ -9,4 +9,5 @@ struct Renderable2d
 	virtual unsigned getIndexCount() const = 0;
 	virtual glm::mat4 getTransform() const = 0;
 	virtual const Material& getMaterial() const = 0;
+	virtual bool getIsVisible() const = 0;
 };
