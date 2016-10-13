@@ -194,6 +194,52 @@ void Scene::setupPrefabs()
 	bulletPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, bulletInfo));
 	bulletPrefab.addConstructor(new ModelRenderConstructor(renderer, bulletModelHandle, shader));
 
+	/* Gems */
+	std::vector<glm::vec3> gemColors = {
+		glm::vec3(1.0f, 0.0f, 0.2f),
+		glm::vec3(0.2f, 1.0f, 0.0f),
+		glm::vec3(0.0f, 0.2f, 1.0f)
+	};
+	gemPrefabs.resize(gemColors.size());
+	gemLightPrefabs.resize(gemColors.size());
+
+	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
+	gemModel.material.setProperty("shininess", 32.0f);
+
+	btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
+
+	for (unsigned i = 0; i < gemColors.size(); i++) {
+		glm::vec3 color = gemColors[i];
+
+		PointLight light;
+		light.constant = 1.0f;
+		light.linear = 0.18f;
+		light.quadratic = 0.064f;
+		light.ambient = color * 0.1f;
+		light.diffuse = color * 0.6f;
+		light.specular = color * 1.0f;
+
+		std::stringstream namestream;
+		namestream << "Light " << i;
+
+		gemLightPrefabs[i].setName(namestream.str());
+		gemLightPrefabs[i].addConstructor(new TransformConstructor());
+		gemLightPrefabs[i].addConstructor(new PointLightConstructor(renderer, light));
+
+		gemModel.material.setProperty("diffuseTint", color);
+		Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
+
+		namestream.str("");
+		namestream << "Gem " << i;
+
+		gemPrefabs[i].setName(namestream.str());
+		gemPrefabs[i].addConstructor(new TransformConstructor());
+		gemPrefabs[i].addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
+		gemPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, rbInfo, CollisionGroupDefault, CollisionGroupAll, false));
+		gemPrefabs[i].addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
+	}
+
 	/* Spider */
 	std::vector<AudioClip> spiderSounds = {
 		AudioClip("assets/sound/minecraft/spider/say1.ogg"),
@@ -292,9 +338,9 @@ void Scene::setupPrefabs()
 	playerLight.diffuse = glm::vec3(0.6f);
 	playerLight.specular = glm::vec3(1.0f);
 
-	lightPrefab.setName("Light");
-	lightPrefab.addConstructor(new TransformConstructor());
-	lightPrefab.addConstructor(new PointLightConstructor(renderer, playerLight));
+	playerLightPrefab.setName("Light");
+	playerLightPrefab.addConstructor(new TransformConstructor());
+	playerLightPrefab.addConstructor(new PointLightConstructor(renderer, playerLight));
 
 	/* Player */
 	btCapsuleShape* shape = new btCapsuleShape(0.5f, 0.7f);
@@ -438,6 +484,7 @@ void Scene::setup()
 	btRigidBody::btRigidBodyConstructionInfo roomConstructionInfo(0.0f, new btDefaultMotionState(), roomShape);
 
 	// Render the room
+	// TODO: This actually introduces a bit of a leak where we add this to VRAM every time the scene loads
 	Texture roomTexture(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/brick.png"));
 	Model roomModel = roomData.meshBuilder.getModel(std::vector<Texture>{ roomTexture });
 	roomModel.material.setProperty("shininess", MaterialProperty(FLT_MAX));
@@ -452,10 +499,6 @@ void Scene::setup()
 	PrefabConstructionInfo platformInfo = PrefabConstructionInfo(Transform());
 	eid_t platformEntity = world.constructPrefab(platformPrefab, World::NullEntity, &platformInfo);
 
-	// TODO: This actually introduces a bit of a leak where we add this to VRAM every time the scene loads
-	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
-	gemModel.material.setProperty("shininess", 32.0f);
-
 	const RoomBox& centerRoomBox = room.boxes[0];
 	const RoomBox& topmostRoomBox = room.boxes[room.topmostBox];
 	const RoomBox& bottommostRoomBox = room.boxes[room.bottommostBox];
@@ -468,56 +511,20 @@ void Scene::setup()
 		roomBoxCenter(bottommostRoomBox)
 	};
 
-	std::vector<glm::vec3> gemColors = {
-		glm::vec3(1.0f, 0.0f, 0.2f),
-		glm::vec3(0.2f, 1.0f, 0.0f),
-		glm::vec3(0.0f, 0.2f, 1.0f)
-	};
-
 	// Put a light in the center room and the rooms that are farthest out
 	for (unsigned i = 0; i < gemFloorPositions.size(); i++) {
 		glm::vec3 floorPosition = gemFloorPositions[i];
-		glm::vec3 color = gemColors[i];
 
-		PointLight light;
-		light.position = floorPosition + glm::vec3(0.0f, roomHeight / 2.0f, 0.0f);
-		light.constant = 1.0f;
-		light.linear = 0.18f;
-		light.quadratic = 0.064f;
-		light.ambient = color * 0.1f;
-		light.diffuse = color * 0.6f;
-		light.specular = color * 1.0f;
-
-		std::stringstream namestream;
-		PrefabConstructionInfo lightInfo = PrefabConstructionInfo(Transform(light.position));
-		namestream << "Light " << i;
-
-		Prefab lightPrefab(namestream.str());
-		lightPrefab.addConstructor(new TransformConstructor());
-		lightPrefab.addConstructor(new PointLightConstructor(renderer, light));
-		eid_t lightEntity = world.constructPrefab(lightPrefab, World::NullEntity, &lightInfo);
+		glm::vec3 lightPosition = floorPosition + glm::vec3(0.0f, roomHeight / 2.0f, 0.0f);
+		PrefabConstructionInfo lightInfo = PrefabConstructionInfo(Transform(lightPosition));
+		eid_t lightEntity = world.constructPrefab(gemLightPrefabs[i], World::NullEntity, &lightInfo);
 
 		PrefabConstructionInfo pedestalInfo = PrefabConstructionInfo(Transform(floorPosition));
 		eid_t pedestalEntity = world.constructPrefab(pedestalPrefab, World::NullEntity, &pedestalInfo);
 
-		gemModel.material.setProperty("diffuseTint", color);
-		Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
-
 		glm::vec3 gemPosition = floorPosition + glm::vec3(0.0f, 1.5f, 0.0f);
-		btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
-
-		namestream.str("");
-		namestream << "Gem " << i;
-
-		Prefab gemPrefab(namestream.str());
-		gemPrefab.addConstructor(new TransformConstructor());
-		gemPrefab.addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
-		gemPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, rbInfo, CollisionGroupDefault, CollisionGroupAll, false));
-		gemPrefab.addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
-
 		PrefabConstructionInfo gemInfo = PrefabConstructionInfo(Transform(gemPosition));
-		eid_t gemEntity = world.constructPrefab(gemPrefab, World::NullEntity, &gemInfo);
+		eid_t gemEntity = world.constructPrefab(gemPrefabs[i], World::NullEntity, &gemInfo);
 	}
 
 	// Clutter
@@ -585,7 +592,7 @@ void Scene::setup()
 	PrefabConstructionInfo playerInfo = PrefabConstructionInfo(Transform(playerSpawn));
 	eid_t player = world.constructPrefab(playerPrefab, World::NullEntity, &playerInfo);
 	eid_t camera = world.constructPrefab(cameraPrefab, player);
-	eid_t playerLight = world.constructPrefab(lightPrefab, player);
+	eid_t playerLight = world.constructPrefab(playerLightPrefab, player);
 	eid_t gun = world.constructPrefab(playerGunPrefab, camera);
 
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(player);

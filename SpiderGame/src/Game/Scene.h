@@ -117,9 +117,12 @@ private:
 	Prefab playerGunPrefab;
 	Prefab playerPrefab;
 	Prefab cameraPrefab;
-	Prefab lightPrefab;
+	Prefab playerLightPrefab;
 
 	Prefab platformPrefab;
+
+	std::vector<Prefab> gemPrefabs;
+	std::vector<Prefab> gemLightPrefabs;
 
 	Shader shader;
 	Shader skinnedShader;
