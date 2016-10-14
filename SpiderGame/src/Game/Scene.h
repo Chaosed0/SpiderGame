@@ -125,6 +125,7 @@ private:
 
 	std::vector<Prefab> gemPrefabs;
 	std::vector<Prefab> gemLightPrefabs;
+	std::vector<Prefab> gemSlabPrefabs;
 
 	Shader shader;
 	Shader skinnedShader;

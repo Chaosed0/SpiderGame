@@ -46,6 +46,9 @@ const static int spiderCount = 6;
 
 const static glm::vec3 tableDimensions(2.0f, 1.0f, 0.785f);
 const static glm::vec3 bulletDimensions(0.2f, 0.07f, 0.2f);
+const static glm::vec3 platformDimensions1(6.0f, 0.25f, 6.0f);
+const static glm::vec3 platformDimensions2(5.0f, 0.25f, 5.0f);
+const static glm::vec3 gemSlabDimensions(0.5f, 0.1f, 0.5f);
 
 glm::vec3 roomBoxCenter(const RoomBox& box);
 
@@ -172,13 +175,11 @@ void Scene::setupPrefabs()
 	Model platformModel = modelLoader.loadModelFromPath("assets/models/platform.fbx");
 	Renderer::ModelHandle platformModelHandle = renderer.getModelHandle(platformModel);
 
-	btVector3 platformHalfExtents1(3.0f, 0.125f, 3.0f);
-	btVector3 platformHalfExtents2(2.25f, 0.125f, 2.25f);
-	btCollisionShape* platformShape1 = new btBoxShape(platformHalfExtents1);
-	btCollisionShape* platformShape2 = new btBoxShape(platformHalfExtents2);
+	btCollisionShape* platformShape1 = new btBoxShape(Util::glmToBt(platformDimensions1 / 2.0f));
+	btCollisionShape* platformShape2 = new btBoxShape(Util::glmToBt(platformDimensions2 / 2.0f));
 	btCompoundShape* platformCompoundShape = new btCompoundShape();
-	platformCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, platformHalfExtents1.y(), 0.0f)), platformShape1);
-	platformCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, platformHalfExtents1.y() * 2.0f + platformHalfExtents2.y(), 0.0f)), platformShape2);
+	platformCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, platformDimensions1.y / 2.0f, 0.0f)), platformShape1);
+	platformCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, platformDimensions1.y + platformDimensions2.y / 2.0f, 0.0f)), platformShape2);
 	btRigidBody::btRigidBodyConstructionInfo platformBodyInfo(0.0f, new btDefaultMotionState(), platformCompoundShape);
 
 	platformPrefab.addConstructor(new TransformConstructor());
@@ -207,12 +208,18 @@ void Scene::setupPrefabs()
 	};
 	gemPrefabs.resize(gemColors.size());
 	gemLightPrefabs.resize(gemColors.size());
+	gemSlabPrefabs.resize(gemColors.size());
 
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
 	gemModel.material.setProperty("shininess", 32.0f);
 
 	btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
-	btRigidBody::btRigidBodyConstructionInfo rbInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
+	btRigidBody::btRigidBodyConstructionInfo gemBodyInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
+
+	Model gemSlabModel = getBox({ textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gem.png") }, gemSlabDimensions);
+
+	btCollisionShape* gemSlabCollisionShape = new btBoxShape(Util::glmToBt(gemSlabDimensions / 2.0f));
+	btRigidBody::btRigidBodyConstructionInfo gemSlabBodyInfo(0.0f, new btDefaultMotionState(), gemSlabCollisionShape);
 
 	for (unsigned i = 0; i < gemColors.size(); i++) {
 		glm::vec3 color = gemColors[i];
@@ -241,8 +248,19 @@ void Scene::setupPrefabs()
 		gemPrefabs[i].setName(namestream.str());
 		gemPrefabs[i].addConstructor(new TransformConstructor());
 		gemPrefabs[i].addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
-		gemPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, rbInfo, CollisionGroupDefault, CollisionGroupAll, false));
+		gemPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, gemBodyInfo, CollisionGroupDefault, CollisionGroupAll, false));
 		gemPrefabs[i].addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
+
+		gemSlabModel.material.setProperty("diffuseTint", color);
+		Renderer::ModelHandle gemSlabModelHandle = renderer.getModelHandle(gemSlabModel);
+
+		namestream.str("");
+		namestream << "Slab " << i;
+
+		gemSlabPrefabs[i].setName(namestream.str());
+		gemSlabPrefabs[i].addConstructor(new TransformConstructor());
+		gemSlabPrefabs[i].addConstructor(new ModelRenderConstructor(renderer, gemSlabModelHandle, shader));
+		gemSlabPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, gemSlabBodyInfo));
 	}
 
 	/* Spider */
@@ -369,6 +387,9 @@ void Scene::setupPrefabs()
 	playerData.shotTracerPrefab = bulletTracer;
 	playerData.muzzleFlashPrefab = muzzleFlash;
 	playerData.facingLabel = gui.facingLabel;
+
+	playerData.gemPrefabs = gemPrefabs;
+	playerData.gemLightPrefabs = gemLightPrefabs;
 
 	playerPrefab.setName("Player");
 	playerPrefab.addConstructor(new TransformConstructor());
@@ -512,9 +533,6 @@ void Scene::setup()
 	roomPrefab.addConstructor(new LevelConstructor(LevelComponent::Data(roomData.room)));
 	eid_t roomEntity = world.constructPrefab(roomPrefab);
 
-	PrefabConstructionInfo platformInfo = PrefabConstructionInfo(Transform());
-	eid_t platformEntity = world.constructPrefab(platformPrefab, World::NullEntity, &platformInfo);
-
 	const RoomBox& centerRoomBox = room.boxes[0];
 	const RoomBox& topmostRoomBox = room.boxes[room.topmostBox];
 	const RoomBox& bottommostRoomBox = room.boxes[room.bottommostBox];
@@ -541,6 +559,24 @@ void Scene::setup()
 		glm::vec3 gemPosition = floorPosition + glm::vec3(0.0f, 1.5f, 0.0f);
 		PrefabConstructionInfo gemInfo = PrefabConstructionInfo(Transform(gemPosition));
 		eid_t gemEntity = world.constructPrefab(gemPrefabs[i], World::NullEntity, &gemInfo);
+	}
+
+	// Create the platform in the center room with some gem slabs on it
+	glm::vec3 centerBoxCenter = roomBoxCenter(centerRoomBox);
+	PrefabConstructionInfo platformInfo = PrefabConstructionInfo(Transform(centerBoxCenter));
+	eid_t platformEntity = world.constructPrefab(platformPrefab, World::NullEntity, &platformInfo);
+
+	glm::vec3 gemSlabCenter = centerBoxCenter + glm::vec3(0.0f, platformDimensions1.y + platformDimensions2.y + gemSlabDimensions.y / 2.0f + 0.01f, 0.0f);
+	std::vector<glm::vec3> gemSlabPositions = {
+		gemSlabCenter + glm::vec3(-2.0f, 0.0f, 0.0f),
+		gemSlabCenter + glm::vec3(0.0f, 0.0f, -2.0f),
+		gemSlabCenter + glm::vec3(2.0f, 0.0f, 0.0f)
+	};
+
+	for (unsigned i = 0; i < gemSlabPositions.size(); i++) {
+		glm::vec3 gemSlabPosition = gemSlabPositions[i];
+		PrefabConstructionInfo slabInfo = PrefabConstructionInfo(Transform(gemSlabPosition));
+		eid_t slabEntity = world.constructPrefab(gemSlabPrefabs[i], World::NullEntity, &slabInfo);
 	}
 
 	// Clutter

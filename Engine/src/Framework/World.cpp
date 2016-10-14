@@ -158,6 +158,10 @@ World::eid_iterator World::getEidIterator(ComponentBitmask match)
 
 eid_t World::getEntityWithName(const std::string& name)
 {
+	if (name.size() == 0) {
+		fprintf(stderr, "getEntityWithName called with empty name - did you mean to do that?");
+	}
+
 	for (auto& pair : this->entities) {
 		if (pair.second.name.compare(name) == 0) {
 			return pair.first;

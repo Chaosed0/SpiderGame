@@ -77,6 +77,7 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 
 		world.removeEntity(entity);
 
+		sstream.clear();
 		sstream.str("");
 		sstream << "Light " << gemIndex;
 		eid_t light = world.getEntityWithName(sstream.str());
@@ -96,6 +97,38 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		event.newBulletsInGun = playerComponent->bulletsInGun;
 		event.oldBulletsInGun = playerComponent->bulletsInGun;
 		eventManager.sendEvent(event);
+	} else if (name.compare(0, 4, "Slab") == 0) {
+		int gemIndex = -1;
+		std::stringstream sstream;
+		sstream << name;
+		sstream.ignore(5);
+		sstream >> gemIndex;
+		if (gemIndex >= 0 &&
+			(unsigned)gemIndex < playerComponent->gemStates.size() &&
+			playerComponent->gemStates[gemIndex] == GemState_PickedUp)
+		{
+			playerComponent->gemStates[gemIndex] = GemState_Placed;
+
+			// Force a refresh of the facing label
+			playerComponent->lastFacedEntity = World::NullEntity;
+
+			// Create gem atop the slab
+			Prefab& gemPrefab = playerComponent->data.gemPrefabs[gemIndex];
+			Prefab& gemLightPrefab = playerComponent->data.gemLightPrefabs[gemIndex];
+			gemPrefab.setName("PlacedGem");
+			gemLightPrefab.setName("PlacedGemLight");
+
+			TransformComponent* slabTransformComponent = world.getComponent<TransformComponent>(entity);
+			Transform transform(*slabTransformComponent->data);
+			transform.setPosition(transform.getPosition() + glm::vec3(0.0f, 0.2f, 0.0f));
+			PrefabConstructionInfo gemInfo = PrefabConstructionInfo(transform);
+			eid_t gem = world.constructPrefab(gemPrefab, World::NullEntity, &gemInfo);
+			eid_t gemLight = world.constructPrefab(gemLightPrefab, gem);
+
+			GemCountChangedEvent event;
+			event.source = player;
+			eventManager.sendEvent(event);
+		}
 	}
 }
 

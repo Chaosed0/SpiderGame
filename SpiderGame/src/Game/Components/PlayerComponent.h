@@ -53,6 +53,8 @@ public:
 
 		Prefab shotTracerPrefab;
 		Prefab muzzleFlashPrefab;
+		std::vector<Prefab> gemPrefabs;
+		std::vector<Prefab> gemLightPrefabs;
 
 		AudioClip shotClip;
 		AudioClip dryFireClip;

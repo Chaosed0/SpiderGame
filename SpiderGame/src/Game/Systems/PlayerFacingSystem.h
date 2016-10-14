@@ -18,4 +18,7 @@ public:
 private:
 	btDynamicsWorld* dynamicsWorld;
 	std::shared_ptr<Label> label;
+
+	static const float maxLookDistance;
+	static const glm::vec2 facingLabelOffset;
 };
