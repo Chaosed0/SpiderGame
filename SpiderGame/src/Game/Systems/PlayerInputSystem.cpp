@@ -66,22 +66,14 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 
 	std::string name = world.getEntityName(entity);
 	if (name.compare(0, 3, "Gem") == 0) {
-		int gemIndex = -1;
-		std::stringstream sstream;
-		sstream << name;
-		sstream.ignore(4);
-		sstream >> gemIndex;
-		if (gemIndex >= 0 && (unsigned)gemIndex < playerComponent->gemStates.size()) {
-			playerComponent->gemStates[gemIndex] = GemState_PickedUp;
+		GemComponent* gemComponent = world.getComponent<GemComponent>(entity);
+		unsigned gemIndex = gemComponent->data.color;
+		if (gemIndex >= 0 && gemIndex < playerComponent->gemStates.size()) {
+			playerComponent->gemStates[gemIndex] = PlayerGemState_PickedUp;
 		}
 
 		world.removeEntity(entity);
-
-		sstream.clear();
-		sstream.str("");
-		sstream << "Light " << gemIndex;
-		eid_t light = world.getEntityWithName(sstream.str());
-		world.removeEntity(light);
+		world.removeEntity(gemComponent->light);
 
 		GemCountChangedEvent event;
 		event.source = player;
@@ -105,9 +97,9 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 		sstream >> gemIndex;
 		if (gemIndex >= 0 &&
 			(unsigned)gemIndex < playerComponent->gemStates.size() &&
-			playerComponent->gemStates[gemIndex] == GemState_PickedUp)
+			playerComponent->gemStates[gemIndex] == PlayerGemState_PickedUp)
 		{
-			playerComponent->gemStates[gemIndex] = GemState_Placed;
+			playerComponent->gemStates[gemIndex] = PlayerGemState_Placed;
 
 			// Force a refresh of the facing label
 			playerComponent->lastFacedEntity = World::NullEntity;
@@ -124,6 +116,9 @@ void PlayerInputSystem::tryActivate(eid_t player, PlayerComponent* playerCompone
 			PrefabConstructionInfo gemInfo = PrefabConstructionInfo(transform);
 			eid_t gem = world.constructPrefab(gemPrefab, World::NullEntity, &gemInfo);
 			eid_t gemLight = world.constructPrefab(gemLightPrefab, gem);
+
+			GemComponent* gemComponent = world.getComponent<GemComponent>(gem);
+			gemComponent->light = gemLight;
 
 			GemCountChangedEvent event;
 			event.source = player;

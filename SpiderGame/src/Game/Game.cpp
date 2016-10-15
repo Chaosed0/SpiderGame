@@ -228,6 +228,7 @@ int Game::setup()
 	pointLightSystem = std::make_unique<PointLightSystem>(world, renderer);
 	spawnerSystem = std::make_unique<SpawnerSystem>(world, dynamicsWorld, generator);
 	playerDeathSystem = std::make_unique<PlayerDeathSystem>(world, *eventManager);
+	gemSystem = std::make_unique<GemSystem>(world, renderer);
 
 	SceneInfo sceneInfo;
 	sceneInfo.dynamicsWorld = dynamicsWorld;
@@ -316,6 +317,7 @@ void Game::update()
 	rigidbodyMotorSystem->update(timeDelta);
 	velocitySystem->update(timeDelta);
 	shootingSystem->update(timeDelta);
+	gemSystem->update(timeDelta);
 
 	dynamicsWorld->stepSimulation(timeDelta);
 

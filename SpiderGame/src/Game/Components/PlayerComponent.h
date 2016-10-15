@@ -8,22 +8,17 @@
 #include "Renderer/Renderer.h"
 #include "Renderer/UI/Label.h"
 
+#include "Game/Components/GemComponent.h"
+
 enum GunState {
 	GunState_Reloading,
 	GunState_Ready,
 };
 
-enum GemState {
-	GemState_NotPickedUp,
-	GemState_PickedUp,
-	GemState_Placed
-};
-
-enum GemColor {
-	GemColor_Red = 0,
-	GemColor_Green,
-	GemColor_Blue,
-	GemColor_Unknown
+enum PlayerGemState {
+	PlayerGemState_NotPickedUp,
+	PlayerGemState_PickedUp,
+	PlayerGemState_Placed
 };
 
 class PlayerComponent : public Component
@@ -77,7 +72,7 @@ public:
 	float deathRestartTimer;
 	GunState gunState;
 
-	std::vector<GemState> gemStates;
+	std::vector<PlayerGemState> gemStates;
 
 	unsigned bulletCount;
 	unsigned bulletsInGun;

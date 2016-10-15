@@ -68,9 +68,9 @@ void PlayerFacingSystem::updateEntity(float dt, eid_t entity)
 				gemColor = "Red";
 			}
 
-			if (playerComponent->gemStates[gemIndex] == GemState_NotPickedUp) {
+			if (playerComponent->gemStates[gemIndex] == PlayerGemState_NotPickedUp) {
 				sstream << "Need " << gemColor << " gem";
-			} else if(playerComponent->gemStates[gemIndex] == GemState_PickedUp) {
+			} else if(playerComponent->gemStates[gemIndex] == PlayerGemState_PickedUp) {
 				sstream << "[e] to place " << gemColor << " gem";
 			}
 			text = sstream.str();

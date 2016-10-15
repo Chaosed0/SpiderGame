@@ -30,6 +30,7 @@
 #include "Game/Components/PointLightComponent.h"
 #include "Game/Components/SpawnerComponent.h"
 #include "Game/Components/LevelComponent.h"
+#include "Game/Components/GemComponent.h"
 
 #include "Game/Events/HealthChangedEvent.h"
 #include "Game/Events/GemCountChangedEvent.h"
@@ -224,20 +225,28 @@ void Scene::setupPrefabs()
 	for (unsigned i = 0; i < gemColors.size(); i++) {
 		glm::vec3 color = gemColors[i];
 
-		PointLight light;
-		light.constant = 1.0f;
-		light.linear = 0.18f;
-		light.quadratic = 0.064f;
-		light.ambient = color * 0.1f;
-		light.diffuse = color * 0.6f;
-		light.specular = color * 1.0f;
+		PointLight minIntensity;
+		minIntensity.constant = 1.0f;
+		minIntensity.linear = 0.27f;
+		minIntensity.quadratic = 0.096f;
+		minIntensity.ambient = color * 0.0f;
+		minIntensity.diffuse = color * 0.2f;
+		minIntensity.specular = color * 0.3f;
+
+		PointLight maxIntensity;
+		maxIntensity.constant = 1.0f;
+		maxIntensity.linear = 0.18f;
+		maxIntensity.quadratic = 0.064f;
+		maxIntensity.ambient = color * 0.1f;
+		maxIntensity.diffuse = color * 0.6f;
+		maxIntensity.specular = color * 1.0f;
 
 		std::stringstream namestream;
 		namestream << "Light " << i;
 
 		gemLightPrefabs[i].setName(namestream.str());
 		gemLightPrefabs[i].addConstructor(new TransformConstructor());
-		gemLightPrefabs[i].addConstructor(new PointLightConstructor(renderer, light));
+		gemLightPrefabs[i].addConstructor(new PointLightConstructor(renderer, minIntensity));
 
 		gemModel.material.setProperty("diffuseTint", color);
 		Renderer::ModelHandle gemModelHandle = renderer.getModelHandle(gemModel);
@@ -250,6 +259,7 @@ void Scene::setupPrefabs()
 		gemPrefabs[i].addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
 		gemPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, gemBodyInfo, CollisionGroupDefault, CollisionGroupAll, false));
 		gemPrefabs[i].addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
+		gemPrefabs[i].addConstructor(new GemConstructor(GemComponent::Data((GemColor)i, GemState_OnPedestal, color, 7.5f, minIntensity, maxIntensity)));
 
 		gemSlabModel.material.setProperty("diffuseTint", color);
 		Renderer::ModelHandle gemSlabModelHandle = renderer.getModelHandle(gemSlabModel);
@@ -463,7 +473,7 @@ void Scene::setupPrefabs()
 					continue;
 				}
 
-				gemImage->isVisible = playerComponent->gemStates[i] == GemState_PickedUp;
+				gemImage->isVisible = playerComponent->gemStates[i] == PlayerGemState_PickedUp;
 			}
 
 			soundManager->playClipAtSource(playerComponent->data.gemPickupClip, audioSourceComponent->sourceHandle);
@@ -559,6 +569,9 @@ void Scene::setup()
 		glm::vec3 gemPosition = floorPosition + glm::vec3(0.0f, 1.5f, 0.0f);
 		PrefabConstructionInfo gemInfo = PrefabConstructionInfo(Transform(gemPosition));
 		eid_t gemEntity = world.constructPrefab(gemPrefabs[i], World::NullEntity, &gemInfo);
+
+		GemComponent* gemComponent = world.getComponent<GemComponent>(gemEntity);
+		gemComponent->light = lightEntity;
 	}
 
 	// Create the platform in the center room with some gem slabs on it
