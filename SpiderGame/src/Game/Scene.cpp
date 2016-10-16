@@ -112,17 +112,14 @@ void Scene::setupPrefabs()
 	/* Gem images */
 	gui.redGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemred.png"), glm::vec2(32.0f, 32.0f));
 	gui.redGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 48.0f, windowHeight - 42.0f, 0.0f)).matrix();
-	gui.redGemImage->isVisible = false;
 	gui.redGemImageHandle = uiRenderer.getEntityHandle(gui.redGemImage, imageShader);
 
 	gui.greenGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemgreen.png"), glm::vec2(32.0f, 32.0f));
 	gui.greenGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 16.0f, windowHeight - 42.0f, 0.0f)).matrix();
-	gui.greenGemImage->isVisible = false;
 	gui.greenGemImageHandle = uiRenderer.getEntityHandle(gui.greenGemImage, imageShader);
 
 	gui.blueGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemblue.png"), glm::vec2(32.0f, 32.0f));
 	gui.blueGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f + 16.0f, windowHeight - 42.0f, 0.0f)).matrix();
-	gui.blueGemImage->isVisible = false;
 	gui.blueGemImageHandle = uiRenderer.getEntityHandle(gui.blueGemImage, imageShader);
 
 	/* Notification label */
@@ -582,8 +579,8 @@ void Scene::setup()
 	glm::vec3 gemSlabCenter = centerBoxCenter + glm::vec3(0.0f, platformDimensions1.y + platformDimensions2.y + gemSlabDimensions.y / 2.0f + 0.01f, 0.0f);
 	std::vector<glm::vec3> gemSlabPositions = {
 		gemSlabCenter + glm::vec3(-2.0f, 0.0f, 0.0f),
-		gemSlabCenter + glm::vec3(0.0f, 0.0f, -2.0f),
-		gemSlabCenter + glm::vec3(2.0f, 0.0f, 0.0f)
+		gemSlabCenter + glm::vec3(glm::cos(glm::radians(120.0f)) * -2.0f, 0.0f, glm::sin(glm::radians(120.0f)) * 2.0f),
+		gemSlabCenter + glm::vec3(glm::cos(glm::radians(240.0f)) * -2.0f, 0.0f, glm::sin(glm::radians(240.0f)) * 2.0f)
 	};
 
 	for (unsigned i = 0; i < gemSlabPositions.size(); i++) {
@@ -684,6 +681,10 @@ void Scene::setup()
 	sstream.str("");
 	sstream << playerComponent->bulletsInGun << "/" << playerComponent->bulletCount;
 	gui.bulletLabel->setText(sstream.str());
+
+	gui.redGemImage->isVisible = playerComponent->gemStates[GemColor_Red] == PlayerGemState_PickedUp;
+	gui.greenGemImage->isVisible = playerComponent->gemStates[GemColor_Green] == PlayerGemState_PickedUp;
+	gui.blueGemImage->isVisible = playerComponent->gemStates[GemColor_Blue] == PlayerGemState_PickedUp;
 }
 
 glm::vec3 roomBoxCenter(const RoomBox& box)

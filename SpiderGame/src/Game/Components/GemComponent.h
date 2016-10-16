@@ -18,7 +18,7 @@ enum GemColor {
 class GemComponent : public Component
 {
 public:
-	GemComponent() : light(World::NullEntity), pulseTimer(0.0f) { }
+	GemComponent() : light(World::NullEntity), pulseTimer(0.0f), endGameTimer(0.0f) { }
 
 	struct Data {
 		Data(GemColor color, GemState state, const glm::vec3& lightColor, float pulseTime, const PointLight& minIntensity, const PointLight& maxIntensity)
@@ -37,6 +37,7 @@ public:
 	Data data;
 	eid_t light;
 	float pulseTimer;
+	float endGameTimer;
 };
 
 class GemConstructor : public DefaultComponentConstructor<GemComponent> {

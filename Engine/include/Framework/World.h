@@ -80,6 +80,13 @@ public:
 	T* addComponent(eid_t entity);
 
 	/*!
+	 \brief Removes a component from an entity.
+	 \param entity The entity from which the component is removed.
+	 */
+	template <class T>
+	void removeComponent(eid_t entity);
+
+	/*!
 	 \brief Gets a component attached to an entity.
 	 If insert==true and the there is no component of the passed type attached to the entity, the
 	 method constructs one using the default constructor and attaches it.
@@ -190,15 +197,30 @@ T* World::getComponent(eid_t entity, bool insert)
 			iter = emplaceIter.first;
 
 			auto entityIter = entities.find(entity);
-			if (entityIter == entities.end()) {
-				throw "Tried to add component to nonexistent entity";
-			}
+			assert (entityIter != entities.end());
 
 			entityIter->second.components.setBit(cid, true);
 		}
 	}
 
 	return static_cast<T*>(iter->second.get());
+}
+
+template <class T>
+void World::removeComponent(eid_t entity)
+{
+	cid_t cid = getComponentId<T>();
+	ComponentPool& componentPool = this->entityComponentMaps[cid];
+
+	auto iter = componentPool.find(entity);
+	if (iter == componentPool.end()) {
+		componentPool.erase(iter);
+
+		auto entityIter = entities.find(entity);
+		assert (entityIter != entities.end());
+
+		entityIter->second.components.setBit(cid, false);
+	}
 }
 
 template <class T>

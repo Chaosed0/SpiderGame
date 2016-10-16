@@ -2,6 +2,7 @@
 
 #include "Framework/Component.h"
 #include "Framework/ComponentConstructor.h"
+#include "Game/Extra/PrefabConstructionInfo.h"
 #include "Renderer/Renderer.h"
 
 struct ModelRenderComponent : public Component
@@ -20,6 +21,12 @@ public:
 	{
 		ModelRenderComponent* component = new ModelRenderComponent();
 		component->rendererHandle = renderer.getRenderableHandle(modelHandle, shader);
+
+		if (userinfo != nullptr) {
+			PrefabConstructionInfo* info = (PrefabConstructionInfo*)userinfo;
+			renderer.setRenderableTransform(component->rendererHandle, info->initialTransform.matrix());
+		}
+
 		return ComponentConstructorInfo(component, typeid(ModelRenderComponent).hash_code());
 	}
 

@@ -228,7 +228,7 @@ int Game::setup()
 	pointLightSystem = std::make_unique<PointLightSystem>(world, renderer);
 	spawnerSystem = std::make_unique<SpawnerSystem>(world, dynamicsWorld, generator);
 	playerDeathSystem = std::make_unique<PlayerDeathSystem>(world, *eventManager);
-	gemSystem = std::make_unique<GemSystem>(world, renderer);
+	gemSystem = std::make_unique<GemSystem>(world, renderer, *eventManager);
 
 	SceneInfo sceneInfo;
 	sceneInfo.dynamicsWorld = dynamicsWorld;

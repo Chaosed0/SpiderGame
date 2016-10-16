@@ -18,7 +18,8 @@ enum GunState {
 enum PlayerGemState {
 	PlayerGemState_NotPickedUp,
 	PlayerGemState_PickedUp,
-	PlayerGemState_Placed
+	PlayerGemState_Placed,
+	PlayerGemState_Count
 };
 
 class PlayerComponent : public Component
@@ -28,8 +29,9 @@ public:
 		: shooting(false), reloading(false),
 		shotTimer(0.0f), reloadTimer(data.reloadTime),
 		gunState(GunState_Ready), isDead(false),
-		gemStates(GemColor_Unknown), bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
-		lastFacedEntity(World::NullEntity) { }
+		bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
+		lastFacedEntity(World::NullEntity),
+		gemStates(PlayerGemState_Count, PlayerGemState_NotPickedUp) { }
 
 	struct Data {
 		Data()
