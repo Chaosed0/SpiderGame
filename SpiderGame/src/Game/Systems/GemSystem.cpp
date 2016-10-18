@@ -8,12 +8,13 @@
 #include "Game/Components/PlayerComponent.h"
 #include "Game/Components/CollisionComponent.h"
 
+#include "Game/Systems/GameEndingSystem.h"
+
 #include <algorithm>
 
 const float GemSystem::endGemHeight = 2.0f;
 const float GemSystem::endGemAngularSpeed = 0.25f;
 const float GemSystem::airLiftTime = 2.5f;
-const float GemSystem::endGameTime = 10.0f;
 
 template <class T>
 T lerp(T min, T max, float lerp)
@@ -24,12 +25,14 @@ T lerp(T min, T max, float lerp)
 GemSystem::GemSystem(World& world, Renderer& renderer, EventManager& eventManager)
 	: System(world),
 	renderer(renderer),
-	allGemsPlaced(false)
+	allGemsPlaced(false),
+	eventManager(eventManager),
+	endGameTime(GameEndingSystem::gemDefenseTime)
 {
 	require<GemComponent>();
 	require<TransformComponent>();
 
-	eventManager.registerForEvent<GemCountChangedEvent>(std::bind(&GemSystem::onGemCountChanged, this, std::placeholders::_1));
+	eventManager.registerForEvent<AllGemsCollectedEvent>(std::bind(&GemSystem::onAllGemsCollected, this, std::placeholders::_1));
 }
 
 void GemSystem::updateEntity(float dt, eid_t entity)
@@ -57,11 +60,6 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 	renderer.setPointLight(pointLightComponent->handle, light);
 
 	if (allGemsPlaced) {
-		if (gemComponent->endGameTimer == 0.0f) {
-			// Do some pre-endgame setup
-			world.removeComponent<CollisionComponent>(entity);
-		}
-
 		TransformComponent* gemTransformComponent = world.getComponent<TransformComponent>(entity);
 		glm::vec3 currentGemPosition = gemTransformComponent->data->getWorldPosition();
 
@@ -82,16 +80,12 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 	}
 }
 
-void GemSystem::onGemCountChanged(const GemCountChangedEvent& gemCountChangedEvent)
+void GemSystem::onAllGemsCollected(const AllGemsCollectedEvent& allGemsCollectedEvent)
 {
-	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(gemCountChangedEvent.source);
-	assert (playerComponent != nullptr);
-
 	this->allGemsPlaced = true;
-	for (unsigned i = 0; i < playerComponent->gemStates.size(); i++) {
-		if (playerComponent->gemStates[i] != PlayerGemState_Placed) {
-			this->allGemsPlaced = false;
-			break;
-		}
+
+	std::vector<eid_t> gems = world.getEntitiesWithComponent<GemComponent>();
+	for (unsigned i = 0; i < gems.size(); ++i) {
+		world.removeComponent<CollisionComponent>(gems[i]);
 	}
 }

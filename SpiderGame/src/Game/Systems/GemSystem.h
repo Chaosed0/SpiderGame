@@ -4,7 +4,7 @@
 #include "Framework/EventManager.h"
 #include "Renderer/Renderer.h"
 
-#include "Game/Events/GemCountChangedEvent.h"
+#include "Game/Events/EndGameEvent.h"
 
 class GemSystem : public System
 {
@@ -13,12 +13,14 @@ public:
 	virtual void updateEntity(float dt, eid_t entity);
 private:
 	Renderer& renderer;
+	EventManager& eventManager;
 	bool allGemsPlaced;
 
-	void onGemCountChanged(const GemCountChangedEvent& gemCountChangedEvent);
+	float endGameTime;
+
+	void onAllGemsCollected(const AllGemsCollectedEvent& allGemsCollectedEvent);
 
 	static const float endGemHeight;
 	static const float endGemAngularSpeed;
 	static const float airLiftTime;
-	static const float endGameTime;
 };

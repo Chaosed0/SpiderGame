@@ -50,6 +50,7 @@ struct GUI
 	std::shared_ptr<UIQuad> blueGemImage;
 	std::shared_ptr<Label> facingLabel;
 	std::shared_ptr<UIQuad> reticleImage;
+	std::shared_ptr<UIQuad> blackoutQuad;
 
 	UIRenderer::UIElementHandle healthLabelHandle;
 	UIRenderer::UIElementHandle healthImageHandle;
@@ -60,6 +61,7 @@ struct GUI
 	UIRenderer::UIElementHandle blueGemImageHandle;
 	UIRenderer::UIElementHandle facingLabelHandle;
 	UIRenderer::UIElementHandle reticleHandle;
+	UIRenderer::UIElementHandle blackoutHandle;
 };
 
 struct SceneInfo
@@ -130,6 +132,10 @@ private:
 	Shader shader;
 	Shader skinnedShader;
 	Shader singleColorShader;
+	Shader singleColorShader2d;
 	Shader textShader;
 	Shader imageShader;
+	Shader skyboxShader;
+
+	Renderer::RenderableHandle skybox;
 };

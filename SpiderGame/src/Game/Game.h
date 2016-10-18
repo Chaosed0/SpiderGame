@@ -41,6 +41,7 @@
 #include "Game/Systems/SpawnerSystem.h"
 #include "Game/Systems/PlayerDeathSystem.h"
 #include "Game/Systems/GemSystem.h"
+#include "Game/Systems/GameEndingSystem.h"
 
 #include "Framework/Physics.h"
 #include "Framework/EventManager.h"
@@ -90,6 +91,7 @@ private:
 	std::unique_ptr<SpawnerSystem> spawnerSystem;
 	std::unique_ptr<PlayerDeathSystem> playerDeathSystem;
 	std::unique_ptr<GemSystem> gemSystem;
+	std::unique_ptr<GameEndingSystem> gameEndingSystem;
 
 	std::unique_ptr<EventManager> eventManager;
 

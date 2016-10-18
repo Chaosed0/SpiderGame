@@ -40,6 +40,8 @@ public:
 	void stopClip(const ClipHandle& clipHandle);
 	bool clipValid(const ClipHandle& clipHandle);
 
+	void stopAllClips();
+
 	void update();
 private:
 	void freeSource(unsigned sourceIndex);

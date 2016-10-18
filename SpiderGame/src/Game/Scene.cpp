@@ -84,6 +84,8 @@ void Scene::setupPrefabs()
 	singleColorShader = shaderLoader.compileAndLink("Shaders/basic.vert", "Shaders/singlecolor.frag");
 	textShader = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/text.frag");
 	imageShader = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/texture2d.frag");
+	skyboxShader = shaderLoader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
+	singleColorShader2d = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/singlecolor.frag");
 
 	/* Health label */
 	std::shared_ptr<Font> font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
@@ -130,10 +132,15 @@ void Scene::setupPrefabs()
 	gui.facingLabelHandle = uiRenderer.getEntityHandle(gui.facingLabel, textShader);
 	font.reset();
 
-	/* Aiming reticle*/
+	/* Aiming reticle */
 	gui.reticleImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/reticle.png"), glm::vec2(32.0f, 32.0f));
 	gui.reticleImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 16.0f, windowHeight / 2.0f - 16.0f, 0.0f)).matrix();
 	gui.reticleHandle = uiRenderer.getEntityHandle(gui.reticleImage, imageShader);
+
+	/* Blackout */
+	gui.blackoutQuad = std::make_shared<UIQuad>(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec2(windowWidth, windowHeight));
+	gui.blackoutQuad->isVisible = false;
+	gui.blackoutHandle = uiRenderer.getEntityHandle(gui.blackoutQuad, singleColorShader2d);
 
 	/* Pedestal */
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
@@ -383,6 +390,7 @@ void Scene::setupPrefabs()
 	playerData.shotCooldown = 0.3f;
 	playerData.shotDamage = 100;
 	playerData.facingLabel = gui.facingLabel;
+	playerData.blackoutQuad = gui.blackoutQuad;
 
 	playerData.shotClip = AudioClip("assets/sound/shot.wav");
 	playerData.dryFireClip = AudioClip("assets/sound/dryfire.wav");
@@ -410,6 +418,17 @@ void Scene::setupPrefabs()
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, eventManager);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, eventManager);
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, eventManager);
+
+	Model skyboxModel = getSkybox(std::vector<std::string> {
+		"assets/img/skybox/miramar_ft.tga",
+		"assets/img/skybox/miramar_bk.tga",
+		"assets/img/skybox/miramar_up.tga",
+		"assets/img/skybox/miramar_dn.tga",
+		"assets/img/skybox/miramar_rt.tga",
+		"assets/img/skybox/miramar_lf.tga",
+	});
+
+	skybox = renderer.getRenderableHandle(renderer.getModelHandle(skyboxModel), skyboxShader);
 
 	std::function<void(const ShotEvent& event)> shotCallback =
 		[world = &world, soundManager = &soundManager](const ShotEvent& event) {

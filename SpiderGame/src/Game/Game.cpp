@@ -229,6 +229,7 @@ int Game::setup()
 	spawnerSystem = std::make_unique<SpawnerSystem>(world, dynamicsWorld, generator);
 	playerDeathSystem = std::make_unique<PlayerDeathSystem>(world, *eventManager);
 	gemSystem = std::make_unique<GemSystem>(world, renderer, *eventManager);
+	gameEndingSystem = std::make_unique<GameEndingSystem>(world, *eventManager, soundManager);
 
 	SceneInfo sceneInfo;
 	sceneInfo.dynamicsWorld = dynamicsWorld;
@@ -336,6 +337,7 @@ void Game::update()
 	/* Cleanup */
 	expiresSystem->update(timeDelta);
 	playerDeathSystem->update(timeDelta);
+	gameEndingSystem->update(timeDelta);
 
 	world.cleanupEntities();
 

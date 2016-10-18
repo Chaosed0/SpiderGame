@@ -239,3 +239,11 @@ bool SoundManager::clipValid(const ClipHandle& clipHandle)
 {
 	return (bool)clipPool.get(clipHandle);
 }
+
+void SoundManager::stopAllClips()
+{
+	for (unsigned i = 0; i < sources.size(); ++i) {
+		alSourceStop(sources[i].alSource);
+		sources[i].startPlaying = false;
+	}
+}

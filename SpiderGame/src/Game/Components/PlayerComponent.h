@@ -5,8 +5,10 @@
 #include "Framework/World.h"
 #include "Framework/Prefab.h"
 #include "Sound/AudioClip.h"
+
 #include "Renderer/Renderer.h"
 #include "Renderer/UI/Label.h"
+#include "Renderer/UI/UIQuad.h"
 
 #include "Game/Components/GemComponent.h"
 
@@ -60,6 +62,7 @@ public:
 		AudioClip gemPickupClip;
 
 		std::shared_ptr<Label> facingLabel;
+		std::shared_ptr<UIQuad> blackoutQuad;
 		eid_t camera;
 	};
 
