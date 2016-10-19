@@ -51,6 +51,7 @@ struct GUI
 	std::shared_ptr<Label> facingLabel;
 	std::shared_ptr<UIQuad> reticleImage;
 	std::shared_ptr<UIQuad> blackoutQuad;
+	std::shared_ptr<Label> victoryLabel;
 
 	UIRenderer::UIElementHandle healthLabelHandle;
 	UIRenderer::UIElementHandle healthImageHandle;
@@ -62,6 +63,7 @@ struct GUI
 	UIRenderer::UIElementHandle facingLabelHandle;
 	UIRenderer::UIElementHandle reticleHandle;
 	UIRenderer::UIElementHandle blackoutHandle;
+	UIRenderer::UIElementHandle victoryLabelHandle;
 };
 
 struct SceneInfo

@@ -2,7 +2,10 @@
 
 #include "Framework/Event.h"
 
-class VictoryEvent : public Event
+class VictorySequenceStartedEvent : public Event
+{ };
+
+class VictorySequenceEndedEvent : public Event
 { };
 
 class RestEndEvent : public Event

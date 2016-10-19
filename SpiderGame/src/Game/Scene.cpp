@@ -36,6 +36,7 @@
 #include "Game/Events/GemCountChangedEvent.h"
 #include "Game/Events/BulletCountChangedEvent.h"
 #include "Game/Events/ShotEvent.h"
+#include "Game/Events/EndGameEvent.h"
 
 #include "Game/Extra/PrefabConstructionInfo.h"
 
@@ -130,7 +131,6 @@ void Scene::setupPrefabs()
 	gui.facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gui.facingLabel->transform = Transform(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f)).matrix();
 	gui.facingLabelHandle = uiRenderer.getEntityHandle(gui.facingLabel, textShader);
-	font.reset();
 
 	/* Aiming reticle */
 	gui.reticleImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/reticle.png"), glm::vec2(32.0f, 32.0f));
@@ -141,6 +141,17 @@ void Scene::setupPrefabs()
 	gui.blackoutQuad = std::make_shared<UIQuad>(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec2(windowWidth, windowHeight));
 	gui.blackoutQuad->isVisible = false;
 	gui.blackoutHandle = uiRenderer.getEntityHandle(gui.blackoutQuad, singleColorShader2d);
+
+	/*! Victory label*/
+	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 100);
+	gui.victoryLabel = std::make_shared<Label>(font);
+	gui.victoryLabel->setAlignment(Label::Alignment_center);
+	gui.victoryLabel->setText("YOU ESCAPED");
+	gui.victoryLabel->isVisible = false;
+	gui.victoryLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
+	gui.victoryLabel->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f)).matrix();
+	gui.victoryLabelHandle = uiRenderer.getEntityHandle(gui.victoryLabel, textShader);
+	font.reset();
 
 	/* Pedestal */
 	Model pedestalModel = modelLoader.loadModelFromPath("assets/models/pedestal.fbx");
@@ -515,6 +526,26 @@ void Scene::setupPrefabs()
 			soundManager->playClipAtSource(playerComponent->data.reloadClip, audioSourceComponent->sourceHandle);
 		};
 	eventManager.registerForEvent<ReloadStartEvent>(reloadStartCallback);
+
+	std::function<void(const VictorySequenceStartedEvent& event)> victorySequenceStartedCallback =
+		[gui = &gui](const VictorySequenceStartedEvent& event) {
+			// Free all UI handles
+			gui->blueGemImageHandle = nullptr;
+			gui->redGemImageHandle = nullptr;
+			gui->greenGemImageHandle = nullptr;
+			gui->bulletImageHandle = nullptr;
+			gui->bulletLabelHandle = nullptr;
+			gui->healthImageHandle = nullptr;
+			gui->healthLabelHandle = nullptr;
+		};
+	eventManager.registerForEvent<VictorySequenceStartedEvent>(victorySequenceStartedCallback);
+
+	std::function<void(const VictorySequenceEndedEvent& event)> victorySequenceEndedCallback =
+		[gui = &gui](const VictorySequenceEndedEvent& event) {
+			// Throw some text on screen
+			gui->victoryLabel->isVisible = true;
+		};
+	eventManager.registerForEvent<VictorySequenceEndedEvent>(victorySequenceEndedCallback);
 
 	prefabsSetup = true;
 }

@@ -14,10 +14,10 @@
 #include <algorithm>
 
 const float GameEndingSystem::screenShakeTime = 3.0f;
-const float GameEndingSystem::gemDefenseTime = 3.0f;
+const float GameEndingSystem::gemDefenseTime = 30.0f;
 const float GameEndingSystem::blackoutTime = 3.0f;
 const float GameEndingSystem::fadeInTime = 2.0f;
-const float GameEndingSystem::endRestTime = 5.0f;
+const float GameEndingSystem::endRestTime = 2.0f;
 
 GameEndingSystem::GameEndingSystem(World& world, EventManager& eventManager, SoundManager& soundManager)
 	: System(world), eventManager(eventManager), state(GameEndState_NotEnded), soundManager(soundManager)
@@ -50,6 +50,8 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 			for (unsigned i = 0; i < spawners.size(); i++) {
 				world.removeEntity(spawners[i]);
 			}
+
+			eventManager.sendEvent(VictorySequenceStartedEvent());
 		}
 	} else if (state == GameEndState_Blackout) {
 		if (timer >= blackoutTime) {
@@ -85,7 +87,7 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 		}
 	} else if (state == GameEndState_Rest) {
 		if (timer >= endRestTime) {
-			eventManager.sendEvent(VictoryEvent());
+			eventManager.sendEvent(VictorySequenceEndedEvent());
 			state = GameEndState_Finished;
 			timer = 0.0f;
 		}
