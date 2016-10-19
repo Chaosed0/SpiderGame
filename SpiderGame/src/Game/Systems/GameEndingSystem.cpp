@@ -3,15 +3,18 @@
 
 #include "Game/Components/PlayerComponent.h"
 #include "Game/Components/TransformComponent.h"
+#include "Game/Components/CameraComponent.h"
 #include "Game/Events/EndGameEvent.h"
 
 #include "Game/Components/SpiderComponent.h"
 #include "Game/Components/SpawnerComponent.h"
 
+#include "Util.h"
+
 #include <algorithm>
 
 const float GameEndingSystem::screenShakeTime = 3.0f;
-const float GameEndingSystem::gemDefenseTime = 30.0f;
+const float GameEndingSystem::gemDefenseTime = 3.0f;
 const float GameEndingSystem::blackoutTime = 3.0f;
 const float GameEndingSystem::fadeInTime = 2.0f;
 const float GameEndingSystem::endRestTime = 5.0f;
@@ -52,6 +55,25 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 		if (timer >= blackoutTime) {
 			state = GameEndState_Fadein;
 			timer -= blackoutTime;
+
+			// Setup the camera
+			std::vector<eid_t> cameras = world.getEntitiesWithComponent<CameraComponent>();
+			assert (cameras.size() > 0);
+			CameraComponent* oldCameraComponent = world.getComponent<CameraComponent>(cameras[0]);
+
+			eid_t endGameCamera = world.getNewEntity();
+			TransformComponent* transformComponent = world.addComponent<TransformComponent>(endGameCamera);
+			CameraComponent* cameraComponent = world.addComponent<CameraComponent>(endGameCamera);
+
+			// Copy all the properties of the old camera
+			cameraComponent->data = oldCameraComponent->data;
+
+			// Point us toward the sky
+			transformComponent->data->setPosition(glm::vec3(0.0f, 100.0f, 0.0f));
+			transformComponent->data->setRotation(glm::angleAxis(glm::radians(75.0f), Util::right));
+
+			// Disable the old camera
+			oldCameraComponent->isActive = false;
 		}
 	} else if (state == GameEndState_Fadein) {
 		float alpha = (std::max)(1.0f - timer / fadeInTime, 0.0f);

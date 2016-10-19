@@ -7,8 +7,10 @@
 class CameraComponent : public Component
 {
 public:
+	CameraComponent() : isActive(true) { }
 	typedef Camera Data;
 	Camera data;
+	bool isActive;
 };
 
 class CameraConstructor : public DefaultComponentConstructor<CameraComponent> {

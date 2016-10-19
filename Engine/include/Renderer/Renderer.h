@@ -8,7 +8,6 @@
 
 #include "Model.h"
 #include "Material.h"
-#include "Camera.h"
 #include "HandlePool.h"
 
 /*! A point light in space. */
@@ -40,9 +39,6 @@ enum RenderSpace
 {
 	/*! Render in worldspace. */
 	RenderSpace_World,
-
-	/*! Render in UI space. */
-	RenderSpace_UI
 };
 
 class Renderer
@@ -68,9 +64,14 @@ public:
 	void setDebugLogCallback(const DebugLogCallback& callback);
 
 	/*!
-	 * \brief Sets the current camera which this renderer will use.
+	 * \brief Sets the projection matrix.
 	 */
-	void setCamera(Camera* camera);
+	void setProjectionMatrix(const glm::mat4& projectionMatrix);
+
+	/*!
+	 * \brief Sets the view matrix.
+	 */
+	void setViewMatrix(const glm::mat4& viewMatrix);
 
 	/*!
 	 * \brief Sets the directional light. Currently, only one is supported.
@@ -146,9 +147,6 @@ private:
 	 */
 	void drawInternal(RenderSpace space);
 
-	/*! Reference to the current camera. */
-	Camera* camera;
-
 	/*! The global directional light. */
 	DirLight dirLight;
 
@@ -173,4 +171,10 @@ private:
 
 	/*! Model space transformation for UI space drawing. */
 	glm::mat4 uiModelTransform;
+
+	/*! Current projection matrix. */
+	glm::mat4 projectionMatrix;
+
+	/*! Current view matrix. */
+	glm::mat4 viewMatrix;
 };

@@ -104,7 +104,6 @@ void Game::restartGame()
 		printf("WARNING: No camera in scene");
 	} else {
 		CameraComponent* cameraComponent = world.getComponent<CameraComponent>(cameraEntities[0]);
-		renderer.setCamera(&cameraComponent->data);
 		debugDrawer.setCamera(&cameraComponent->data);
 	}
 }
@@ -217,7 +216,7 @@ int Game::setup()
 	rigidbodyMotorSystem = std::make_unique<RigidbodyMotorSystem>(world);
 	modelRenderSystem = std::make_unique<ModelRenderSystem>(world, renderer);
 	collisionUpdateSystem = std::make_unique<CollisionUpdateSystem>(world);
-	cameraSystem = std::make_unique<CameraSystem>(world);
+	cameraSystem = std::make_unique<CameraSystem>(world, renderer);
 	followSystem = std::make_unique<FollowSystem>(world, dynamicsWorld);
 	spiderSystem = std::make_unique<SpiderSystem>(world, *eventManager, dynamicsWorld, renderer, soundManager, generator);
 	expiresSystem = std::make_unique<ExpiresSystem>(world);

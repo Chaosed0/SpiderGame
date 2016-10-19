@@ -79,7 +79,6 @@ struct Renderer::Entity
 };
 
 Renderer::Renderer()
-	: camera(nullptr)
 {
 	this->uiModelTransform = glm::mat4();
 	// Flip the y axis so we can use normal modelspace but position in UI space
@@ -233,9 +232,6 @@ void Renderer::draw()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	this->drawInternal(RenderSpace_World);
-
-	glDisable(GL_DEPTH_TEST);
-	this->drawInternal(RenderSpace_UI);
 }
 
 void Renderer::drawInternal(RenderSpace space)
@@ -244,14 +240,8 @@ void Renderer::drawInternal(RenderSpace space)
 		const ShaderCache& shaderCache = iter->second;
 
 		shaderCache.shader.use();
-		if (space == RenderSpace_World) {
-			shaderCache.shader.setProjectionMatrix(this->camera->getProjectionMatrix());
-			shaderCache.shader.setViewMatrix(this->camera->getViewMatrix());
-		} else {
-			shaderCache.shader.setProjectionMatrix(this->camera->getProjectionMatrixOrtho());
-			shaderCache.shader.setViewMatrix(this->camera->getViewMatrixOrtho());
-			continue;
-		}
+		shaderCache.shader.setProjectionMatrix(projectionMatrix);
+		shaderCache.shader.setViewMatrix(viewMatrix);
 		glCheckError();
 
 		unsigned pointLightCount = 0;
@@ -295,10 +285,6 @@ void Renderer::drawInternal(RenderSpace space)
 		ShaderCache& shaderCache = renderable.shaderCache;
 		glm::mat4 modelMatrix = renderable.transform;
 
-		if (renderable.space == RenderSpace_UI) {
-			modelMatrix = modelMatrix * this->uiModelTransform;
-		}
-
 		shaderCache.shader.use();
 
 		if (renderable.animatable) {
@@ -330,9 +316,14 @@ void Renderer::drawInternal(RenderSpace space)
 	}
 }
 
-void Renderer::setCamera(Camera* camera)
+void Renderer::setProjectionMatrix(const glm::mat4& projectionMatrix)
 {
-	this->camera = camera;
+	this->projectionMatrix = projectionMatrix;
+}
+
+void Renderer::setViewMatrix(const glm::mat4& viewMatrix)
+{
+	this->viewMatrix = viewMatrix;
 }
 
 void Renderer::setDirLight(DirLight dirLight)
