@@ -14,7 +14,7 @@
 
 const float GemSystem::endGemHeight = 2.0f;
 const float GemSystem::endGemAngularSpeed = 0.25f;
-const float GemSystem::airLiftTime = 2.5f;
+const float GemSystem::airLiftTime = 8.0f;
 
 template <class T>
 T lerp(T min, T max, float lerp)

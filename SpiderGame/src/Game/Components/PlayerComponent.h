@@ -24,6 +24,16 @@ enum PlayerGemState {
 	PlayerGemState_Count
 };
 
+enum GameEndState
+{
+	GameEndState_NotEnded,
+	GameEndState_DefendingGems,
+	GameEndState_Blackout,
+	GameEndState_Fadein,
+	GameEndState_Rest,
+	GameEndState_Finished
+};
+
 class PlayerComponent : public Component
 {
 public:
@@ -33,7 +43,8 @@ public:
 		gunState(GunState_Ready), isDead(false),
 		bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
 		lastFacedEntity(World::NullEntity),
-		gemStates(PlayerGemState_Count, PlayerGemState_NotPickedUp) { }
+		gemStates(PlayerGemState_Count, PlayerGemState_NotPickedUp),
+		gameEndTimer(0.0f), gameEndState(GameEndState_NotEnded) { }
 
 	struct Data {
 		Data()
@@ -76,6 +87,9 @@ public:
 	float shotTimer;
 	float deathRestartTimer;
 	GunState gunState;
+
+	float gameEndTimer;
+	GameEndState gameEndState;
 
 	std::vector<PlayerGemState> gemStates;
 

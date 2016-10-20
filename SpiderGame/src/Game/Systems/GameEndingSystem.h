@@ -9,16 +9,6 @@
 
 #include "Game/Events/GemCountChangedEvent.h"
 
-enum GameEndState
-{
-	GameEndState_NotEnded,
-	GameEndState_DefendingGems,
-	GameEndState_Blackout,
-	GameEndState_Fadein,
-	GameEndState_Rest,
-	GameEndState_Finished
-};
-
 class GameEndingSystem : public System
 {
 public:
@@ -34,10 +24,6 @@ public:
 private:
 	EventManager& eventManager;
 	SoundManager& soundManager;
-
-	float timer;
-	bool allGemsPlaced;
-	GameEndState state;
 
 	void onGemCountChanged(const GemCountChangedEvent& gemCountChangedEvent);
 };

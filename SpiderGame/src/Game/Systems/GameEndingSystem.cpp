@@ -20,7 +20,7 @@ const float GameEndingSystem::fadeInTime = 2.0f;
 const float GameEndingSystem::endRestTime = 2.0f;
 
 GameEndingSystem::GameEndingSystem(World& world, EventManager& eventManager, SoundManager& soundManager)
-	: System(world), eventManager(eventManager), state(GameEndState_NotEnded), soundManager(soundManager)
+	: System(world), eventManager(eventManager), soundManager(soundManager)
 {
 	require<TransformComponent>();
 	require<PlayerComponent>();
@@ -32,11 +32,11 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 {
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 
-	timer += dt;
-	if (state == GameEndState_DefendingGems) {
-		if (timer >= gemDefenseTime) {
-			state = GameEndState_Blackout;
-			timer -= gemDefenseTime;
+	playerComponent->gameEndTimer += dt;
+	if (playerComponent->gameEndState == GameEndState_DefendingGems) {
+		if (playerComponent->gameEndState >= gemDefenseTime) {
+			playerComponent->gameEndState = GameEndState_Blackout;
+			playerComponent->gameEndTimer -= gemDefenseTime;
 
 			playerComponent->data.blackoutQuad->isVisible = true;
 			soundManager.stopAllClips();
@@ -53,10 +53,10 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 
 			eventManager.sendEvent(VictorySequenceStartedEvent());
 		}
-	} else if (state == GameEndState_Blackout) {
-		if (timer >= blackoutTime) {
-			state = GameEndState_Fadein;
-			timer -= blackoutTime;
+	} else if (playerComponent->gameEndState == GameEndState_Blackout) {
+		if (playerComponent->gameEndTimer >= blackoutTime) {
+			playerComponent->gameEndState = GameEndState_Fadein;
+			playerComponent->gameEndTimer -= blackoutTime;
 
 			// Setup the camera
 			std::vector<eid_t> cameras = world.getEntitiesWithComponent<CameraComponent>();
@@ -77,19 +77,19 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 			// Disable the old camera
 			oldCameraComponent->isActive = false;
 		}
-	} else if (state == GameEndState_Fadein) {
-		float alpha = (std::max)(1.0f - timer / fadeInTime, 0.0f);
+	} else if (playerComponent->gameEndState == GameEndState_Fadein) {
+		float alpha = (std::max)(1.0f - playerComponent->gameEndTimer / fadeInTime, 0.0f);
 		Material& material = playerComponent->data.blackoutQuad->material;
 		material.setProperty("color", MaterialProperty(glm::vec4(0.0f, 0.0f, 0.0f, alpha)));
-		if (timer >= fadeInTime) {
-			state = GameEndState_Rest;
-			timer -= fadeInTime;
+		if (playerComponent->gameEndTimer >= fadeInTime) {
+			playerComponent->gameEndState = GameEndState_Rest;
+			playerComponent->gameEndTimer-= fadeInTime;
 		}
-	} else if (state == GameEndState_Rest) {
-		if (timer >= endRestTime) {
+	} else if (playerComponent->gameEndState == GameEndState_Rest) {
+		if (playerComponent->gameEndTimer >= endRestTime) {
 			eventManager.sendEvent(VictorySequenceEndedEvent());
-			state = GameEndState_Finished;
-			timer = 0.0f;
+			playerComponent->gameEndState = GameEndState_Finished;
+			playerComponent->gameEndTimer = 0.0f;
 		}
 	}
 }
@@ -99,7 +99,7 @@ void GameEndingSystem::onGemCountChanged(const GemCountChangedEvent& gemCountCha
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(gemCountChangedEvent.source);
 	assert (playerComponent != nullptr);
 
-	allGemsPlaced = true;
+	bool allGemsPlaced = true;
 	for (unsigned i = 0; i < playerComponent->gemStates.size(); i++) {
 		if (playerComponent->gemStates[i] != PlayerGemState_Placed) {
 			allGemsPlaced = false;
@@ -112,7 +112,7 @@ void GameEndingSystem::onGemCountChanged(const GemCountChangedEvent& gemCountCha
 		event.source = gemCountChangedEvent.source;
 		eventManager.sendEvent(event);
 
-		this->state = GameEndState_DefendingGems;
-		this->timer = 0.0f;
+		playerComponent->gameEndState = GameEndState_DefendingGems;
+		playerComponent->gameEndTimer = 0.0f;
 	}
 }
