@@ -74,7 +74,7 @@ void FollowSystem::updateEntity(float dt, eid_t entity)
 			// Try pathfinding again
 			std::vector<eid_t> levelEntities = world.getEntitiesWithComponent<LevelComponent>();
 			if (levelEntities.size() <= 0) {
-				printf("WARNING: %s tried to repath, but no level found", world.getEntityName(entity).c_str());
+				throw "%s tried to repath, but no level found" + world.getEntityName(entity);
 			}
 			LevelComponent* levelComponent = world.getComponent<LevelComponent>(levelEntities[0]);
 

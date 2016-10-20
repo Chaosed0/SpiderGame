@@ -92,6 +92,8 @@ SoundManager::SourceHandle SoundManager::getSourceHandle()
 	source.position = glm::vec3(0.0f);
 	source.priority = 0;
 	source.volume = 1.0f;
+	source.rolloffFactor = 2.0f;
+	source.dirty = true;
 	return sourcePool.getNewHandle(source);
 }
 
@@ -178,6 +180,7 @@ void SoundManager::update()
 		LogicalSource& logicalSource = sourcePool.get(sources[i].logicalSourceHandle).value_or(invalidSource);
 		if (logicalSource.dirty || source.startPlaying) {
 			alSourcef(alSource, AL_GAIN, logicalSource.volume);
+			alSourcef(alSource, AL_ROLLOFF_FACTOR, logicalSource.rolloffFactor);
 			alSource3f(alSource, AL_POSITION, logicalSource.position.x, logicalSource.position.y, logicalSource.position.z);
 		}
 

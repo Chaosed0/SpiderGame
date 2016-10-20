@@ -17,7 +17,7 @@ enum SpiderState
 class SpiderComponent : public Component
 {
 public:
-	SpiderComponent() : animState(SPIDER_IDLE), timer(0.0f), soundTimer(0.0f), soundTime(-1.0f) { }
+	SpiderComponent() : animState(SPIDER_IDLE), timer(0.0f), soundTimer(0.0f), soundTime(-1.0f), hurtbox(World::NullEntity) { }
 
 	struct Data {
 		Data() : soundTimeMin(3.0f), soundTimeMax(6.0f), attackTime(0.5f), recoveryTime(0.25f), normalMoveSpeed(3.5f), leapMoveSpeed(7.0f) { }

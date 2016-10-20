@@ -13,6 +13,7 @@ struct LogicalSource
 	glm::vec3 position;
 	float volume;
 	int priority;
+	float rolloffFactor;
 	bool dirty;
 };
 
