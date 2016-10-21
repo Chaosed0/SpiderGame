@@ -229,6 +229,7 @@ int Game::setup()
 	playerDeathSystem = std::make_unique<PlayerDeathSystem>(world, *eventManager);
 	gemSystem = std::make_unique<GemSystem>(world, renderer, *eventManager);
 	gameEndingSystem = std::make_unique<GameEndingSystem>(world, *eventManager, soundManager);
+	shakeSystem = std::make_unique<ShakeSystem>(world, generator);
 
 	SceneInfo sceneInfo;
 	sceneInfo.dynamicsWorld = dynamicsWorld;
@@ -324,6 +325,7 @@ void Game::update()
 	/* Display */
 	playerFacingSystem->update(timeDelta);
 	collisionUpdateSystem->update(timeDelta);
+	shakeSystem->update(timeDelta);
 	cameraSystem->update(timeDelta);
 	modelRenderSystem->update(timeDelta);
 	pointLightSystem->update(timeDelta);

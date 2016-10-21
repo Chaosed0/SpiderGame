@@ -31,6 +31,7 @@
 #include "Game/Components/SpawnerComponent.h"
 #include "Game/Components/LevelComponent.h"
 #include "Game/Components/GemComponent.h"
+#include "Game/Components/ShakeComponent.h"
 
 #include "Game/Events/HealthChangedEvent.h"
 #include "Game/Events/GemCountChangedEvent.h"

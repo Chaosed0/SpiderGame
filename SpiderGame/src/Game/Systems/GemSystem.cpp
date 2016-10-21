@@ -16,12 +16,6 @@ const float GemSystem::endGemHeight = 2.0f;
 const float GemSystem::endGemAngularSpeed = 0.25f;
 const float GemSystem::airLiftTime = 8.0f;
 
-template <class T>
-T lerp(T min, T max, float lerp)
-{
-	return min + (max - min) * lerp;
-}
-
 GemSystem::GemSystem(World& world, Renderer& renderer, EventManager& eventManager)
 	: System(world),
 	renderer(renderer),
@@ -50,12 +44,12 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 	}
 
 	float interp = (sin(gemComponent->pulseTimer / gemComponent->data.pulseTime * glm::two_pi<float>()) + 1.0f) / 2.0f;
-	light.constant = lerp(gemComponent->data.minIntensity.constant, gemComponent->data.maxIntensity.constant, interp);
-	light.linear = lerp(gemComponent->data.minIntensity.linear, gemComponent->data.maxIntensity.linear, interp);
-	light.quadratic = lerp(gemComponent->data.minIntensity.quadratic, gemComponent->data.maxIntensity.quadratic, interp);
-	light.ambient = lerp(gemComponent->data.minIntensity.ambient, gemComponent->data.maxIntensity.ambient, interp);
-	light.diffuse = lerp(gemComponent->data.minIntensity.diffuse, gemComponent->data.maxIntensity.diffuse, interp);
-	light.specular = lerp(gemComponent->data.minIntensity.specular, gemComponent->data.maxIntensity.specular, interp);
+	light.constant = Util::interpolate(gemComponent->data.minIntensity.constant, gemComponent->data.maxIntensity.constant, interp);
+	light.linear = Util::interpolate(gemComponent->data.minIntensity.linear, gemComponent->data.maxIntensity.linear, interp);
+	light.quadratic = Util::interpolate(gemComponent->data.minIntensity.quadratic, gemComponent->data.maxIntensity.quadratic, interp);
+	light.ambient = Util::interpolate(gemComponent->data.minIntensity.ambient, gemComponent->data.maxIntensity.ambient, interp);
+	light.diffuse = Util::interpolate(gemComponent->data.minIntensity.diffuse, gemComponent->data.maxIntensity.diffuse, interp);
+	light.specular = Util::interpolate(gemComponent->data.minIntensity.specular, gemComponent->data.maxIntensity.specular, interp);
 
 	renderer.setPointLight(pointLightComponent->handle, light);
 

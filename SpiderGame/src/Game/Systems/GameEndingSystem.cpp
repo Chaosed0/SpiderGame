@@ -8,6 +8,7 @@
 
 #include "Game/Components/SpiderComponent.h"
 #include "Game/Components/SpawnerComponent.h"
+#include "Game/Components/ShakeComponent.h"
 
 #include "Util.h"
 
@@ -34,7 +35,18 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 
 	playerComponent->gameEndTimer += dt;
 	if (playerComponent->gameEndState == GameEndState_DefendingGems) {
-		if (playerComponent->gameEndState >= gemDefenseTime) {
+		if (playerComponent->gameEndTimer >= gemDefenseTime - screenShakeTime) {
+			ShakeComponent* cameraShakeComponent = world.getComponent<ShakeComponent>(playerComponent->data.camera, true);
+			if (cameraShakeComponent->active == false) {
+				cameraShakeComponent->data.shakeTime = screenShakeTime;
+				cameraShakeComponent->data.frequency = 0.5f;
+				cameraShakeComponent->data.amplitude = 5.0f;
+				cameraShakeComponent->timer = 0.0f;
+				cameraShakeComponent->active = true;
+			}
+		}
+
+		if (playerComponent->gameEndTimer >= gemDefenseTime) {
 			playerComponent->gameEndState = GameEndState_Blackout;
 			playerComponent->gameEndTimer -= gemDefenseTime;
 

@@ -37,8 +37,16 @@ public:
 
 	static eid_t raycast(btDynamicsWorld* dynamicsWorld, const btVector3& from, const btVector3& to, short int collisionGroup = CollisionGroupAll);
 
+	template <class T>
+	static T interpolate(T min, T max, float lerp);
+
 	static const glm::vec3 up;
 	static const glm::vec3 right;
 	static const glm::vec3 forward;
 };
 
+template <class T>
+T Util::interpolate(T min, T max, float lerp)
+{
+	return min + (max - min) * lerp;
+}

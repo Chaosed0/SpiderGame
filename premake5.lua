@@ -11,6 +11,7 @@ project "Engine"
 	includedirs { "Engine/src/", "Engine/include/" }
     buildoptions "-std=c++14"
     targetdir "bin/Engine/%{cfg.buildcfg}"
+    flags { "Symbols" }
 
     files { "Engine/src/**.h", "Engine/src/**.cpp", "Engine/include/**.h" }
     includedirs {
@@ -41,6 +42,7 @@ project "EngineTest"
 	includedirs { "EngineTest/src/", "Engine/include/" }
     buildoptions "-std=c++14"
     targetdir "bin/EngineTest/%{cfg.buildcfg}"
+    flags { "Symbols" }
 
     files { "EngineTest/src/**.h", "EngineTest/src/**.cpp", "EngineTest/src/catch.hpp" }
 	links { "BulletDynamics", "BulletCollision", "LinearMath", "SDL2", "SDL2main", "SDL2_image", "OpenAL32", "libsndfile-1", "glew32", "OpenGL32", "libnoise", "Engine" }
@@ -102,6 +104,7 @@ project "SpiderGame"
 	includedirs { "SpiderGame/src/", "Engine/include/" }
     buildoptions "-std=c++14"
     targetdir "bin/Game/%{cfg.buildcfg}"
+    flags { "Symbols" }
 
     files { "SpiderGame/src/**.h", "SpiderGame/src/**.cpp" }
 	links { "BulletDynamics", "BulletCollision", "LinearMath", "SDL2", "SDL2main", "SDL2_image", "OpenAL32", "libsndfile-1", "glew32", "OpenGL32", "libnoise", "Engine" }
