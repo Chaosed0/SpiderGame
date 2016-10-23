@@ -273,7 +273,7 @@ void Scene::setupPrefabs()
 		gemPrefabs[i].setName(namestream.str());
 		gemPrefabs[i].addConstructor(new TransformConstructor());
 		gemPrefabs[i].addConstructor(new ModelRenderConstructor(renderer, gemModelHandle, shader));
-		gemPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, gemBodyInfo, CollisionGroupDefault, CollisionGroupAll, false));
+		gemPrefabs[i].addConstructor(new CollisionConstructor(dynamicsWorld, CollisionConstructorInfo(gemBodyInfo, CollisionGroupDefault, CollisionGroupAll, false)));
 		gemPrefabs[i].addConstructor(new VelocityConstructor(VelocityComponent::Data(1.0f, glm::vec3(0.0f, 1.0f, 0.0f))));
 		gemPrefabs[i].addConstructor(new GemConstructor(GemComponent::Data((GemColor)i, GemState_OnPedestal, color, 7.5f, minIntensity, maxIntensity)));
 
@@ -391,6 +391,20 @@ void Scene::setupPrefabs()
 	playerLightPrefab.addConstructor(new TransformConstructor());
 	playerLightPrefab.addConstructor(new PointLightConstructor(renderer, playerLight));
 
+	/* Victory Portal */
+	glm::vec3 portalHalfExtents = glm::vec3(1.0f, 2.0f, 1.0f);
+	btBoxShape* portalShape = new btBoxShape(Util::glmToBt(portalHalfExtents));
+	btCompoundShape* portalCompoundShape = new btCompoundShape();
+	portalCompoundShape->addChildShape(btTransform(btQuaternion::getIdentity(), btVector3(0.0f, portalHalfExtents.y, 0.0f)), portalShape);
+	btRigidBody::btRigidBodyConstructionInfo portalRbInfo(0.0f, new btDefaultMotionState(), portalCompoundShape);
+	CollisionConstructorInfo portalCollisionInfo(portalRbInfo);
+	portalCollisionInfo.collisionFlags = btCollisionObject::CF_NO_CONTACT_RESPONSE;
+
+	Prefab victoryPortalPrefab;
+	victoryPortalPrefab.setName("VictoryPortal");
+	victoryPortalPrefab.addConstructor(new TransformConstructor());
+	victoryPortalPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, portalCollisionInfo));
+
 	/* Player */
 	btCapsuleShape* shape = new btCapsuleShape(0.5f, 0.7f);
 	float playerMass = 70.0f;
@@ -413,6 +427,7 @@ void Scene::setupPrefabs()
 
 	playerData.shotTracerPrefab = bulletTracer;
 	playerData.muzzleFlashPrefab = muzzleFlash;
+	playerData.victoryPortalPrefab = victoryPortalPrefab;
 	playerData.facingLabel = gui.facingLabel;
 
 	playerData.gemPrefabs = gemPrefabs;
@@ -420,7 +435,7 @@ void Scene::setupPrefabs()
 
 	playerPrefab.setName("Player");
 	playerPrefab.addConstructor(new TransformConstructor());
-	playerPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, playerInfo, CollisionGroupPlayer));
+	playerPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, CollisionConstructorInfo(playerInfo, CollisionGroupPlayer, CollisionGroupAll, true)));
 	playerPrefab.addConstructor(new PlayerConstructor(playerData));
 	playerPrefab.addConstructor(new RigidbodyMotorConstructor(RigidbodyMotorComponent::Data(5.0f, 4.0f)));
 	playerPrefab.addConstructor(new HealthConstructor(HealthComponent::Data(100)));
@@ -586,7 +601,7 @@ void Scene::setup()
 	Renderer::ModelHandle roomModelHandle = renderer.getModelHandle(roomModel);
 
 	Prefab roomPrefab("Level");
-	roomPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, roomConstructionInfo, CollisionGroupWall, CollisionGroupAll));
+	roomPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, CollisionConstructorInfo(roomConstructionInfo, CollisionGroupWall, CollisionGroupAll, true)));
 	roomPrefab.addConstructor(new ModelRenderConstructor(renderer, roomModelHandle, shader));
 	roomPrefab.addConstructor(new LevelConstructor(LevelComponent::Data(roomData.room)));
 	eid_t roomEntity = world.constructPrefab(roomPrefab);

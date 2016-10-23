@@ -27,6 +27,7 @@ GameEndingSystem::GameEndingSystem(World& world, EventManager& eventManager, Sou
 	require<PlayerComponent>();
 
 	eventManager.registerForEvent<GemCountChangedEvent>(std::bind(&GameEndingSystem::onGemCountChanged, this, std::placeholders::_1));
+	eventManager.registerForEvent<CollisionEvent>(std::bind(&GameEndingSystem::onCollision, this, std::placeholders::_1));
 }
 
 void GameEndingSystem::updateEntity(float dt, eid_t entity)
@@ -36,34 +37,22 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 	playerComponent->gameEndTimer += dt;
 	if (playerComponent->gameEndState == GameEndState_DefendingGems) {
 		if (playerComponent->gameEndTimer >= gemDefenseTime - screenShakeTime) {
-			ShakeComponent* cameraShakeComponent = world.getComponent<ShakeComponent>(playerComponent->data.camera, true);
-			if (cameraShakeComponent->active == false) {
-				cameraShakeComponent->data.shakeTime = screenShakeTime;
-				cameraShakeComponent->data.frequency = 0.5f;
-				cameraShakeComponent->data.amplitude = 5.0f;
+		ShakeComponent* cameraShakeComponent = world.getComponent<ShakeComponent>(playerComponent->data.camera);
+			if (cameraShakeComponent == nullptr) {
+				cameraShakeComponent = world.addComponent<ShakeComponent>(playerComponent->data.camera);
+				cameraShakeComponent->data.shakeTime = -1.0f;
+				cameraShakeComponent->data.frequency = 1/30.0f;
+				cameraShakeComponent->data.amplitude = 0.25f;
 				cameraShakeComponent->timer = 0.0f;
 				cameraShakeComponent->active = true;
 			}
 		}
 
 		if (playerComponent->gameEndTimer >= gemDefenseTime) {
-			playerComponent->gameEndState = GameEndState_Blackout;
-			playerComponent->gameEndTimer -= gemDefenseTime;
+			playerComponent->gameEndState = GameEndState_EnteringPortal;
 
-			playerComponent->data.blackoutQuad->isVisible = true;
-			soundManager.stopAllClips();
-
-			std::vector<eid_t> spiders = world.getEntitiesWithComponent<SpiderComponent>();
-			for (unsigned i = 0; i < spiders.size(); i++) {
-				world.removeEntity(spiders[i]);
-			}
-
-			std::vector<eid_t> spawners = world.getEntitiesWithComponent<SpawnerComponent>();
-			for (unsigned i = 0; i < spawners.size(); i++) {
-				world.removeEntity(spawners[i]);
-			}
-
-			eventManager.sendEvent(VictorySequenceStartedEvent());
+			PrefabConstructionInfo info = PrefabConstructionInfo(Transform());
+			world.constructPrefab(playerComponent->data.victoryPortalPrefab, World::NullEntity, &info);
 		}
 	} else if (playerComponent->gameEndState == GameEndState_Blackout) {
 		if (playerComponent->gameEndTimer >= blackoutTime) {
@@ -127,4 +116,38 @@ void GameEndingSystem::onGemCountChanged(const GemCountChangedEvent& gemCountCha
 		playerComponent->gameEndState = GameEndState_DefendingGems;
 		playerComponent->gameEndTimer = 0.0f;
 	}
+}
+
+void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
+{
+	eid_t player, other;
+	if (!world.orderEntities(player, other, requiredComponents, ComponentBitmask())) {
+		return;
+	}
+
+	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(player);
+
+	if (playerComponent->gameEndState == GameEndState_EnteringPortal) {
+		return;
+	}
+
+	if (world.getEntityName(other).compare("VictoryPortal") != 0) {
+		return;
+	}
+
+	playerComponent->data.blackoutQuad->isVisible = true;
+	playerComponent->gameEndState = GameEndState_Blackout;
+	soundManager.stopAllClips();
+
+	std::vector<eid_t> spiders = world.getEntitiesWithComponent<SpiderComponent>();
+	for (unsigned i = 0; i < spiders.size(); i++) {
+		world.removeEntity(spiders[i]);
+	}
+
+	std::vector<eid_t> spawners = world.getEntitiesWithComponent<SpawnerComponent>();
+	for (unsigned i = 0; i < spawners.size(); i++) {
+		world.removeEntity(spawners[i]);
+	}
+
+	eventManager.sendEvent(VictorySequenceStartedEvent());
 }

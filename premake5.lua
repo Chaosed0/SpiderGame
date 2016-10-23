@@ -27,7 +27,7 @@ project "Engine"
                 }
         
     filter "configurations:Debug"
-        defines { "DEBUG" }
+        defines { "DEBUG", "_ITERATOR_DEBUG_LEVEL=0" }
         debugdir "./"
         flags { "Symbols" }
 
@@ -56,7 +56,7 @@ project "EngineTest"
                 }
         
     filter "configurations:Debug"
-        defines { "DEBUG" }
+        defines { "DEBUG", "_ITERATOR_DEBUG_LEVEL=0" }
         debugdir "./"
         libdirs {
 			    os.getenv("FREETYPE_LIBDIR_D"),
@@ -118,7 +118,7 @@ project "SpiderGame"
                 }
         
     filter "configurations:Debug"
-        defines { "DEBUG" }
+        defines { "DEBUG", "_ITERATOR_DEBUG_LEVEL=0" }
         debugdir "./"
         libdirs {
 			    os.getenv("FREETYPE_LIBDIR_D"),

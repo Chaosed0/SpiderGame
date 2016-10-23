@@ -19,28 +19,36 @@ void ShakeSystem::updateEntity(float dt, eid_t entity)
 	TransformComponent* transformComponent = world.getComponent<TransformComponent>(entity);
 	ShakeComponent* shakeComponent = world.getComponent<ShakeComponent>(entity);
 
-	if (!shakeComponent->active || shakeComponent->timer >= shakeComponent->data.shakeTime) {
+	shakeComponent->timer += dt;
+
+	float timer = shakeComponent->timer;
+	float frequency = shakeComponent->data.frequency;
+	float time = shakeComponent->data.shakeTime;
+
+	if (!shakeComponent->active || (time > 0.0f && timer >= time)) {
 		shakeComponent->currentOffset = glm::vec3(0.0f);
 		return;
 	}
 
-	if (shakeComponent->timer == 0.0f) {
-		std::vector<glm::vec3> samples;
-		samples.resize((int)std::ceil(shakeComponent->data.shakeTime / shakeComponent->data.frequency));
-		std::uniform_real_distribution<float> sampleRand(-shakeComponent->data.amplitude, shakeComponent->data.amplitude);
-		for (unsigned i = 0; i < samples.size(); ++i) {
-			samples[i] = glm::vec3(sampleRand(generator), sampleRand(generator), 0.0f);
-		}
+	int sampleIndex = (int)std::floor(timer / frequency);
+	float interval = timer - sampleIndex * frequency;
 
-		samples.push_back(glm::vec3(0.0f));
-		shakeComponent->samples = samples;
+	printf("%d %g\n", sampleIndex, timer);
+
+	// Generate a new sample
+	if (sampleIndex > shakeComponent->sampleIndex) {
+		++shakeComponent->sampleIndex;
+		shakeComponent->currentSample = shakeComponent->nextSample;
+
+		// Check if we are about to end the shake
+		if (time > 0.0f && time - timer < frequency) {
+			shakeComponent->nextSample = glm::vec3(0.0f);
+		} else {
+			std::uniform_real_distribution<float> sampleRand(-shakeComponent->data.amplitude, shakeComponent->data.amplitude);
+			shakeComponent->nextSample = glm::vec3(sampleRand(generator), sampleRand(generator), 0.0f);
+		}
 	}
 
-	int sampleIndex = (int)std::floor(shakeComponent->timer / shakeComponent->data.frequency);
-	glm::vec3 s1 = shakeComponent->samples[sampleIndex];
-	glm::vec3 s2 = shakeComponent->samples[sampleIndex+1];
-	float lerp = shakeComponent->timer / shakeComponent->data.frequency - sampleIndex;
-
-	shakeComponent->currentOffset = Util::interpolate(s1, s2, lerp);
-	shakeComponent->timer += dt;
+	float lerp = interval / shakeComponent->data.frequency;
+	shakeComponent->currentOffset = Util::interpolate(shakeComponent->currentSample, shakeComponent->nextSample, lerp);
 }

@@ -8,7 +8,7 @@
 class ShakeComponent : public Component
 {
 public:
-	ShakeComponent() : timer(0.0f), active(true) { }
+	ShakeComponent() : timer(0.0f), active(true), sampleIndex(-1) { }
 
 	struct Data {
 		Data(float shakeTime, float frequency, float amplitude) : shakeTime(shakeTime), frequency(frequency), amplitude(amplitude) { }
@@ -20,7 +20,9 @@ public:
 
 	Data data;
 	float timer;
-	std::vector<glm::vec3> samples;
+	glm::vec3 currentSample;
+	glm::vec3 nextSample;
+	int sampleIndex;
 	glm::vec3 currentOffset;
 	bool active;
 };

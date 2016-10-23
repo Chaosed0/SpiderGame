@@ -28,6 +28,7 @@ enum GameEndState
 {
 	GameEndState_NotEnded,
 	GameEndState_DefendingGems,
+	GameEndState_EnteringPortal,
 	GameEndState_Blackout,
 	GameEndState_Fadein,
 	GameEndState_Rest,
@@ -43,7 +44,7 @@ public:
 		gunState(GunState_Ready), isDead(false),
 		bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
 		lastFacedEntity(World::NullEntity),
-		gemStates(PlayerGemState_Count, PlayerGemState_NotPickedUp),
+		gemStates(PlayerGemState_Count, PlayerGemState_PickedUp),
 		gameEndTimer(0.0f), gameEndState(GameEndState_NotEnded) { }
 
 	struct Data {
@@ -63,6 +64,7 @@ public:
 
 		Prefab shotTracerPrefab;
 		Prefab muzzleFlashPrefab;
+		Prefab victoryPortalPrefab;
 		std::vector<Prefab> gemPrefabs;
 		std::vector<Prefab> gemLightPrefabs;
 

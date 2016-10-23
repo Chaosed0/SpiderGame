@@ -8,6 +8,7 @@
 #include "Sound/SoundManager.h"
 
 #include "Game/Events/GemCountChangedEvent.h"
+#include "Framework/CollisionEvent.h"
 
 class GameEndingSystem : public System
 {
@@ -26,4 +27,5 @@ private:
 	SoundManager& soundManager;
 
 	void onGemCountChanged(const GemCountChangedEvent& gemCountChangedEvent);
+	void onCollision(const CollisionEvent& collisionEvent);
 };
