@@ -120,14 +120,15 @@ void GameEndingSystem::onGemCountChanged(const GemCountChangedEvent& gemCountCha
 
 void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
 {
-	eid_t player, other;
+	eid_t player = collisionEvent.e1;
+	eid_t other = collisionEvent.e2;
 	if (!world.orderEntities(player, other, requiredComponents, ComponentBitmask())) {
 		return;
 	}
 
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(player);
 
-	if (playerComponent->gameEndState == GameEndState_EnteringPortal) {
+	if (playerComponent->gameEndState != GameEndState_EnteringPortal) {
 		return;
 	}
 
@@ -137,6 +138,7 @@ void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
 
 	playerComponent->data.blackoutQuad->isVisible = true;
 	playerComponent->gameEndState = GameEndState_Blackout;
+	playerComponent->gameEndTimer = 0.0f;
 	soundManager.stopAllClips();
 
 	std::vector<eid_t> spiders = world.getEntitiesWithComponent<SpiderComponent>();

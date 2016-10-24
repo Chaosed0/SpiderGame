@@ -1,4 +1,4 @@
-libdir=D:/Libraries/
+libdir=E:/Libraries/
 openal_sdk_dir="C:/Program Files (x86)/OpenAL 1.1 SDK"
 libsndfile_sdk_dir="C:/Program Files (x86)/Mega-Nerd/libsndfile"
 TARGET=vs2015
