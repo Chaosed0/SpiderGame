@@ -28,6 +28,8 @@ public:
 	bool noclip;
 	bool canJump;
 	bool canMove;
+
+	unsigned numContacts;
 };
 
 class RigidbodyMotorConstructor : public DefaultComponentConstructor<RigidbodyMotorComponent> {

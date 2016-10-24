@@ -9,8 +9,6 @@
 #include "Game/Components/PlayerComponent.h"
 #include "Framework/CollisionEvent.h"
 
-#include <btBulletCollisionCommon.h>
-
 PlayerJumpResponder::PlayerJumpResponder(World& world, EventManager& eventManager)
 	: world(world), eventManager(eventManager)
 {
@@ -21,27 +19,35 @@ PlayerJumpResponder::PlayerJumpResponder(World& world, EventManager& eventManage
 
 void PlayerJumpResponder::handleCollisionEvent(const CollisionEvent& collisionEvent)
 {
-	eid_t e1 = collisionEvent.e1, e2 = collisionEvent.e2;
-	if (!world.orderEntities(e1, e2, requiredComponents, ComponentBitmask())) {
+	eid_t player = collisionEvent.e1;
+	eid_t other = collisionEvent.e2;
+	if (!world.orderEntities(player, other, requiredComponents, ComponentBitmask())) {
 		return;
 	}
 
-	if (collisionEvent.type != CollisionResponseType_Began) {
-		return;
-	}
-
-	btCollisionObject* collidedBody = nullptr;
-	if (*((eid_t*)collisionEvent.collisionManifold->getBody0()->getUserPointer()) == e1) {
-		collidedBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody1();
+	btCollisionObject* playerBody = nullptr;
+	btCollisionObject* otherBody = nullptr;
+	if (*((eid_t*)collisionEvent.collisionManifold->getBody0()->getUserPointer()) == player) {
+		playerBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody0();
+		otherBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody1();
 	} else {
-		collidedBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody0();
+		otherBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody0();
+		playerBody = (btCollisionObject*)collisionEvent.collisionManifold->getBody1();
 	}
 
-	if ((collidedBody->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE) != 0) {
+	if ((otherBody->getCollisionFlags() & btCollisionObject::CF_NO_CONTACT_RESPONSE) != 0) {
 		// Don't collide with things like hurtboxes
 		return;
 	}
 
-	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(e1);
-	rigidbodyMotorComponent->canJump = true;
+	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(player);
+	if (collisionEvent.type == CollisionResponseType_Began) {
+		++rigidbodyMotorComponent->numContacts;
+	} else {
+		--rigidbodyMotorComponent->numContacts;
+	}
+
+	printf("%d\n", rigidbodyMotorComponent->numContacts);
+
+	rigidbodyMotorComponent->canJump = (rigidbodyMotorComponent->numContacts >= 0);
 }

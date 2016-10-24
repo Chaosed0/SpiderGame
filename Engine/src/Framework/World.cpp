@@ -176,7 +176,7 @@ bool World::orderEntities(eid_t& e1, eid_t& e2, const ComponentBitmask& b1, cons
 	ComponentBitmask eb2 = this->getEntityBitmask(e2);
 	if (eb1.hasComponents(b1) && eb2.hasComponents(b2)) {
 		return true;
-	} else if (eb2.hasComponents(b2) && eb1.hasComponents(b1)) {
+	} else if (eb1.hasComponents(b2) && eb2.hasComponents(b1)) {
 		eid_t tmp = e1;
 		e1 = e2;
 		e2 = tmp;

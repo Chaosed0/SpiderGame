@@ -44,7 +44,7 @@ public:
 		gunState(GunState_Ready), isDead(false),
 		bulletCount(0), bulletsInGun(0), deathRestartTimer(0.0f),
 		lastFacedEntity(World::NullEntity),
-		gemStates(PlayerGemState_Count, PlayerGemState_PickedUp),
+		gemStates(PlayerGemState_Count, PlayerGemState_NotPickedUp),
 		gameEndTimer(0.0f), gameEndState(GameEndState_NotEnded) { }
 
 	struct Data {

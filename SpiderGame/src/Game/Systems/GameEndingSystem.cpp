@@ -120,6 +120,10 @@ void GameEndingSystem::onGemCountChanged(const GemCountChangedEvent& gemCountCha
 
 void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
 {
+	if (collisionEvent.type != CollisionResponseType_Began) {
+		return;
+	}
+
 	eid_t player = collisionEvent.e1;
 	eid_t other = collisionEvent.e2;
 	if (!world.orderEntities(player, other, requiredComponents, ComponentBitmask())) {

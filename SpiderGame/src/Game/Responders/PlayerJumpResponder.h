@@ -10,9 +10,10 @@ class PlayerJumpResponder
 {
 public:
 	PlayerJumpResponder(World& world, EventManager& eventManager);
-	void handleCollisionEvent(const CollisionEvent& collisionEvent);
 private:
 	World& world;
 	EventManager& eventManager;
 	ComponentBitmask requiredComponents;
+
+	void handleCollisionEvent(const CollisionEvent& collisionEvent);
 };

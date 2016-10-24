@@ -2,7 +2,6 @@
 #include "Framework/ComponentBitmask.h"
 
 ComponentBitmask::ComponentBitmask()
-	: mask(0)
 { }
 
 void ComponentBitmask::setBit(msize_t bit, bool set)
