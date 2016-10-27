@@ -47,7 +47,5 @@ void PlayerJumpResponder::handleCollisionEvent(const CollisionEvent& collisionEv
 		--rigidbodyMotorComponent->numContacts;
 	}
 
-	printf("%d\n", rigidbodyMotorComponent->numContacts);
-
-	rigidbodyMotorComponent->canJump = (rigidbodyMotorComponent->numContacts >= 0);
+	rigidbodyMotorComponent->canJump = (rigidbodyMotorComponent->numContacts > 0);
 }

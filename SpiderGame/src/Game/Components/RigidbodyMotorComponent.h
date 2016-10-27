@@ -11,7 +11,7 @@ class RigidbodyMotorComponent : public Component
 {
 public:
 	RigidbodyMotorComponent()
-		: jump(false), noclip(false), canJump(false), canMove(true) { }
+		: jump(false), noclip(false), canJump(false), canMove(true), numContacts(0) { }
 
 	struct Data {
 		Data(float moveSpeed, float jumpSpeed) : moveSpeed(moveSpeed), jumpSpeed(jumpSpeed) { }
