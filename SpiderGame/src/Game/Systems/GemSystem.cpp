@@ -63,8 +63,6 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 		float index = gemComponent->data.color + 0.5f;
 		float currentIndex = playerComponent->gameEndTimer / playerComponent->data.gemDefenseTime * GemColor_Unknown;
 
-		printf("%g, %g\n", currentIndex, index);
-
 		// Figure out when to "turn on" the light
 		if (currentIndex >= index && gemComponent->data.lightState == GemLightState_Small) {
 			PointLight light = renderer.getPointLight(pointLightComponent->handle);

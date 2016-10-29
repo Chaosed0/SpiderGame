@@ -39,7 +39,13 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 
 			PrefabConstructionInfo info = PrefabConstructionInfo(Transform());
 			world.constructPrefab(playerComponent->data.victoryPortalPrefab, World::NullEntity, &info);
+			playerComponent->gameEndTimer -= playerData.gemDefenseTime;
 		}
+	} else if (playerComponent->gameEndState == GameEndState_EnteringPortal) {
+		float alpha = (std::max)(1.0f - timer / playerData.whiteoutTime, 0.0f);
+		Material& material = playerComponent->data.blackoutQuad->material;
+		material.setProperty("color", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, alpha)));
+		playerComponent->data.blackoutQuad->isVisible = true;
 	} else if (playerComponent->gameEndState == GameEndState_Blackout) {
 		if (timer >= playerData.blackoutTime) {
 			playerComponent->gameEndState = GameEndState_Fadein;
@@ -126,7 +132,8 @@ void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
 		return;
 	}
 
-	playerComponent->data.blackoutQuad->isVisible = true;
+	Material& material = playerComponent->data.blackoutQuad->material;
+	material.setProperty("color", MaterialProperty(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
 	playerComponent->gameEndState = GameEndState_Blackout;
 	playerComponent->gameEndTimer = 0.0f;
 	soundManager.stopAllClips();

@@ -33,8 +33,6 @@ void ShakeSystem::updateEntity(float dt, eid_t entity)
 	int sampleIndex = (int)std::floor(timer / frequency);
 	float interval = timer - sampleIndex * frequency;
 
-	printf("%d %g\n", sampleIndex, timer);
-
 	// Generate a new sample
 	if (sampleIndex > shakeComponent->sampleIndex) {
 		++shakeComponent->sampleIndex;
