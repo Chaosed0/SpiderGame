@@ -54,6 +54,7 @@ private:
 	const static float xPadding;
 	const static float yPadding;
 	const static float linePadding;
+	const static float zPosition;
 	const static unsigned int maxBufferLines;
 	const static unsigned int maxLineSize;
 	const static glm::vec4 textColor;

@@ -51,11 +51,11 @@ static const GLfloat vertex_data[] = {
 	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f
 };
 
-Model getBox(const std::vector<Texture>& textures, glm::vec3 scale)
+Model getBox(const std::vector<Texture>& textures, glm::vec3 scale, glm::vec3 offset)
 {
 	std::vector<Vertex> vertices(36);
 	for (unsigned i = 0; i < vertices.size(); i++) {
-		vertices[i].position = glm::vec3(vertex_data[i*8] * scale.x, vertex_data[i*8+1] * scale.y, vertex_data[i*8+2] * scale.z);
+		vertices[i].position = glm::vec3(vertex_data[i*8] * scale.x, vertex_data[i*8+1] * scale.y, vertex_data[i*8+2] * scale.z) + offset;
 		vertices[i].normal = glm::vec3(vertex_data[i*8+3], vertex_data[i*8+4], vertex_data[i*8+5]);
 		vertices[i].texCoords = glm::vec2(vertex_data[i*8+6], vertex_data[i*8+7]);
 	}
@@ -69,11 +69,6 @@ Model getBox(const std::vector<Texture>& textures, glm::vec3 scale)
 	Material material;
 	material.setTextures(textures);
 	return Model(mesh, material);
-}
-
-Model getBox(const std::vector<Texture>& textures)
-{
-	return getBox(textures, glm::vec3(1.0f));
 }
 
 GLfloat skybox_verts[] = {

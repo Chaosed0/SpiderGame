@@ -192,7 +192,7 @@ int Game::setup()
 
 	/* Renderer */
 	renderer.setDebugLogCallback(std::bind(&Console::print, this->console.get(), std::placeholders::_1));
-	uiRenderer.setProjection(glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f));
+	uiRenderer.setProjection(glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f, 1000.0f, -1000.0f));
 
 	/* Physics */
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();

@@ -11,6 +11,7 @@
 const float Console::xPadding = 5.0f;
 const float Console::yPadding = 5.0f;
 const float Console::linePadding = 2.0f;
+const float Console::zPosition = 100.0f;
 const unsigned int Console::maxBufferLines = 30;
 const unsigned int Console::maxLineSize = 250;
 const glm::vec4 Console::textColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -31,6 +32,8 @@ Console::Console(std::shared_ptr<Font> font, glm::vec2 size)
 	this->repositionLabels();
 	this->updateInputLabel();
 	this->setVisible(false);
+
+	backQuad->transform = glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, zPosition));
 }
 
 void Console::addCallback(const std::string& functionName, Callback callback)
@@ -152,7 +155,7 @@ void Console::print(const std::string& message)
 void Console::repositionLabels()
 {
 	float bottom = size.y - yPadding;
-	this->inputLabel->transform = Transform(glm::vec3(this->xPadding, bottom, 1.0f)).matrix();
+	this->inputLabel->transform = Transform(glm::vec3(this->xPadding, bottom, zPosition + 0.1f)).matrix();
 
 	// This rotates the labels' positions.
 	// We could keep the labels at the same position and rotate the text, but setting
@@ -160,7 +163,7 @@ void Console::repositionLabels()
 	for (unsigned i = 0; i < numBufferedLines; i++) {
 		bottom -= linePadding + lineHeight;
 		int index = (this->buffer.size() * 2 + (this->bufferEnd - 1 - i)) % this->buffer.size();
-		this->bufferLabels[index]->transform = Transform(glm::vec3(this->xPadding, bottom, 1.0f)).matrix();
+		this->bufferLabels[index]->transform = Transform(glm::vec3(this->xPadding, bottom, zPosition + 0.1f)).matrix();
 	}
 }
 

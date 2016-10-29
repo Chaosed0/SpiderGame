@@ -24,8 +24,8 @@ class UIRendererSortComparator
 public:
 	bool operator() (const std::pair<HandlePool<UIRenderer::Entity>::WeakHandle, UIRenderer::Entity>& p1, const std::pair<HandlePool<UIRenderer::Entity>::WeakHandle, UIRenderer::Entity>& p2)
 	{
-		// 2,3 is the location of z position in the matrix
-		return p1.second.renderable->getTransform()[2][3] < p2.second.renderable->getTransform()[2][3];
+		// 3,2 is the location of z position in the matrix
+		return p1.second.renderable->getTransform()[3][2] < p2.second.renderable->getTransform()[3][2];
 	}
 };
 

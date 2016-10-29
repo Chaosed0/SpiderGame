@@ -400,10 +400,14 @@ void Scene::setupPrefabs()
 	CollisionConstructorInfo portalCollisionInfo(portalRbInfo);
 	portalCollisionInfo.collisionFlags = btCollisionObject::CF_NO_CONTACT_RESPONSE;
 
+	Model portalBox = getBox(std::vector<Texture> {}, portalHalfExtents * 2.0f, glm::vec3(0.0f, portalHalfExtents.y, 0.0f));
+	portalBox.material.setProperty("color", MaterialProperty(glm::vec4(1.0f)));
+
 	Prefab victoryPortalPrefab;
 	victoryPortalPrefab.setName("VictoryPortal");
 	victoryPortalPrefab.addConstructor(new TransformConstructor());
 	victoryPortalPrefab.addConstructor(new CollisionConstructor(dynamicsWorld, portalCollisionInfo));
+	victoryPortalPrefab.addConstructor(new ModelRenderConstructor(renderer, renderer.getModelHandle(portalBox), singleColorShader));
 
 	/* Player */
 	btCapsuleShape* shape = new btCapsuleShape(0.5f, 0.7f);
