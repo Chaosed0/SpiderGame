@@ -16,12 +16,6 @@ public:
 	GameEndingSystem(World& world, EventManager& eventManager, SoundManager& soundManager);
 
 	virtual void updateEntity(float dt, eid_t entity);
-
-	static const float screenShakeTime;
-	static const float gemDefenseTime;
-	static const float blackoutTime;
-	static const float fadeInTime;
-	static const float endRestTime;
 private:
 	EventManager& eventManager;
 	SoundManager& soundManager;

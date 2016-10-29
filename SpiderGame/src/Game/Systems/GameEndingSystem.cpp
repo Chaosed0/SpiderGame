@@ -14,12 +14,6 @@
 
 #include <algorithm>
 
-const float GameEndingSystem::screenShakeTime = 3.0f;
-const float GameEndingSystem::gemDefenseTime = 30.0f;
-const float GameEndingSystem::blackoutTime = 3.0f;
-const float GameEndingSystem::fadeInTime = 2.0f;
-const float GameEndingSystem::endRestTime = 2.0f;
-
 GameEndingSystem::GameEndingSystem(World& world, EventManager& eventManager, SoundManager& soundManager)
 	: System(world), eventManager(eventManager), soundManager(soundManager)
 {
@@ -35,29 +29,21 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 
 	playerComponent->gameEndTimer += dt;
-	if (playerComponent->gameEndState == GameEndState_DefendingGems) {
-		if (playerComponent->gameEndTimer >= gemDefenseTime - screenShakeTime) {
-		ShakeComponent* cameraShakeComponent = world.getComponent<ShakeComponent>(playerComponent->data.camera);
-			if (cameraShakeComponent == nullptr) {
-				cameraShakeComponent = world.addComponent<ShakeComponent>(playerComponent->data.camera);
-				cameraShakeComponent->data.shakeTime = -1.0f;
-				cameraShakeComponent->data.frequency = 1/30.0f;
-				cameraShakeComponent->data.amplitude = 0.25f;
-				cameraShakeComponent->timer = 0.0f;
-				cameraShakeComponent->active = true;
-			}
-		}
+	float timer = playerComponent->gameEndTimer;
 
-		if (playerComponent->gameEndTimer >= gemDefenseTime) {
+	PlayerComponent::Data& playerData = playerComponent->data;
+
+	if (playerComponent->gameEndState == GameEndState_DefendingGems) {
+		if (timer >= playerData.gemDefenseTime) {
 			playerComponent->gameEndState = GameEndState_EnteringPortal;
 
 			PrefabConstructionInfo info = PrefabConstructionInfo(Transform());
 			world.constructPrefab(playerComponent->data.victoryPortalPrefab, World::NullEntity, &info);
 		}
 	} else if (playerComponent->gameEndState == GameEndState_Blackout) {
-		if (playerComponent->gameEndTimer >= blackoutTime) {
+		if (timer >= playerData.blackoutTime) {
 			playerComponent->gameEndState = GameEndState_Fadein;
-			playerComponent->gameEndTimer -= blackoutTime;
+			playerComponent->gameEndTimer -= playerData.blackoutTime;
 
 			// Setup the camera
 			std::vector<eid_t> cameras = world.getEntitiesWithComponent<CameraComponent>();
@@ -79,15 +65,15 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 			oldCameraComponent->isActive = false;
 		}
 	} else if (playerComponent->gameEndState == GameEndState_Fadein) {
-		float alpha = (std::max)(1.0f - playerComponent->gameEndTimer / fadeInTime, 0.0f);
+		float alpha = (std::max)(1.0f - timer / playerData.fadeInTime, 0.0f);
 		Material& material = playerComponent->data.blackoutQuad->material;
 		material.setProperty("color", MaterialProperty(glm::vec4(0.0f, 0.0f, 0.0f, alpha)));
-		if (playerComponent->gameEndTimer >= fadeInTime) {
+		if (timer >= playerData.fadeInTime) {
 			playerComponent->gameEndState = GameEndState_Rest;
-			playerComponent->gameEndTimer-= fadeInTime;
+			playerComponent->gameEndTimer -= playerData.fadeInTime;
 		}
 	} else if (playerComponent->gameEndState == GameEndState_Rest) {
-		if (playerComponent->gameEndTimer >= endRestTime) {
+		if (timer >= playerData.endRestTime) {
 			eventManager.sendEvent(VictorySequenceEndedEvent());
 			playerComponent->gameEndState = GameEndState_Finished;
 			playerComponent->gameEndTimer = 0.0f;

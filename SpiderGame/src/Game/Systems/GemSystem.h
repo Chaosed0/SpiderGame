@@ -16,8 +16,6 @@ private:
 	EventManager& eventManager;
 	bool allGemsPlaced;
 
-	float endGameTime;
-
 	void onAllGemsCollected(const AllGemsCollectedEvent& allGemsCollectedEvent);
 
 	static const float endGemHeight;

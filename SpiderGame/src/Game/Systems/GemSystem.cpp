@@ -20,8 +20,7 @@ GemSystem::GemSystem(World& world, Renderer& renderer, EventManager& eventManage
 	: System(world),
 	renderer(renderer),
 	allGemsPlaced(false),
-	eventManager(eventManager),
-	endGameTime(GameEndingSystem::gemDefenseTime)
+	eventManager(eventManager)
 {
 	require<GemComponent>();
 	require<TransformComponent>();
@@ -36,22 +35,15 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 	PointLightComponent* pointLightComponent = world.getComponent<PointLightComponent>(gemComponent->light);
 	assert (pointLightComponent != nullptr);
 
-	PointLight light = renderer.getPointLight(pointLightComponent->handle);
-
-	gemComponent->pulseTimer += dt;
-	if (gemComponent->pulseTimer >= gemComponent->data.pulseTime) {
-		gemComponent->pulseTimer -= gemComponent->data.pulseTime;
+	if (gemComponent->data.lightState == GemLightState_Unset) {
+		PointLight light = renderer.getPointLight(pointLightComponent->handle);
+		renderer.setPointLight(pointLightComponent->handle, gemComponent->data.minIntensity);
+		gemComponent->data.lightState = GemLightState_Small;
 	}
 
-	float interp = (sin(gemComponent->pulseTimer / gemComponent->data.pulseTime * glm::two_pi<float>()) + 1.0f) / 2.0f;
-	light.constant = Util::interpolate(gemComponent->data.minIntensity.constant, gemComponent->data.maxIntensity.constant, interp);
-	light.linear = Util::interpolate(gemComponent->data.minIntensity.linear, gemComponent->data.maxIntensity.linear, interp);
-	light.quadratic = Util::interpolate(gemComponent->data.minIntensity.quadratic, gemComponent->data.maxIntensity.quadratic, interp);
-	light.ambient = Util::interpolate(gemComponent->data.minIntensity.ambient, gemComponent->data.maxIntensity.ambient, interp);
-	light.diffuse = Util::interpolate(gemComponent->data.minIntensity.diffuse, gemComponent->data.maxIntensity.diffuse, interp);
-	light.specular = Util::interpolate(gemComponent->data.minIntensity.specular, gemComponent->data.maxIntensity.specular, interp);
-
-	renderer.setPointLight(pointLightComponent->handle, light);
+	std::vector<eid_t> players = world.getEntitiesWithComponent<PlayerComponent>();
+	assert(players.size());
+	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(players[0]);
 
 	if (allGemsPlaced) {
 		TransformComponent* gemTransformComponent = world.getComponent<TransformComponent>(entity);
@@ -63,9 +55,26 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 		}
 
 		// Assume the gems circle around the origin
-		float angularSpeed = (std::min)(gemComponent->endGameTimer / this->endGameTime, 1.0f) * this->endGemAngularSpeed;
+		float angularSpeed = (std::min)(gemComponent->endGameTimer / playerComponent->data.gemDefenseTime, 1.0f) * this->endGemAngularSpeed;
 		float theta = atan2f(currentGemPosition.x, currentGemPosition.z) + angularSpeed;
 		float rad = glm::distance(currentGemPosition, glm::vec3(0.0f, currentGemPosition.y, 0.0f));
+
+		// Stagger each gem turn on
+		float index = gemComponent->data.color + 0.5f;
+		float currentIndex = playerComponent->gameEndTimer / playerComponent->data.gemDefenseTime * GemColor_Unknown;
+
+		printf("%g, %g\n", currentIndex, index);
+
+		// Figure out when to "turn on" the light
+		if (currentIndex >= index && gemComponent->data.lightState == GemLightState_Small) {
+			PointLight light = renderer.getPointLight(pointLightComponent->handle);
+			renderer.setPointLight(pointLightComponent->handle, gemComponent->data.maxIntensity);
+			gemComponent->data.lightState = GemLightState_Max;
+
+			GemLightOnEvent lightOnEvent;
+			lightOnEvent.source = entity;
+			eventManager.sendEvent(lightOnEvent);
+		}
 
 		glm::vec3 newPosition(sin(theta) * rad, currentGemPosition.y + heightChange, cos(theta) * rad);
 		gemTransformComponent->data->setPosition(newPosition);

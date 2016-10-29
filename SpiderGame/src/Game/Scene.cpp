@@ -430,6 +430,11 @@ void Scene::setupPrefabs()
 	playerData.victoryPortalPrefab = victoryPortalPrefab;
 	playerData.facingLabel = gui.facingLabel;
 
+	playerData.gemDefenseTime = 30.0f;
+	playerData.blackoutTime = 2.0f;
+	playerData.fadeInTime = 2.0f;
+	playerData.endRestTime = 2.0f;
+
 	playerData.gemPrefabs = gemPrefabs;
 	playerData.gemLightPrefabs = gemLightPrefabs;
 

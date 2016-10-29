@@ -62,6 +62,11 @@ public:
 		unsigned shotDamage;
 		glm::vec3 gunBarrelOffset;
 
+		float gemDefenseTime;
+		float blackoutTime;
+		float fadeInTime;
+		float endRestTime;
+
 		Prefab shotTracerPrefab;
 		Prefab muzzleFlashPrefab;
 		Prefab victoryPortalPrefab;
