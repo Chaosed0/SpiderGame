@@ -230,8 +230,10 @@ void Scene::setupPrefabs()
 	Model gemModel = modelLoader.loadModelFromPath("assets/models/gem.fbx");
 	gemModel.material.setProperty("shininess", 32.0f);
 
+	btVector3 gemBodyInertia;
 	btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
-	btRigidBody::btRigidBodyConstructionInfo gemBodyInfo(0.0f, new btDefaultMotionState(), gemCollisionShape);
+	btRigidBody::btRigidBodyConstructionInfo gemBodyInfo(0.0f, new btDefaultMotionState(), gemCollisionShape, gemBodyInertia);
+	gemCollisionShape->calculateLocalInertia(1.0f, gemBodyInertia);
 
 	Model gemSlabModel = getBox({ textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gem.png") }, gemSlabDimensions);
 
@@ -434,7 +436,7 @@ void Scene::setupPrefabs()
 	playerData.victoryPortalPrefab = victoryPortalPrefab;
 	playerData.facingLabel = gui.facingLabel;
 
-	playerData.gemDefenseTime = 30.0f;
+	playerData.gemDefenseTime = 5.0f;
 	playerData.blackoutTime = 2.0f;
 	playerData.fadeInTime = 2.0f;
 	playerData.endRestTime = 2.0f;

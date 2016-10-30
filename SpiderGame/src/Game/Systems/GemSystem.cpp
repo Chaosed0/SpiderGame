@@ -7,6 +7,7 @@
 
 #include "Game/Components/PlayerComponent.h"
 #include "Game/Components/CollisionComponent.h"
+#include "Game/Components/VelocityComponent.h"
 
 #include "Game/Systems/GameEndingSystem.h"
 
@@ -24,6 +25,8 @@ GemSystem::GemSystem(World& world, Renderer& renderer, EventManager& eventManage
 {
 	require<GemComponent>();
 	require<TransformComponent>();
+	require<CollisionComponent>();
+	require<VelocityComponent>();
 
 	eventManager.registerForEvent<AllGemsCollectedEvent>(std::bind(&GemSystem::onAllGemsCollected, this, std::placeholders::_1));
 }
@@ -31,6 +34,10 @@ GemSystem::GemSystem(World& world, Renderer& renderer, EventManager& eventManage
 void GemSystem::updateEntity(float dt, eid_t entity)
 {
 	GemComponent* gemComponent = world.getComponent<GemComponent>(entity);
+
+	if (gemComponent->data.state == GemState_Free) {
+		return;
+	}
 
 	PointLightComponent* pointLightComponent = world.getComponent<PointLightComponent>(gemComponent->light);
 	assert (pointLightComponent != nullptr);
@@ -48,6 +55,11 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 	if (allGemsPlaced) {
 		TransformComponent* gemTransformComponent = world.getComponent<TransformComponent>(entity);
 		glm::vec3 currentGemPosition = gemTransformComponent->data->getWorldPosition();
+
+		// Turn off collision
+		CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
+		int flags = collisionComponent->collisionObject->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE;
+		collisionComponent->collisionObject->setCollisionFlags(flags);
 
 		float heightChange = 0.0f;
 		if (gemComponent->endGameTimer < this->airLiftTime) {
@@ -78,6 +90,21 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 		gemTransformComponent->data->setPosition(newPosition);
 
 		gemComponent->endGameTimer += dt;
+	}
+
+	if (gemComponent->data.state == GemState_ShouldFree) {
+		// Turn collision back on
+		CollisionComponent* collisionComponent = world.getComponent<CollisionComponent>(entity);
+		int flags = collisionComponent->collisionObject->getCollisionFlags() & (~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+		collisionComponent->collisionObject->setCollisionFlags(flags);
+
+		// Remove velocity and give control back to physics
+		world.removeComponent<VelocityComponent>(entity);
+		collisionComponent->controlsMovement = true;
+		btVector3 inertia(((btRigidBody*)collisionComponent->collisionObject)->getLocalInertia());
+		((btRigidBody*)collisionComponent->collisionObject)->setMassProps(1.0f, inertia);
+
+		gemComponent->data.state = GemState_Free;
 	}
 }
 

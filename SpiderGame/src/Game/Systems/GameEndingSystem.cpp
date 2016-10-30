@@ -46,6 +46,12 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 		Material& material = playerComponent->data.blackoutQuad->material;
 		material.setProperty("color", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, alpha)));
 		playerComponent->data.blackoutQuad->isVisible = true;
+
+		std::vector<eid_t> gems = world.getEntitiesWithComponent<GemComponent>();
+		for (unsigned i = 0; i < gems.size(); i++) {
+			GemComponent* gemComponent = world.getComponent<GemComponent>(gems[i]);
+			gemComponent->data.state = GemState_ShouldFree;
+		}
 	} else if (playerComponent->gameEndState == GameEndState_Blackout) {
 		if (timer >= playerData.blackoutTime) {
 			playerComponent->gameEndState = GameEndState_Fadein;

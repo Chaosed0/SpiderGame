@@ -5,7 +5,9 @@
 
 enum GemState {
 	GemState_OnPedestal,
-	GemState_OnSlab
+	GemState_OnSlab,
+	GemState_ShouldFree,
+	GemState_Free
 };
 
 enum GemColor {
@@ -18,7 +20,8 @@ enum GemColor {
 enum GemLightState {
 	GemLightState_Unset,
 	GemLightState_Small,
-	GemLightState_Max
+	GemLightState_Max,
+	GemLightState_Deleted
 };
 
 class GemComponent : public Component
@@ -28,7 +31,7 @@ public:
 
 	struct Data {
 		Data(GemColor color, GemState state, const glm::vec3& lightColor, float pulseTime, const PointLight& minIntensity, const PointLight& maxIntensity)
-			: color(color), state(state), lightColor(lightColor), minIntensity(minIntensity), maxIntensity(maxIntensity) { }
+			: color(color), state(state), lightColor(lightColor), minIntensity(minIntensity), maxIntensity(maxIntensity), lightState(GemLightState_Unset) { }
 		Data() : Data(GemColor_Unknown, GemState_OnPedestal, glm::vec3(0.0f), 3.0f, PointLight(), PointLight()) { }
 
 		GemColor color;
