@@ -44,8 +44,6 @@
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/UIQuad.h"
 
-const static int gemCount = 3;
-const static int spiderCount = 6;
 
 const static glm::vec3 tableDimensions(2.0f, 1.0f, 0.785f);
 const static glm::vec3 bulletDimensions(0.2f, 0.07f, 0.2f);
@@ -140,7 +138,6 @@ void Scene::setupPrefabs()
 
 	/* Blackout */
 	gui.blackoutQuad = std::make_shared<UIQuad>(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), glm::vec2(windowWidth, windowHeight));
-	gui.blackoutQuad->isVisible = false;
 	gui.blackoutHandle = uiRenderer.getEntityHandle(gui.blackoutQuad, singleColorShader2d);
 
 	/*! Victory label*/
@@ -148,7 +145,6 @@ void Scene::setupPrefabs()
 	gui.victoryLabel = std::make_shared<Label>(font);
 	gui.victoryLabel->setAlignment(Label::Alignment_center);
 	gui.victoryLabel->setText("YOU ESCAPED");
-	gui.victoryLabel->isVisible = false;
 	gui.victoryLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
 	gui.victoryLabel->transform = Transform(glm::vec3(windowWidth / 2.0f, windowHeight / 2.0f, 0.0f)).matrix();
 	gui.victoryLabelHandle = uiRenderer.getEntityHandle(gui.victoryLabel, textShader);
@@ -232,6 +228,7 @@ void Scene::setupPrefabs()
 
 	btVector3 gemBodyInertia;
 	btCollisionShape* gemCollisionShape = new btBoxShape(btVector3(0.1f, 0.1f, 0.05f));
+	gemCollisionShape->calculateLocalInertia(1.0f, gemBodyInertia);
 	btRigidBody::btRigidBodyConstructionInfo gemBodyInfo(0.0f, new btDefaultMotionState(), gemCollisionShape, gemBodyInertia);
 	gemCollisionShape->calculateLocalInertia(1.0f, gemBodyInertia);
 
@@ -429,6 +426,8 @@ void Scene::setupPrefabs()
 	playerData.hurtClip = AudioClip("assets/sound/minecraft/classic_hurt.ogg");
 	playerData.gemPickupClip = AudioClip("assets/sound/pickup.wav");
 	playerData.reloadClip = AudioClip("assets/sound/reload.wav");
+	playerData.portalClip = AudioClip("assets/sound/portal.wav");
+	playerData.portalEnterClip = AudioClip("assets/sound/portal_enter.wav");
 	playerData.gunBarrelOffset = glm::vec3(0.0f, 0.19f, -0.665f);
 
 	playerData.shotTracerPrefab = bulletTracer;
@@ -436,7 +435,7 @@ void Scene::setupPrefabs()
 	playerData.victoryPortalPrefab = victoryPortalPrefab;
 	playerData.facingLabel = gui.facingLabel;
 
-	playerData.gemDefenseTime = 5.0f;
+	playerData.gemDefenseTime = 30.0f;
 	playerData.blackoutTime = 2.0f;
 	playerData.fadeInTime = 2.0f;
 	playerData.endRestTime = 2.0f;
@@ -456,6 +455,10 @@ void Scene::setupPrefabs()
 	damageEventResponder = std::make_unique<DamageEventResponder>(world, eventManager);
 	playerJumpResponder = std::make_shared<PlayerJumpResponder>(world, eventManager);
 	hurtboxPlayerResponder = std::make_shared<HurtboxPlayerResponder>(world, eventManager);
+
+	endGameSoundPrefab.setName("EndGameSoundSource");
+	endGameSoundPrefab.addConstructor(new TransformConstructor());
+	endGameSoundPrefab.addConstructor(new AudioSourceConstructor(soundManager));
 
 	Model skyboxModel = getSkybox(std::vector<std::string> {
 		"assets/img/skybox/miramar_ft.tga",
@@ -749,6 +752,9 @@ void Scene::setup()
 		spawnerComponent->data.candidatePositions.push_back(roomBoxCenter(box) + glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 
+	PrefabConstructionInfo endGameSoundConstructionInfo = PrefabConstructionInfo(Transform(glm::vec3(0.0f, 3.0f, 0.0f)));
+	world.constructPrefab(endGameSoundPrefab, World::NullEntity, &endGameSoundConstructionInfo);
+
 	// Initialize the GUI
 	HealthComponent* playerHealthComponent = world.getComponent<HealthComponent>(player);
 	std::stringstream sstream;
@@ -762,6 +768,9 @@ void Scene::setup()
 	gui.redGemImage->isVisible = playerComponent->gemStates[GemColor_Red] == PlayerGemState_PickedUp;
 	gui.greenGemImage->isVisible = playerComponent->gemStates[GemColor_Green] == PlayerGemState_PickedUp;
 	gui.blueGemImage->isVisible = playerComponent->gemStates[GemColor_Blue] == PlayerGemState_PickedUp;
+
+	gui.blackoutQuad->material.setProperty("color", MaterialProperty(glm::vec4(0.0f)));
+	gui.victoryLabel->isVisible = false;
 }
 
 glm::vec3 roomBoxCenter(const RoomBox& box)

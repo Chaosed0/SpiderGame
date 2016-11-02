@@ -52,7 +52,7 @@ public:
 			: maxShotDistance(100.0f), shotCooldown(1/30.0f), reloadTime(2.5f),
 			gunBarrelOffset(0.0f), maxBulletsInGun(6), shotDamage(100), deathRestartTime(4.0f),
 			camera(World::NullEntity), gun(World::NullEntity),
-			gemDefenseTime(30.0f), whiteoutTime(1.0f), blackoutTime(2.0f), fadeInTime(1.5f), endRestTime(1.0f) { }
+			gemDefenseTime(30.0f), whiteoutTime(1.0f), blackoutTime(4.0f), fadeInTime(1.5f), endRestTime(1.0f) { }
 
 		eid_t gun;
 		float reloadTime;
@@ -80,6 +80,8 @@ public:
 		AudioClip reloadClip;
 		AudioClip hurtClip;
 		AudioClip gemPickupClip;
+		AudioClip portalClip;
+		AudioClip portalEnterClip;
 
 		std::shared_ptr<Label> facingLabel;
 		std::shared_ptr<UIQuad> blackoutQuad;

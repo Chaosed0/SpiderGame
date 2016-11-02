@@ -9,6 +9,7 @@
 #include "Game/Components/SpiderComponent.h"
 #include "Game/Components/SpawnerComponent.h"
 #include "Game/Components/ShakeComponent.h"
+#include "Game/Components/AudioSourceComponent.h"
 
 #include "Util.h"
 
@@ -21,6 +22,7 @@ GameEndingSystem::GameEndingSystem(World& world, EventManager& eventManager, Sou
 	require<PlayerComponent>();
 
 	eventManager.registerForEvent<GemCountChangedEvent>(std::bind(&GameEndingSystem::onGemCountChanged, this, std::placeholders::_1));
+	eventManager.registerForEvent<GemLightOnEvent>(std::bind(&GameEndingSystem::onGemLightOn, this, std::placeholders::_1));
 	eventManager.registerForEvent<CollisionEvent>(std::bind(&GameEndingSystem::onCollision, this, std::placeholders::_1));
 }
 
@@ -38,8 +40,13 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 			playerComponent->gameEndState = GameEndState_EnteringPortal;
 
 			PrefabConstructionInfo info = PrefabConstructionInfo(Transform());
-			world.constructPrefab(playerComponent->data.victoryPortalPrefab, World::NullEntity, &info);
+			eid_t portal = world.constructPrefab(playerComponent->data.victoryPortalPrefab, World::NullEntity, &info);
 			playerComponent->gameEndTimer -= playerData.gemDefenseTime;
+
+			eid_t gameEndSoundSource = world.getEntityWithName("EndGameSoundSource");
+			assert(gameEndSoundSource != World::NullEntity);
+			AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(gameEndSoundSource);
+			soundManager.setSourceVolume(audioSourceComponent->sourceHandle, 1.0f);
 		}
 	} else if (playerComponent->gameEndState == GameEndState_EnteringPortal) {
 		float alpha = (std::max)(1.0f - timer / playerData.whiteoutTime, 0.0f);
@@ -113,7 +120,31 @@ void GameEndingSystem::onGemCountChanged(const GemCountChangedEvent& gemCountCha
 
 		playerComponent->gameEndState = GameEndState_DefendingGems;
 		playerComponent->gameEndTimer = 0.0f;
+
+		eid_t gameEndSoundSource = world.getEntityWithName("EndGameSoundSource");
+		assert(gameEndSoundSource != World::NullEntity);
+		AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(gameEndSoundSource);
+		soundManager.setSourceVolume(audioSourceComponent->sourceHandle, 0.25f);
+		soundManager.playClipAtSource(playerComponent->data.portalClip, audioSourceComponent->sourceHandle, true);
 	}
+}
+
+void GameEndingSystem::onGemLightOn(const GemLightOnEvent& gemLightOnEvent) {
+	std::vector<eid_t> gems = world.getEntitiesWithComponent<GemComponent>();
+	int lightsOn = 0;
+
+	for (unsigned i = 0; i < gems.size(); i++) {
+		GemComponent* gemComponent = world.getComponent<GemComponent>(gems[i]);
+		if (gemComponent->data.lightState == GemLightState_Max) {
+			++lightsOn;
+		}
+	}
+	
+	eid_t gameEndSoundSource = world.getEntityWithName("EndGameSoundSource");
+	assert (gameEndSoundSource != World::NullEntity);
+
+	AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(gameEndSoundSource);
+	soundManager.setSourceVolume(audioSourceComponent->sourceHandle, 0.25f + 0.75f / gems.size() * lightsOn);
 }
 
 void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
@@ -143,6 +174,9 @@ void GameEndingSystem::onCollision(const CollisionEvent& collisionEvent)
 	playerComponent->gameEndState = GameEndState_Blackout;
 	playerComponent->gameEndTimer = 0.0f;
 	soundManager.stopAllClips();
+
+	AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(player);
+	soundManager.playClipAtSource(playerComponent->data.portalEnterClip, audioSourceComponent->sourceHandle);
 
 	std::vector<eid_t> spiders = world.getEntitiesWithComponent<SpiderComponent>();
 	for (unsigned i = 0; i < spiders.size(); i++) {

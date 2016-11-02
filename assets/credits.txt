@@ -2,3 +2,6 @@ flash.png: Muzzle Flares From PixelVFX tinyurl.com/PixelVFX
 
 shot.wav: http://freesound.org/people/tehlordoswag420/sounds/240377/
 dryfire.wav: http://freesound.org/people/Nanashi/sounds/104412/
+pickup.wav: http://freesound.org/people/mbx448/sounds/256896/
+portal.wav: http://freesound.org/people/couchHero/sounds/168910/
+portal_enter.wav: http://freesound.org/people/Robinhood76/sounds/330724/

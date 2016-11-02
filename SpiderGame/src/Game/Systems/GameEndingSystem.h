@@ -21,5 +21,6 @@ private:
 	SoundManager& soundManager;
 
 	void onGemCountChanged(const GemCountChangedEvent& gemCountChangedEvent);
+	void onGemLightOn(const GemLightOnEvent& gemLightOnEvent);
 	void onCollision(const CollisionEvent& collisionEvent);
 };

@@ -37,7 +37,7 @@ public:
 
 	void setListenerVolume(float volume);
 
-	ClipHandle playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle);
+	ClipHandle playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle, bool loop = false);
 	void stopClip(const ClipHandle& clipHandle);
 	bool clipValid(const ClipHandle& clipHandle);
 

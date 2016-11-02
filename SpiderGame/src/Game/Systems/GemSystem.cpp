@@ -39,8 +39,8 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 		return;
 	}
 
+	// Always check lightState before dereferencing this
 	PointLightComponent* pointLightComponent = world.getComponent<PointLightComponent>(gemComponent->light);
-	assert (pointLightComponent != nullptr);
 
 	if (gemComponent->data.lightState == GemLightState_Unset) {
 		PointLight light = renderer.getPointLight(pointLightComponent->handle);
@@ -103,6 +103,10 @@ void GemSystem::updateEntity(float dt, eid_t entity)
 		collisionComponent->controlsMovement = true;
 		btVector3 inertia(((btRigidBody*)collisionComponent->collisionObject)->getLocalInertia());
 		((btRigidBody*)collisionComponent->collisionObject)->setMassProps(1.0f, inertia);
+
+		// Delete light
+		world.removeEntity(gemComponent->light);
+		gemComponent->data.lightState = GemLightState_Deleted;
 
 		gemComponent->data.state = GemState_Free;
 	}

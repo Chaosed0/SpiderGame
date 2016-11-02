@@ -124,6 +124,7 @@ private:
 	Prefab playerPrefab;
 	Prefab cameraPrefab;
 	Prefab playerLightPrefab;
+	Prefab endGameSoundPrefab;
 
 	Prefab platformPrefab;
 

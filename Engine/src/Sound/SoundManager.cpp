@@ -24,7 +24,7 @@ struct SoundManager::Source
 };
 
 SoundManager::SoundManager()
-	: impl(new Impl), listenerVolume(1.0f)
+	: impl(new Impl), listenerVolume(0.99f)
 { }
 
 SoundManager::~SoundManager()
@@ -74,7 +74,7 @@ bool SoundManager::initialize()
 		sources[i].playing = false;
 		sources[i].startPlaying = false;
 
-		alSourcef(alSources[i], AL_REFERENCE_DISTANCE, 5.0f);
+		alSourcef(alSources[i], AL_REFERENCE_DISTANCE, 2.5f);
 	}
 
 	return true;
@@ -92,7 +92,7 @@ SoundManager::SourceHandle SoundManager::getSourceHandle()
 	source.position = glm::vec3(0.0f);
 	source.priority = 0;
 	source.volume = 1.0f;
-	source.rolloffFactor = 2.0f;
+	source.rolloffFactor = 1.0f;
 	source.dirty = true;
 	return sourcePool.getNewHandle(source);
 }
@@ -100,22 +100,28 @@ SoundManager::SourceHandle SoundManager::getSourceHandle()
 void SoundManager::setSourcePosition(const SourceHandle& handle, glm::vec3 position)
 {
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
-	source.position = position;
-	source.dirty = true;
+	if (source.position != position) {
+		source.position = position;
+		source.dirty = true;
+	}
 }
 
 void SoundManager::setSourceVolume(const SourceHandle& handle, float volume)
 {
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
-	source.volume = volume;
-	source.dirty = true;
+	if (source.volume != volume) {
+		source.volume = volume;
+		source.dirty = true;
+	}
 }
 
 void SoundManager::setSourcePriority(const SourceHandle& handle, int priority)
 {
 	LogicalSource& source = sourcePool.get(handle).value_or(invalidSource);
-	source.priority = priority;
-	source.dirty = true;
+	if (source.priority != priority) {
+		source.priority = priority;
+		source.dirty = true;
+	}
 }
 
 void SoundManager::setListenerVolume(float volume)
@@ -123,7 +129,7 @@ void SoundManager::setListenerVolume(float volume)
 	this->listenerVolume = volume;
 }
 
-SoundManager::ClipHandle SoundManager::playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle)
+SoundManager::ClipHandle SoundManager::playClipAtSource(const AudioClip& clip, const SourceHandle& sourceHandle, bool loop)
 {
 	LogicalSource& logicalSource = sourcePool.get(sourceHandle).value_or(invalidSource);
 
@@ -156,6 +162,10 @@ SoundManager::ClipHandle SoundManager::playClipAtSource(const AudioClip& clip, c
 
 	ALuint alSource = source.alSource;
 	alSourcei(alSource, AL_BUFFER, clip.buffer);
+
+	if (loop) {
+		alSourcei(alSource, AL_LOOPING, 1);
+	}
 
 	source.logicalSourceHandle = sourceHandle;
 	source.playing = true;
