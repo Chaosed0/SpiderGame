@@ -428,6 +428,7 @@ void Scene::setupPrefabs()
 	playerData.reloadClip = AudioClip("assets/sound/reload.wav");
 	playerData.portalClip = AudioClip("assets/sound/portal.wav");
 	playerData.portalEnterClip = AudioClip("assets/sound/portal_enter.wav");
+	playerData.windClip = AudioClip("assets/sound/wind.ogg");
 	playerData.gunBarrelOffset = glm::vec3(0.0f, 0.19f, -0.665f);
 
 	playerData.shotTracerPrefab = bulletTracer;
@@ -436,8 +437,8 @@ void Scene::setupPrefabs()
 	playerData.facingLabel = gui.facingLabel;
 
 	playerData.gemDefenseTime = 30.0f;
-	playerData.blackoutTime = 2.0f;
-	playerData.fadeInTime = 2.0f;
+	playerData.blackoutTime = 4.0f;
+	playerData.fadeInTime = 3.0f;
 	playerData.endRestTime = 2.0f;
 
 	playerData.gemPrefabs = gemPrefabs;

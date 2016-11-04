@@ -12,7 +12,7 @@
 #include <algorithm>
 
 const unsigned SpawnerSystem::maximumSpawnRetries = 10;
-const unsigned SpawnerSystem::maxSpiders = 0;
+const unsigned SpawnerSystem::maxSpiders = 10;
 
 SpawnerSystem::SpawnerSystem(World& world, btDynamicsWorld* dynamicsWorld, std::default_random_engine& generator)
 	: System(world), dynamicsWorld(dynamicsWorld), generator(generator)

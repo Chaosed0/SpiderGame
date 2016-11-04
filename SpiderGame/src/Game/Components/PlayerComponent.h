@@ -82,6 +82,7 @@ public:
 		AudioClip gemPickupClip;
 		AudioClip portalClip;
 		AudioClip portalEnterClip;
+		AudioClip windClip;
 
 		std::shared_ptr<Label> facingLabel;
 		std::shared_ptr<UIQuad> blackoutQuad;

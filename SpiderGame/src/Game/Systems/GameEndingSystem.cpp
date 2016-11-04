@@ -82,6 +82,12 @@ void GameEndingSystem::updateEntity(float dt, eid_t entity)
 
 			// Disable the old camera
 			oldCameraComponent->isActive = false;
+
+			// Play the outdoors soundscape
+			AudioSourceComponent* audioSourceComponent = world.getComponent<AudioSourceComponent>(entity);
+			if (audioSourceComponent->sourceHandle != nullptr) {
+				soundManager.playClipAtSource(playerComponent->data.windClip, audioSourceComponent->sourceHandle);
+			}
 		}
 	} else if (playerComponent->gameEndState == GameEndState_Fadein) {
 		float alpha = (std::max)(1.0f - timer / playerData.fadeInTime, 0.0f);
