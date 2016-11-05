@@ -87,45 +87,47 @@ void Scene::setupPrefabs()
 	skyboxShader = shaderLoader.compileAndLink("Shaders/skybox.vert", "Shaders/skybox.frag");
 	singleColorShader2d = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/singlecolor.frag");
 
+	float imageSize = 64.0f;
+
 	/* Health label */
-	std::shared_ptr<Font> font = std::make_shared<Font>("assets/font/Inconsolata.otf", 50);
+	std::shared_ptr<Font> font = std::make_shared<Font>("assets/font/Inconsolata.otf", 100);
 	gui.healthLabel = std::make_shared<Label>(font);
 	gui.healthLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	gui.healthLabel->transform = Transform(glm::vec3(50.0f, windowHeight - 10.0f, 0.0f)).matrix();
+	gui.healthLabel->transform = Transform(glm::vec3(10.0f + imageSize + 8.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.healthLabelHandle = uiRenderer.getEntityHandle(gui.healthLabel, textShader);
 
 	/* Health image */
-	gui.healthImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(32.0f, 32.0f));
-	gui.healthImage->transform = Transform(glm::vec3(10.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.healthImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/heart.png"), glm::vec2(imageSize));
+	gui.healthImage->transform = Transform(glm::vec3(10.0f, windowHeight - 10.0f - imageSize, 0.0f)).matrix();
 	gui.healthImageHandle = uiRenderer.getEntityHandle(gui.healthImage, imageShader);
 
 	/* Bullet label */
 	gui.bulletLabel = std::make_shared<Label>(font);
 	gui.bulletLabel->setAlignment(Label::Alignment_right);
 	gui.bulletLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
-	gui.bulletLabel->transform = Transform(glm::vec3(windowWidth - 50.0f, windowHeight - 10.0f, 0.0f)).matrix();
+	gui.bulletLabel->transform = Transform(glm::vec3(windowWidth - 10.0f - imageSize - 8.0f, windowHeight - 10.0f, 0.0f)).matrix();
 	gui.bulletLabelHandle = uiRenderer.getEntityHandle(gui.bulletLabel, textShader);
 
 	/* Bullet image */
-	gui.bulletImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/bullet.png"), glm::vec2(32.0f, 32.0f));
-	gui.bulletImage->transform = Transform(glm::vec3(windowWidth - 42.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.bulletImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/bullet.png"), glm::vec2(imageSize));
+	gui.bulletImage->transform = Transform(glm::vec3(windowWidth - 10.0f - imageSize, windowHeight - 10.0f - imageSize, 0.0f)).matrix();
 	gui.bulletImageHandle = uiRenderer.getEntityHandle(gui.bulletImage, imageShader);
 
 	/* Gem images */
-	gui.redGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemred.png"), glm::vec2(32.0f, 32.0f));
-	gui.redGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 48.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.redGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemred.png"), glm::vec2(imageSize));
+	gui.redGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - imageSize * 1.5f, windowHeight - 10.0f - imageSize, 0.0f)).matrix();
 	gui.redGemImageHandle = uiRenderer.getEntityHandle(gui.redGemImage, imageShader);
 
-	gui.greenGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemgreen.png"), glm::vec2(32.0f, 32.0f));
-	gui.greenGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - 16.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.greenGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemgreen.png"), glm::vec2(imageSize));
+	gui.greenGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f - imageSize / 2.0f, windowHeight - 10.0f - imageSize, 0.0f)).matrix();
 	gui.greenGemImageHandle = uiRenderer.getEntityHandle(gui.greenGemImage, imageShader);
 
-	gui.blueGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemblue.png"), glm::vec2(32.0f, 32.0f));
-	gui.blueGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f + 16.0f, windowHeight - 42.0f, 0.0f)).matrix();
+	gui.blueGemImage = std::make_shared<UIQuad>(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/gemblue.png"), glm::vec2(imageSize));
+	gui.blueGemImage->transform = Transform(glm::vec3(windowWidth / 2.0f + imageSize / 2.0f, windowHeight - 10.0f - imageSize, 0.0f)).matrix();
 	gui.blueGemImageHandle = uiRenderer.getEntityHandle(gui.blueGemImage, imageShader);
 
 	/* Notification label */
-	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 30);
+	font = std::make_shared<Font>("assets/font/Inconsolata.otf", 75);
 	gui.facingLabel = std::make_shared<Label>(font);
 	gui.facingLabel->material.setProperty("textColor", MaterialProperty(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)));
 	gui.facingLabel->transform = Transform(glm::vec3(windowWidth / 2.0f + 40.0f, windowHeight / 2.0f - 40.0f, 0.0f)).matrix();

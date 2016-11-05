@@ -202,7 +202,7 @@ int Game::setup()
 	Shader backShader = shaderLoader.compileAndLink("Shaders/basic2d.vert", "Shaders/singlecolor.frag");
 
 	/* Console */
-	std::shared_ptr<Font> font(std::make_shared<Font>("assets/font/Inconsolata.otf", 12));
+	std::shared_ptr<Font> font(std::make_shared<Font>("assets/font/Inconsolata.otf", 18));
 	console = std::make_unique<Console>(font, glm::vec2((float)windowWidth, windowHeight * 0.6f));
 	console->addCallback("exit", CallbackMap::defineCallback(std::bind(&Game::exit, this)));
 	console->addCallback("wireframe", CallbackMap::defineCallback<bool>(std::bind(&Game::setWireframe, this, std::placeholders::_1)));
