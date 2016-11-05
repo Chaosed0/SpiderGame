@@ -1,5 +1,5 @@
 resX=2560
 resY=1440
 fullscreen=1
-nativeres=0
-borderless=0
+nativeres=1
+borderless=1

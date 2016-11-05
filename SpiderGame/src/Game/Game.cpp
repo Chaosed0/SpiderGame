@@ -137,13 +137,15 @@ int Game::setup()
 
 	int windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 	if (fullscreen) {
-		if (borderless) {
-			windowFlags = windowFlags | SDL_WINDOW_BORDERLESS;
-		} else if (nativeres) {
+		if (nativeres) {
 			windowFlags = windowFlags | SDL_WINDOW_FULLSCREEN_DESKTOP;
 		} else {
 			windowFlags = windowFlags | SDL_WINDOW_FULLSCREEN;
 		}
+	}
+
+	if (borderless) {
+		windowFlags = windowFlags | SDL_WINDOW_BORDERLESS;
 	}
 
 	window = SDL_CreateWindow("window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, windowFlags);
