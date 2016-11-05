@@ -17,13 +17,14 @@
 #include "Game/Components/CollisionComponent.h"
 #include "Game/Components/CameraComponent.h"
 #include "Game/Events/RestartEvent.h"
+#include "Game/Extra/Config.h"
 
 #include "Renderer/UI/Label.h"
 #include "Renderer/UI/UIQuad.h"
 
 const static int updatesPerSecond = 60;
-const static int windowWidth = 1080;
-const static int windowHeight = 720;
+const static int defaultWindowWidth = 1080;
+const static int defaultWindowHeight = 720;
 
 Game::Game()
 {
@@ -110,6 +111,14 @@ void Game::restartGame()
 
 int Game::setup()
 {
+	Config config;
+	config.loadConfig("config.txt");
+	int windowWidth = config.getValue<int>("resX", defaultWindowWidth);
+	int windowHeight = config.getValue<int>("resY", defaultWindowHeight);
+	bool fullscreen = config.getValue<bool>("fullscreen", false);
+	bool borderless = config.getValue<bool>("borderless", false);
+	bool nativeres = config.getValue<bool>("nativeres", false);
+
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC | SDL_INIT_JOYSTICK) < 0)
 	{
 		printf ("SDL could not initialize, error: %s\n", SDL_GetError());
@@ -126,7 +135,18 @@ int Game::setup()
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
-	window = SDL_CreateWindow("window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+	int windowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+	if (fullscreen) {
+		if (borderless) {
+			windowFlags = windowFlags | SDL_WINDOW_BORDERLESS;
+		} else if (nativeres) {
+			windowFlags = windowFlags | SDL_WINDOW_FULLSCREEN_DESKTOP;
+		} else {
+			windowFlags = windowFlags | SDL_WINDOW_FULLSCREEN;
+		}
+	}
+
+	window = SDL_CreateWindow("window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, windowFlags);
 
 	if (window == NULL)
 	{
