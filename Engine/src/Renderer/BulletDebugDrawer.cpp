@@ -19,6 +19,7 @@ BulletDebugDrawer::BulletDebugDrawer()
 	: currentBufferSize(0),
 	i(0),
 	impl(new Impl),
+	camera(nullptr),
 	debugMode(btIDebugDraw::DBG_NoDebug)
 { }
 
@@ -60,6 +61,10 @@ void BulletDebugDrawer::reset()
 
 void BulletDebugDrawer::draw()
 {
+	if (camera == nullptr) {
+		return;
+	}
+
 	impl->shader.use();
 	impl->shader.setModelMatrix(glm::mat4());
 	impl->shader.setProjectionMatrix(camera->getProjectionMatrix());

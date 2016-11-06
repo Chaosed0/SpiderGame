@@ -31,6 +31,7 @@ Game::Game()
 	restart = false;
 	running = false;
 	wireframe = false;
+	started = false;
 	lastUpdate = UINT32_MAX;
 	accumulator = 0.0f;
 }
@@ -268,9 +269,11 @@ int Game::setup()
 	sceneInfo.windowWidth = windowWidth;
 
 	scene = std::make_unique<Scene>(sceneInfo);
+	restartGame();
 
 	TextureLoader textureLoader;
-	launchScreen = std::shared_ptr<UIQuad>(new UIQuad(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/LAUNCHSCREEN.png"), glm::vec2(windowWidth, windowHeight)));
+	launchScreen = std::shared_ptr<UIQuad>(new UIQuad(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/SPIDERGAME.png"), glm::vec2(windowWidth, windowHeight)));
+	launchScreen->transform = Transform(glm::vec3(0.0f, 0.0f, 1.0f)).matrix();
 	launchScreenHandle = uiRenderer.getEntityHandle(launchScreen, shaderLoader.compileAndLink("shaders/basic2d.vert", "shaders/texture2d.frag"));
 
 	std::function<void(const RestartEvent& event)> restartCallback =
@@ -300,19 +303,14 @@ int Game::loop()
 			this->handleEvent(event);
 		}
 
-		// Pause while the console is visible
-		if (!console->isVisible() && !started) {
-			accumulator += SDL_GetTicks() - lastUpdate;
-			lastUpdate = SDL_GetTicks();
+		accumulator += SDL_GetTicks() - lastUpdate;
+		lastUpdate = SDL_GetTicks();
 
-			if (accumulator >= 1000.0f / updatesPerSecond)
-			{
-				timeDelta = 1.0f / updatesPerSecond;
-				update();
-				accumulator -= 1000.0f / updatesPerSecond;
-			}
-		} else {
-			lastUpdate = SDL_GetTicks();
+		if (accumulator >= 1000.0f / updatesPerSecond)
+		{
+			timeDelta = 1.0f / updatesPerSecond;
+			update();
+			accumulator -= 1000.0f / updatesPerSecond;
 		}
 	
 		draw();
@@ -334,39 +332,51 @@ void Game::update()
 {
 	input.update();
 
-	/* AI/Input */
-	playerInputSystem->update(timeDelta);
-	followSystem->update(timeDelta);
-	spiderSystem->update(timeDelta);
-	spawnerSystem->update(timeDelta);
+	if (!started) {
+		for (int i = Device_Kbm; i <= Device_Controller3; i++) {
+			if (input.getButtonDown("Start", (Device)i)) {
+				started = true;
+				playerInputSystem->setDevice((Device)i);
+				launchScreen->isVisible = false;
+			}
+		}
+	}
 
-	/* Physics */
-	rigidbodyMotorSystem->update(timeDelta);
-	velocitySystem->update(timeDelta);
-	shootingSystem->update(timeDelta);
-	gemSystem->update(timeDelta);
+	if (!console->isVisible() || !started) {
+		/* AI/Input */
+		playerInputSystem->update(timeDelta);
+		followSystem->update(timeDelta);
+		spiderSystem->update(timeDelta);
+		spawnerSystem->update(timeDelta);
 
-	dynamicsWorld->stepSimulation(timeDelta);
+		/* Physics */
+		rigidbodyMotorSystem->update(timeDelta);
+		velocitySystem->update(timeDelta);
+		shootingSystem->update(timeDelta);
+		gemSystem->update(timeDelta);
 
-	/* Display */
-	playerFacingSystem->update(timeDelta);
-	collisionUpdateSystem->update(timeDelta);
-	shakeSystem->update(timeDelta);
-	cameraSystem->update(timeDelta);
-	modelRenderSystem->update(timeDelta);
-	pointLightSystem->update(timeDelta);
-	audioSourceSystem->update(timeDelta);
-	audioListenerSystem->update(timeDelta);
+		dynamicsWorld->stepSimulation(timeDelta);
 
-	renderer.update(timeDelta);
-	soundManager.update();
+		/* Display */
+		playerFacingSystem->update(timeDelta);
+		collisionUpdateSystem->update(timeDelta);
+		shakeSystem->update(timeDelta);
+		cameraSystem->update(timeDelta);
+		modelRenderSystem->update(timeDelta);
+		pointLightSystem->update(timeDelta);
+		audioSourceSystem->update(timeDelta);
+		audioListenerSystem->update(timeDelta);
 
-	/* Cleanup */
-	expiresSystem->update(timeDelta);
-	playerDeathSystem->update(timeDelta);
-	gameEndingSystem->update(timeDelta);
+		renderer.update(timeDelta);
+		soundManager.update();
 
-	world.cleanupEntities();
+		/* Cleanup */
+		expiresSystem->update(timeDelta);
+		playerDeathSystem->update(timeDelta);
+		gameEndingSystem->update(timeDelta);
+
+		world.cleanupEntities();
+	}
 
 	if (restart) {
 		this->restartGame();
@@ -378,16 +388,6 @@ void Game::handleEvent(SDL_Event& event)
 {
 	if (!this->console->isVisible()) {
 		input.handleEvent(event);
-	}
-
-	if (!started) {
-		for (int i = Device_Kbm; i <= Device_Controller3; i++) {
-			if (input.getButtonDown("Start", (Device)i)) {
-				started = true;
-				playerInputSystem->setDevice((Device)i);
-				launchScreen->isVisible = false;
-			}
-		}
 	}
 
 	switch(event.type) {
@@ -437,7 +437,7 @@ void Game::handleEvent(SDL_Event& event)
 
 		switch(event.key.keysym.sym) {
 		case SDLK_ESCAPE:
-			SDL_SetRelativeMouseMode(SDL_FALSE);
+			running = false;
 			break;
 		}
 		break;

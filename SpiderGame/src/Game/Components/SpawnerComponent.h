@@ -12,7 +12,7 @@ public:
 
 	struct Data
 	{
-		Data() : startSpawnTime(5.0f), endSpawnTime(2.5f), difficultyRampTime(30.0f), minSpawnDistance(7.0f) { }
+		Data() : startSpawnTime(8.0f), endSpawnTime(3.0f), difficultyRampTime(60.0f), minSpawnDistance(7.0f) { }
 		float startSpawnTime;
 		float endSpawnTime;
 		float difficultyRampTime;
