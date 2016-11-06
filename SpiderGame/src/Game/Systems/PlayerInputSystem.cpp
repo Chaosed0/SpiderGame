@@ -14,15 +14,19 @@ static const unsigned bulletPileCount = 12;
 
 PlayerInputSystem::PlayerInputSystem(World& world, Input& input, EventManager& eventManager)
 	: System(world), input(input), eventManager(eventManager),
-	noclip(false), horizontalRad(0.0f), verticalRad(0.0f)
+	noclip(false), horizontalRad(0.0f), verticalRad(0.0f), device(Device_Kbm)
 {
 	require<RigidbodyMotorComponent>();
 	require<PlayerComponent>();
 }
 
+void PlayerInputSystem::setDevice(Device device)
+{
+	this->device = device;
+}
+
 void PlayerInputSystem::updateEntity(float dt, eid_t entity)
 {
-	Device device = Device_Kbm;
 	RigidbodyMotorComponent* rigidbodyMotorComponent = world.getComponent<RigidbodyMotorComponent>(entity);
 	PlayerComponent* playerComponent = world.getComponent<PlayerComponent>(entity);
 

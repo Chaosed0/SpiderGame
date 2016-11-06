@@ -15,11 +15,13 @@ public:
 	void updateEntity(float dt, eid_t entity);
 
 	void setNoclip(bool noclip);
+	void setDevice(Device device);
 private:
 	bool noclip;
 
 	float horizontalRad;
 	float verticalRad;
+	Device device;
 
 	EventManager& eventManager;
 	Input& input;

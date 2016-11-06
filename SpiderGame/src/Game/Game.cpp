@@ -16,7 +16,7 @@
 
 #include "Game/Components/CollisionComponent.h"
 #include "Game/Components/CameraComponent.h"
-#include "Game/Events/RestartEvent.h"
+#include "Game/Events/GameEvents.h"
 #include "Game/Extra/Config.h"
 
 #include "Renderer/UI/Label.h"
@@ -184,6 +184,7 @@ int Game::setup()
 	input.setDefaultMapping("Use", KbmAxis_E, KbmAxis_None);
 	input.setDefaultMapping("Fire", KbmAxis_MouseLeft, KbmAxis_None);
 	input.setDefaultMapping("Reload", KbmAxis_R, KbmAxis_None);
+	input.setDefaultMapping("Start", KbmAxis_Return, KbmAxis_None);
 
 	input.setDefaultMapping("Horizontal", ControllerAxis_LStickXPos, ControllerAxis_LStickXNeg);
 	input.setDefaultMapping("Vertical", ControllerAxis_LStickYPos, ControllerAxis_LStickYNeg);
@@ -193,6 +194,7 @@ int Game::setup()
 	input.setDefaultMapping("Use", ControllerAxis_X, ControllerAxis_None);
 	input.setDefaultMapping("Fire", ControllerAxis_RightTrigger, ControllerAxis_None);
 	input.setDefaultMapping("Reload", ControllerAxis_Y, ControllerAxis_None);
+	input.setDefaultMapping("Start", ControllerAxis_Start, ControllerAxis_None);
 
 	/*! Event Manager */
 	eventManager = std::make_unique<EventManager>(world);
@@ -267,7 +269,9 @@ int Game::setup()
 
 	scene = std::make_unique<Scene>(sceneInfo);
 
-	restartGame();
+	TextureLoader textureLoader;
+	launchScreen = std::shared_ptr<UIQuad>(new UIQuad(textureLoader.loadFromFile(TextureType_diffuse, "assets/img/LAUNCHSCREEN.png"), glm::vec2(windowWidth, windowHeight)));
+	launchScreenHandle = uiRenderer.getEntityHandle(launchScreen, shaderLoader.compileAndLink("shaders/basic2d.vert", "shaders/texture2d.frag"));
 
 	std::function<void(const RestartEvent& event)> restartCallback =
 		[game = this, world = &world](const RestartEvent& event) {
@@ -297,7 +301,7 @@ int Game::loop()
 		}
 
 		// Pause while the console is visible
-		if (!console->isVisible()) {
+		if (!console->isVisible() && !started) {
 			accumulator += SDL_GetTicks() - lastUpdate;
 			lastUpdate = SDL_GetTicks();
 
@@ -374,6 +378,16 @@ void Game::handleEvent(SDL_Event& event)
 {
 	if (!this->console->isVisible()) {
 		input.handleEvent(event);
+	}
+
+	if (!started) {
+		for (int i = Device_Kbm; i <= Device_Controller3; i++) {
+			if (input.getButtonDown("Start", (Device)i)) {
+				started = true;
+				playerInputSystem->setDevice((Device)i);
+				launchScreen->isVisible = false;
+			}
+		}
 	}
 
 	switch(event.type) {

@@ -2,7 +2,7 @@
 #include "PlayerDeathSystem.h"
 
 #include "Game/Components/PlayerComponent.h"
-#include "Game/Events/RestartEvent.h"
+#include "Game/Events/GameEvents.h"
 
 PlayerDeathSystem::PlayerDeathSystem(World& world, EventManager& eventManager)
 	: System(world),

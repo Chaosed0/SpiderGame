@@ -15,6 +15,7 @@
 #include "Renderer/Model.h"
 
 #include "Renderer/UI/UIRenderer.h"
+#include "Renderer/UI/UIQuad.h"
 
 #include "Sound/SoundManager.h"
 
@@ -68,6 +69,7 @@ private:
 	bool wireframe;
 	bool running;
 	bool restart;
+	bool started;
 	Uint32 lastUpdate;
 	float accumulator;
 	float timeDelta;
@@ -110,6 +112,9 @@ private:
 	Input input;
 
 	std::unique_ptr<Scene> scene;
+
+	std::shared_ptr<UIQuad> launchScreen;
+	UIRenderer::UIElementHandle launchScreenHandle;
 
 	void exit();
 	void setWireframe(bool on);
