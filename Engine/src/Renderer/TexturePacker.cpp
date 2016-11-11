@@ -37,12 +37,20 @@ TexturePacker::TextureNode* TexturePacker::pack(TextureNode* node, const glm::iv
 		// Filled, we have to be a leaf
 		assert(!node->left && !node->right);
 		return NULL;
-	} else if (!node->left && !node->right) {
+	} else if (node->left && node->right) {
+		// Non-leaf, try inserting to the left and then to the right
+		assert(node->left && node->right);
+		TextureNode* retval = pack(node->left.get(), size);
+		if (retval != NULL) {
+			return retval;
+		}
+		return pack(node->right.get(), size);
+	} else {
 		glm::ivec2 realSize(node->origin.x + node->size.x == INT_MAX ? textureSize.x - node->origin.x : node->size.x,
 			node->origin.y + node->size.y == INT_MAX ? textureSize.y - node->origin.y : node->size.y);
 		// Unfilled leaf - try to fill
 		if (node->size.x == size.x && node->size.y == size.y) {
-			// Perfect - just pack
+			// This is an interior cell which perfectly fits, just pack it
 			node->empty = false;
 			return node;
 		} else if (realSize.x < size.x || realSize.y < size.y) {
@@ -50,13 +58,14 @@ TexturePacker::TextureNode* TexturePacker::pack(TextureNode* node, const glm::iv
 			return NULL;
 		} else {
 			// Large enough - split
-			std::unique_ptr<TextureNode> left, right;
+			TextureNode* left;
+			TextureNode* right;
 			int remainX = realSize.x - size.x;
 			int remainY = realSize.y - size.y;
 
 			bool verticalSplit = remainX < remainY;
 			if (remainX == 0 && remainY == 0) {
-				// Edge case - we are at a realSize boundary, split along the side which is closer to INT_MAX
+				// This is an exterior cell which perfectly fits - split along the side which is closer to INT_MAX
 				if (node->size.x > node->size.y) {
 					verticalSplit = false;
 				} else {
@@ -66,26 +75,20 @@ TexturePacker::TextureNode* TexturePacker::pack(TextureNode* node, const glm::iv
 
 			if (verticalSplit) {
 				// Split vertically (left is top)
-				left = std::make_unique<TextureNode>(node->origin, glm::ivec2(node->size.x, size.y));
-				right = std::make_unique<TextureNode>(glm::ivec2(node->origin.x, node->origin.y + size.y), glm::ivec2(node->size.x, node->size.y - size.y));
+				left = new TextureNode(node->origin, glm::ivec2(node->size.x, size.y));
+				right = new TextureNode(glm::ivec2(node->origin.x, node->origin.y + size.y),
+										glm::ivec2(node->size.x, node->size.y - size.y));
 			} else {
 				// Split horizontally
-				left = std::make_unique<TextureNode>(node->origin, glm::ivec2(size.x, node->size.y));
-				right = std::make_unique<TextureNode>(glm::ivec2(node->origin.x + size.x, node->origin.y), glm::ivec2(node->size.x - size.x, node->size.y));
+				left = new TextureNode(node->origin, glm::ivec2(size.x, node->size.y));
+				right = new TextureNode(glm::ivec2(node->origin.x + size.x, node->origin.y),
+										glm::ivec2(node->size.x - size.x, node->size.y));
 			}
 
-			node->left = std::move(left);
-			node->right = std::move(right);
+			node->left = std::unique_ptr<TextureNode>(left);
+			node->right = std::unique_ptr<TextureNode>(right);
 			return pack(node->left.get(), size);
 		}
-	} else {
-		// Non-leaf, try inserting to the left and then to the right
-		assert(node->left && node->right);
-		TextureNode* retval = pack(node->left.get(), size);
-		if (retval != NULL) {
-			return retval;
-		}
-		return pack(node->right.get(), size);
 	}
 }
 

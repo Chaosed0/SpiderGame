@@ -36,6 +36,20 @@ struct Font::Impl
 	void packCharacter(Character& character, const FT_Bitmap& bitmap);
 };
 
+class SortCharacterDescending
+{
+public:
+	SortCharacterDescending(std::vector<Character>& characters) : characters(characters) { }
+	bool operator () (int i1, int i2)
+	{
+		Character& c1 = characters[i1];
+		Character& c2 = characters[i2];
+		return (c1.size.x * c1.size.y) > (c2.size.x * c2.size.y);
+	}
+private:
+	std::vector<Character>& characters;
+};
+
 Font::Font()
 	: impl(new Impl())
 { }
@@ -85,8 +99,38 @@ void Font::loadCharacters(const std::string& fontPath, int height)
 			(long)face->glyph->advance.x,
 		};
 		impl->characters.push_back(character);
+	}
 
-		impl->packCharacter(impl->characters[i], face->glyph->bitmap);
+	SortCharacterDescending descending(impl->characters);
+	std::vector<int> sortedCharacters(impl->characters.size());
+	for (size_t i = 0; i < sortedCharacters.size(); i++) {
+		sortedCharacters[i] = i;
+	}
+	std::sort(sortedCharacters.begin(), sortedCharacters.end(), descending);
+
+	int i = 0;
+	for (size_t i = 0; i < sortedCharacters.size(); i++)
+	{
+		int charIndex = sortedCharacters[i];
+		Character& character = impl->characters[charIndex];
+		if (FT_Load_Char(face, charIndex, FT_LOAD_RENDER))
+		{
+			fprintf(stderr, "ERROR::FREETYTPE: Failed to load Glyph %c", charIndex);
+			continue;
+		}
+
+		if (isprint(charIndex))
+		{
+			impl->packCharacter(character, face->glyph->bitmap);
+
+			if (character.size.x > 0 && character.size.y > 0) {
+				int basenameIndex = fontPath.find_last_of('/');
+				std::string basename = fontPath.substr(basenameIndex+1);
+				std::stringstream sstream;
+				sstream << "data/" << basename << "_" << height << "_" << i << ".bmp";
+				saveAtlasToFile(sstream.str());
+			}
+		}
 	}
 
 	glm::ivec2 textureSize = impl->texturePacker.getTextureSize();
