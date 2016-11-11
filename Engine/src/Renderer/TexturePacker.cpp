@@ -42,7 +42,7 @@ TexturePacker::TextureNode* TexturePacker::pack(TextureNode* node, const glm::iv
 			node->origin.y + node->size.y == INT_MAX ? textureSize.y - node->origin.y : node->size.y);
 		// Unfilled leaf - try to fill
 		if (node->size.x == size.x && node->size.y == size.y) {
-			// Perfect - just pack
+			// This is an interior cell which perfectly fits, just pack it
 			node->empty = false;
 			return node;
 		} else if (realSize.x < size.x || realSize.y < size.y) {
@@ -56,7 +56,7 @@ TexturePacker::TextureNode* TexturePacker::pack(TextureNode* node, const glm::iv
 
 			bool verticalSplit = remainX < remainY;
 			if (remainX == 0 && remainY == 0) {
-				// Edge case - we are at a realSize boundary, split along the side which is closer to INT_MAX
+				// This is an exterior cell which perfectly fits - split along the side which is closer to INT_MAX
 				if (node->size.x > node->size.y) {
 					verticalSplit = false;
 				} else {
